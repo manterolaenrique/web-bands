@@ -1,19 +1,28 @@
 {
-  "name": "bandas-web",
-  "private": true,
+  "name": "web-bands",
   "version": "1.0.0",
-  "main": "package.json",
-  "license": "UNLICENSED",
+  "description": "Plantilla profesional en React para bandas de música con CMS Sanity",
+  "main": "index.js",
   "scripts": {
     "dev": "sanity dev",
-    "start": "sanity start",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "deploy-graphql": "sanity graphql deploy"
+    "start:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "npm install && cd frontend && npm install",
+    "dev:all": "concurrently \"npm run dev\" \"npm run start:frontend\""
   },
   "keywords": [
-    "sanity"
+    "react",
+    "sanity",
+    "cms",
+    "music",
+    "bands",
+    "template",
+    "one-page"
   ],
+  "author": "Tu Nombre",
+  "license": "MIT",
   "dependencies": {
     "@sanity/vision": "^4.1.1",
     "react": "^19.1",
@@ -24,6 +33,7 @@
   "devDependencies": {
     "@sanity/eslint-config-studio": "^5.0.2",
     "@types/react": "^19.1",
+    "concurrently": "^8.2.2",
     "eslint": "^9.28",
     "prettier": "^3.5",
     "typescript": "^5.8"
