@@ -1,243 +1,173 @@
-# 🎵 Web Bands - Plantilla para Bandas de Música
+# 🎸 Web Bands - Plantilla Profesional para Bandas de Música
 
-Una plantilla profesional en React para bandas de música con CMS Sanity, diseñada para ser reutilizable y personalizable.
+Una plantilla moderna y profesional en React para bandas de música, con CMS Sanity integrado y funcionalidades avanzadas.
 
-## ✨ Características
+## 🚀 Características
 
-- **Plantilla One Page** moderna y responsive
-- **CMS Sanity** para gestión de contenido dinámico
-- **URLs personalizadas** por banda (ej: `/banda/los-bomberos`)
-- **Colores personalizables** por banda
-- **Componentes modulares** y reutilizables
-- **Diseño responsive** para todos los dispositivos
-- **SEO optimizado** con metadatos dinámicos
+- **Frontend React** con Vite
+- **CMS Sanity** para gestión de contenido
+- **Diseño responsivo** y moderno
+- **Sistema de colores dinámico** por banda
+- **Integración con EmailJS** para formularios de contacto
+- **SEO optimizado** con títulos dinámicos
+- **Favicons dinámicos** por banda
+- **Navegación dinámica** basada en contenido
 
-## 🏗️ Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```
 web-bands/
 ├── frontend/                 # Aplicación React
 │   ├── src/
-│   │   ├── components/       # Componentes de la UI
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Hero.jsx
-│   │   │   ├── About.jsx
-│   │   │   ├── Contact.jsx
-│   │   │   ├── Footer.jsx
-│   │   │   └── BandaPage.jsx
-│   │   ├── sanityClient.js  # Cliente de Sanity
-│   │   └── App.jsx          # Configuración de rutas
-│   └── package.json
-├── schemaTypes/             # Esquemas de Sanity
-│   ├── banda.ts            # Esquema principal
-│   └── index.ts
-├── sanity.config.ts        # Configuración de Sanity
-└── README.md
+│   │   ├── components/      # Componentes React
+│   │   ├── utils/          # Utilidades
+│   │   └── config.js       # Configuración
+│   ├── public/             # Archivos estáticos
+│   ├── env.development     # Variables de entorno desarrollo
+│   ├── env.production      # Variables de entorno producción
+│   └── vercel.json         # Configuración Vercel
+├── schemaTypes/            # Esquemas de Sanity
+├── sanity.config.ts        # Configuración Sanity
+└── package.json           # Dependencias del proyecto
 ```
 
-## 🚀 Instalación y Configuración
+## 🛠️ Instalación y Desarrollo
 
-### 1. Clonar el repositorio
+### Prerrequisitos
+- Node.js >= 18.0.0
+- npm >= 8.0.0
+
+### Instalación
+
+1. **Clonar el repositorio**
 ```bash
-git clone <tu-repositorio>
+git clone https://github.com/manterolaenrique/web-bands.git
 cd web-bands
 ```
 
-### 2. Configurar Sanity CMS
-
-#### Instalar dependencias de Sanity
+2. **Instalar dependencias**
 ```bash
-npm install
+npm run install:all
 ```
 
-#### Iniciar el estudio de Sanity
+3. **Configurar variables de entorno**
 ```bash
-npm run dev
+# Copiar archivo de ejemplo
+cp frontend/env.example frontend/.env
+
+# Editar con tus valores
+# VITE_SANITY_PROJECT_ID=tu_project_id_aqui
 ```
 
-#### Acceder al CMS
-Abre http://localhost:3333 en tu navegador
-
-#### Crear una banda de ejemplo
-1. Ve a "Banda" en el menú lateral
-2. Haz clic en "Create new document"
-3. Completa los campos:
-   - **Nombre**: "Los Bomberos"
-   - **Slug**: Se genera automáticamente
-   - **Colores**: 
-     - Primario: "#e74c3c"
-     - Secundario: "#2c3e50"
-   - **Hero**: 
-     - Título: "Los Bomberos"
-     - Subtítulo: "Música que incendia el alma"
-     - Imagen: Sube una imagen de fondo
-   - **About**: Información sobre la banda
-   - **Contacto**: Email y redes sociales
-
-### 3. Configurar el Frontend
-
-#### Instalar dependencias
+4. **Iniciar desarrollo**
 ```bash
-cd frontend
-npm install
+npm run dev:all
 ```
 
-#### Verificar configuración de Sanity
-Asegúrate de que el `projectId` en `frontend/src/sanityClient.js` coincida con tu proyecto de Sanity.
+## 🌐 Despliegue en Vercel
 
-#### Iniciar el servidor de desarrollo
-```bash
-npm run dev
+### Paso 1: Conectar con GitHub
+
+1. Ve a [vercel.com](https://vercel.com)
+2. Inicia sesión con tu cuenta de GitHub
+3. Haz clic en "New Project"
+4. Selecciona el repositorio `web-bands`
+
+### Paso 2: Configurar el Proyecto
+
+1. **Framework Preset**: Vite
+2. **Root Directory**: `frontend`
+3. **Build Command**: `npm run build`
+4. **Output Directory**: `dist`
+
+### Paso 3: Variables de Entorno
+
+Configura las siguientes variables en Vercel:
+
+```env
+VITE_ENV=production
+VITE_SANITY_PROJECT_ID=vyjsvcoh
+VITE_SANITY_DATASET=production
+VITE_SANITY_API_VERSION=2024-01-01
+VITE_SANITY_STUDIO_URL=https://bandas-web.sanity.studio
+VITE_APP_URL=https://tu-dominio-vercel.vercel.app
+VITE_APP_NAME=Web Bands
 ```
 
-#### Probar la aplicación
-Visita http://localhost:5173/banda/los-bomberos
+### Paso 4: Desplegar
 
-## 📝 Uso del CMS
+1. Haz clic en "Deploy"
+2. Vercel construirá y desplegará automáticamente
+3. Cada push a `main` activará un nuevo despliegue
 
-### Campos del Esquema de Banda
+## 🎨 Sanity Studio
 
-#### Información Básica
-- **Nombre**: Nombre de la banda
-- **Slug**: URL amigable (se genera automáticamente)
+### Desplegar Sanity Studio
 
-#### Colores
-- **Primario**: Color principal de la banda
-- **Secundario**: Color secundario
-- **Acento**: Color de acento (opcional)
-
-#### Sección Hero
-- **Título**: Título principal
-- **Subtítulo**: Subtítulo descriptivo
-- **Imagen**: Imagen de fondo
-- **Descripción**: Texto descriptivo corto
-
-#### Sección About
-- **Título**: Título de la sección
-- **Contenido**: Descripción de la banda
-- **Imagen**: Imagen de la banda
-- **Integrantes**: Lista de miembros con fotos e instrumentos
-
-#### Contacto
-- **Email**: Email de contacto
-- **Teléfono**: Número de teléfono
-- **Ubicación**: Ciudad/país
-- **Redes Sociales**: Enlaces a Instagram, YouTube, Facebook, etc.
-
-#### Música
-- **Spotify Embed**: URL del embed de Spotify
-- **YouTube Embed**: URL del embed de YouTube
-
-#### SEO
-- **Título SEO**: Título para motores de búsqueda
-- **Descripción SEO**: Descripción para motores de búsqueda
-- **Palabras Clave**: Array de palabras clave
-
-## 🎨 Personalización
-
-### Colores
-Los colores se aplican automáticamente en:
-- Botones y elementos interactivos
-- Títulos y acentos
-- Fondos de secciones
-- Enlaces y hover states
-
-### Componentes
-Cada componente es modular y puede ser personalizado:
-- `Hero.jsx`: Sección principal con imagen de fondo
-- `About.jsx`: Información de la banda e integrantes
-- `Contact.jsx`: Formulario y redes sociales
-- `Navbar.jsx`: Navegación responsive
-- `Footer.jsx`: Información de contacto y enlaces
-
-## 🔧 Desarrollo
-
-### Agregar nuevas bandas
-1. Ve al CMS de Sanity
-2. Crea un nuevo documento de tipo "Banda"
-3. Completa todos los campos requeridos
-4. La banda estará disponible en `/banda/[slug]`
-
-### Modificar componentes
-Los componentes están en `frontend/src/components/` y usan:
-- **Inline styles** para máxima compatibilidad
-- **Props** para datos dinámicos
-- **Responsive design** con CSS Grid y Flexbox
-
-### Agregar nuevas secciones
-1. Crea un nuevo componente en `components/`
-2. Agrega los campos necesarios al esquema de Sanity
-3. Integra el componente en `BandaPage.jsx`
-
-## 🚀 Despliegue
-
-### Sanity Studio
+1. **Desde el directorio raíz**:
 ```bash
-npm run build
 npm run deploy
 ```
 
-### Frontend (Vercel)
-1. Conecta tu repositorio a Vercel
-2. Configura las variables de entorno:
-   - `VITE_SANITY_PROJECT_ID`: Tu project ID de Sanity
-   - `VITE_SANITY_DATASET`: Tu dataset (production)
-3. Deploy automático en cada push
+2. **O manualmente**:
+```bash
+sanity deploy
+```
 
-### Frontend (Netlify)
-1. Conecta tu repositorio a Netlify
-2. Configura las variables de entorno
-3. Build command: `cd frontend && npm run build`
-4. Publish directory: `frontend/dist`
+### Acceder al Studio
 
-## 📱 Responsive Design
+- **Desarrollo**: http://localhost:3333
+- **Producción**: https://bandas-web.sanity.studio
 
-La plantilla es completamente responsive:
-- **Desktop**: Layout completo con navegación horizontal
-- **Tablet**: Adaptación de grids y espaciado
-- **Mobile**: Navegación hamburguesa y layout vertical
+## 📧 Configuración de EmailJS
 
-## 🎯 SEO
+Consulta `frontend/SANITY_EMAILJS_SETUP.md` para configurar el sistema de emails.
 
-Cada banda tiene:
-- **Meta tags** dinámicos
-- **Open Graph** para redes sociales
-- **Structured data** para motores de búsqueda
-- **URLs amigables** con slugs personalizados
+## 🎨 Sistema de Colores
 
-## 🔒 Seguridad
+Consulta `COLOR_SYSTEM_GUIDE.md` para entender cómo funciona el sistema de colores dinámico.
 
-- **CORS** configurado en Sanity
-- **API keys** seguras
-- **Validación** de datos en el frontend
-- **Sanitización** de contenido
+## 🔧 Scripts Disponibles
 
-## 🤝 Contribución
+### Desarrollo
+- `npm run dev` - Inicia Sanity Studio
+- `npm run start:frontend` - Inicia el frontend
+- `npm run dev:all` - Inicia ambos servicios
+
+### Construcción
+- `npm run build` - Construye Sanity Studio
+- `npm run build:frontend` - Construye el frontend
+- `npm run build:frontend:prod` - Construye para producción
+
+### Despliegue
+- `npm run deploy` - Despliega Sanity Studio
+- `npm run deploy:vercel` - Despliega en Vercel (desde frontend/)
+
+## 📚 Documentación Adicional
+
+- [Guía de Colores](COLOR_SYSTEM_GUIDE.md)
+- [Guía de Favicons](FAVICON_SYSTEM_GUIDE.md)
+- [Guía de Títulos](TITLE_SYSTEM_GUIDE.md)
+- [Guía de Navegación](NAVBAR_DYNAMIC_GUIDE.md)
+- [Guía de Escúchanos](ESCUCHANOS_GUIDE.md)
+- [Ejemplo de Banda](EJEMPLO_BANDA.md)
+
+## 🤝 Contribuir
 
 1. Fork el proyecto
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
 
-## 🆘 Soporte
+## 👨‍💻 Autor
 
-Si tienes problemas:
-1. Revisa la documentación de [Sanity](https://www.sanity.io/docs)
-2. Verifica la configuración del proyecto
-3. Abre un issue en el repositorio
+**Tu Nombre** - [@tuusuario](https://github.com/tuusuario)
 
-## 🎵 Ejemplo de Uso
+---
 
-1. **Configura Sanity** y crea una banda
-2. **Personaliza** colores y contenido
-3. **Sube imágenes** de la banda
-4. **Agrega redes sociales**
-5. **Deploy** en tu hosting preferido
-6. **Comparte** la URL con tu audiencia
-
-¡Tu banda tendrá una web profesional en minutos! 🚀
+⭐ Si este proyecto te ayuda, ¡dale una estrella!
