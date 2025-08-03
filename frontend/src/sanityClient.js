@@ -37,6 +37,18 @@ export const getBandaBySlug = async (slug) => {
       imagen,
       integrantes[]
     },
+    timelineSection{
+      enabled,
+      titulo,
+      descripcion,
+      events[]{
+        name,
+        date,
+        importance,
+        image,
+        descripcion
+      }
+    },
     contacto{
       email,
       telefono,

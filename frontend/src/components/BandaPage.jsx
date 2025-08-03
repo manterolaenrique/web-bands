@@ -7,6 +7,7 @@ import { updateFavicon, resetToDefaultFavicon } from '../utils/faviconUtils'
 import Navbar from './Navbar'
 import Hero from './Hero'
 import About from './About'
+import TimelineSection from './TimelineSection'
 import Escuchanos from './Escuchanos'
 import Contact from './Contact'
 import Footer from './Footer'
@@ -211,6 +212,14 @@ const BandaPage = () => {
       <section id="about">
         <About 
           about={banda.about} 
+          colores={banda.colores} 
+        />
+      </section>
+      
+      {/* Timeline Section */}
+      <section id="timeline">
+        <TimelineSection 
+          timelineSection={banda.timelineSection} 
           colores={banda.colores} 
         />
       </section>

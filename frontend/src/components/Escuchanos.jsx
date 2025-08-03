@@ -36,7 +36,7 @@ const Escuchanos = ({ escuchanos, colores }) => {
       className="escuchanos-section"
       style={{
         padding: '5rem 2rem',
-        backgroundColor: secondaryColors.dark,
+        backgroundColor: secondaryColors.light,
       }}
     >
       <div

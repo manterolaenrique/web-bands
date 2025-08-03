@@ -172,6 +172,109 @@ export default {
       ],
     },
     {
+      name: 'timelineSection',
+      title: 'Sección Línea de Tiempo',
+      type: 'object',
+      fields: [
+        {
+          name: 'enabled',
+          title: 'Habilitar Línea de Tiempo',
+          type: 'boolean',
+          initialValue: true,
+          description: 'Activa o desactiva la sección de línea de tiempo',
+        },
+        {
+          name: 'titulo',
+          title: 'Título de la Sección',
+          type: 'string',
+          initialValue: 'Nuestra Historia',
+          description: 'Título principal de la sección de línea de tiempo',
+        },
+        {
+          name: 'descripcion',
+          title: 'Descripción',
+          type: 'text',
+          rows: 3,
+          description: 'Descripción breve de la sección',
+        },
+        {
+          name: 'events',
+          title: 'Eventos de la Línea de Tiempo',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              fields: [
+                {
+                  name: 'name',
+                  title: 'Nombre del Evento',
+                  type: 'string',
+                  validation: (Rule: any) => Rule.required(),
+                  description: 'Ej: "Inicio de la banda", "Primer concierto", etc.',
+                },
+                {
+                  name: 'date',
+                  title: 'Fecha',
+                  type: 'datetime',
+                  validation: (Rule: any) => Rule.required(),
+                  description: 'Fecha del evento (se mostrará solo el año)',
+                },
+                {
+                  name: 'importance',
+                  title: 'Importancia',
+                  type: 'string',
+                  options: {
+                    list: [
+                      { title: 'Principal', value: 'principal' },
+                      { title: 'Secundario', value: 'secundario' },
+                      { title: 'Tercero', value: 'tercero' },
+                    ],
+                  },
+                  initialValue: 'secundario',
+                  validation: (Rule: any) => Rule.required(),
+                  description: 'Define el estilo visual del evento',
+                },
+                {
+                  name: 'image',
+                  title: 'Imagen del Evento',
+                  type: 'image',
+                  options: {
+                    hotspot: true,
+                  },
+                  description: 'Imagen que se mostrará al hacer hover (opcional)',
+                },
+                {
+                  name: 'descripcion',
+                  title: 'Descripción del Evento',
+                  type: 'text',
+                  rows: 2,
+                  description: 'Descripción breve del evento (opcional)',
+                },
+              ],
+              preview: {
+                select: {
+                  title: 'name',
+                  subtitle: 'date',
+                  media: 'image',
+                },
+                prepare(selection: any) {
+                  const { title, subtitle, media } = selection
+                  const year = subtitle ? new Date(subtitle).getFullYear() : 'Sin fecha'
+                  return {
+                    title: title || 'Sin título',
+                    subtitle: year,
+                    media: media,
+                  }
+                },
+              },
+            },
+          ],
+          validation: (Rule: any) => Rule.min(1).max(10),
+          description: 'Agrega los eventos importantes de la banda (máximo 10)',
+        },
+      ],
+    },
+    {
       name: 'contacto',
       title: 'Información de Contacto',
       type: 'object',

@@ -82,27 +82,13 @@ const Contact = ({ contacto, colores, nombre }) => {
     if (submitStatus === 'success') {
       return {
         text: emailjsConfig?.mensaje_exito || '¡Mensaje enviado exitosamente! Te responderemos pronto.',
-        style: {
-          color: '#4CAF50',
-          backgroundColor: 'rgba(76, 175, 80, 0.1)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginBottom: '1rem',
-          textAlign: 'center'
-        }
+        className: 'contact__status contact__status--success'
       }
     }
     if (submitStatus === 'error') {
       return {
         text: emailjsConfig?.mensaje_error || 'Error al enviar el mensaje. Verifica los datos e intenta nuevamente.',
-        style: {
-          color: '#f44336',
-          backgroundColor: 'rgba(244, 67, 54, 0.1)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginBottom: '1rem',
-          textAlign: 'center'
-        }
+        className: 'contact__status contact__status--error'
       }
     }
     return null
@@ -112,105 +98,37 @@ const Contact = ({ contacto, colores, nombre }) => {
 
   return (
     <section 
-      className="contact-section"
-      style={{
-        padding: '5rem 2rem',
-        backgroundColor: secondaryColors.light,
-        color: '#fff',
-      }}
+      className="contact"
+      id="contact"
+      style={{ backgroundColor: secondaryColors.dark }}
     >
-      <div 
-        className="container"
-        style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-        }}
-      >
-        <div 
-          className="contact-header"
-          style={{
-            textAlign: 'center',
-            marginBottom: '4rem',
-          }}
-        >
-          <h2 
-            className="contact-title"
-            style={{
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-              fontWeight: 'bold',
-              marginBottom: '1rem',
-            }}
-          >
+      <div className="container">
+        <div className="contact__header">
+          <h2 className="contact__title">
             Contáctanos
           </h2>
-          <p 
-            className="contact-subtitle"
-            style={{
-              fontSize: '1.2rem',
-              opacity: 0.9,
-            }}
-          >
+          <p className="contact__subtitle">
             ¿Quieres que toquemos en tu evento? ¡Escríbenos!
           </p>
         </div>
 
-        <div 
-          className="contact-content"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '3rem',
-          }}
-        >
+        <div className="contact__content">
           {/* Información de contacto */}
-          <div 
-            className="contact-info"
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              padding: '2rem',
-              borderRadius: '15px',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <h3 
-              className="contact-info-title"
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                marginBottom: '1.5rem',
-                color: colores?.primario || '#fff',
-              }}
-            >
+          <div className="contact__info card">
+            <h3 className="contact__info-title">
               Información de Contacto
             </h3>
             
-            <div 
-              className="contact-details"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-              }}
-            >
+            <div className="contact__details">
               {contacto.email && (
-                <div 
-                  className="contact-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                  }}
-                >
-                  <span style={{ fontSize: '1.5rem' }}>📧</span>
-                  <div>
+                <div className="contact__item">
+                  <span className="contact__icon">📧</span>
+                  <div className="contact__item-content">
                     <strong>Email:</strong>
                     <br />
                     <a 
                       href={`mailto:${contacto.email}`}
-                      style={{
-                        color: colores?.primario || '#fff',
-                        textDecoration: 'none',
-                      }}
+                      className="contact__link"
                     >
                       {contacto.email}
                     </a>
@@ -219,24 +137,14 @@ const Contact = ({ contacto, colores, nombre }) => {
               )}
               
               {contacto.telefono && (
-                <div 
-                  className="contact-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                  }}
-                >
-                  <span style={{ fontSize: '1.5rem' }}>📞</span>
-                  <div>
+                <div className="contact__item">
+                  <span className="contact__icon">📞</span>
+                  <div className="contact__item-content">
                     <strong>Teléfono:</strong>
                     <br />
                     <a 
                       href={`tel:${contacto.telefono}`}
-                      style={{
-                        color: colores?.primario || '#fff',
-                        textDecoration: 'none',
-                      }}
+                      className="contact__link"
                     >
                       {contacto.telefono}
                     </a>
@@ -245,16 +153,9 @@ const Contact = ({ contacto, colores, nombre }) => {
               )}
               
               {contacto.ubicacion && (
-                <div 
-                  className="contact-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                  }}
-                >
-                  <span style={{ fontSize: '1.5rem' }}>📍</span>
-                  <div>
+                <div className="contact__item">
+                  <span className="contact__icon">📍</span>
+                  <div className="contact__item-content">
                     <strong>Ubicación:</strong>
                     <br />
                     {contacto.ubicacion}
@@ -265,35 +166,12 @@ const Contact = ({ contacto, colores, nombre }) => {
           </div>
 
           {/* Redes sociales */}
-          <div 
-            className="social-media"
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              padding: '2rem',
-              borderRadius: '15px',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <h3 
-              className="social-title"
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                marginBottom: '1.5rem',
-                color: colores?.primario || '#fff',
-              }}
-            >
+          <div className="contact__social card">
+            <h3 className="contact__social-title">
               Síguenos en Redes Sociales
             </h3>
             
-            <div 
-              className="social-grid"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: '1rem',
-              }}
-            >
+            <div className="contact__social-grid">
               {contacto.redes && Object.entries(contacto.redes).map(([platform, url]) => {
                 if (!url) return null
                 
@@ -303,31 +181,12 @@ const Contact = ({ contacto, colores, nombre }) => {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="social-link"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      padding: '1rem',
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      borderRadius: '10px',
-                      textDecoration: 'none',
-                      color: '#fff',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.transform = 'translateY(-3px)'
-                      e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.transform = 'translateY(0)'
-                      e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'
-                    }}
+                    className="contact__social-link"
                   >
-                    <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                    <span className="contact__social-icon">
                       <SocialIcons platform={platform} size={32} color="#fff" />
                     </span>
-                    <span style={{ fontSize: '0.9rem', textAlign: 'center' }}>
+                    <span className="contact__social-name">
                       {socialNames[platform] || platform}
                     </span>
                   </a>
@@ -338,65 +197,29 @@ const Contact = ({ contacto, colores, nombre }) => {
         </div>
 
         {/* Formulario de contacto */}
-        <div 
-          className="contact-form-section"
-          style={{
-            marginTop: '4rem',
-            textAlign: 'center',
-          }}
-        >
-          <h3 
-            className="form-title"
-            style={{
-              fontSize: '1.8rem',
-              fontWeight: 'bold',
-              marginBottom: '2rem',
-            }}
-          >
+        <div className="contact__form-section">
+          <h3 className="contact__form-title">
             Envíanos un Mensaje
           </h3>
 
           {/* Estado de configuración de EmailJS */}
           {!isEmailEnabled && (
-            <div style={{
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              padding: '2rem',
-              borderRadius: '15px',
-              backdropFilter: 'blur(10px)',
-              marginBottom: '2rem',
-            }}>
-              <h4 style={{
-                color: '#ff9800',
-                marginBottom: '1rem',
-                fontSize: '1.2rem',
-              }}>
+            <div className="contact__warning card">
+              <h4 className="contact__warning-title">
                 ⚠️ Formulario de contacto no disponible
               </h4>
-              <p style={{
-                color: '#fff',
-                opacity: 0.8,
-                marginBottom: '1rem',
-              }}>
+              <p className="contact__warning-text">
                 El formulario de contacto no está configurado para esta banda.
               </p>
               {emailjsConfig && !emailjsConfig.habilitado && (
-                <p style={{
-                  color: '#fff',
-                  opacity: 0.7,
-                  fontSize: '0.9rem',
-                }}>
+                <p className="contact__warning-subtext">
                   Para habilitarlo, activa la opción "Habilitar envío de emails" en Sanity.
                 </p>
               )}
               {emailjsConfig?.habilitado && !validateEmailJSConfig(emailjsConfig).isValid && (
-                <div style={{
-                  color: '#fff',
-                  opacity: 0.7,
-                  fontSize: '0.9rem',
-                  textAlign: 'left',
-                }}>
+                <div className="contact__warning-details">
                   <p><strong>Configuración incompleta:</strong></p>
-                  <ul style={{ margin: '0.5rem 0 0 1.5rem', padding: 0 }}>
+                  <ul>
                     {!emailjsConfig.service_id && <li>Service ID de EmailJS</li>}
                     {!emailjsConfig.template_id && <li>Template ID de EmailJS</li>}
                     {!emailjsConfig.public_key && <li>Public Key de EmailJS</li>}
@@ -412,23 +235,16 @@ const Contact = ({ contacto, colores, nombre }) => {
             <>
               {/* Mensaje de estado */}
               {statusMessage && (
-                <div style={statusMessage.style}>
+                <div className={statusMessage.className}>
                   {statusMessage.text}
                 </div>
               )}
 
               {/* Lista de errores */}
               {errors.length > 0 && (
-                <div style={{
-                  color: '#f44336',
-                  backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  marginBottom: '1rem',
-                  textAlign: 'left'
-                }}>
+                <div className="contact__errors">
                   <strong>Errores:</strong>
-                  <ul style={{ margin: '0.5rem 0 0 1.5rem', padding: 0 }}>
+                  <ul>
                     {errors.map((error, index) => (
                       <li key={index}>{error}</li>
                     ))}
@@ -437,118 +253,378 @@ const Contact = ({ contacto, colores, nombre }) => {
               )}
               
               <form 
-                className="contact-form"
+                className="contact__form"
                 onSubmit={handleSubmit}
-                style={{
-                  maxWidth: '600px',
-                  margin: '0 auto',
-                  display: 'grid',
-                  gap: '1rem',
-                }}
               >
-            <div 
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '1rem',
-              }}
-            >
-              <input 
-                type="text"
-                name="nombre"
-                placeholder="Tu nombre"
-                value={formData.nombre}
-                onChange={handleInputChange}
-                style={{
-                  padding: '1rem',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                }}
-                disabled={isSubmitting}
-              />
-              <input 
-                type="email"
-                name="email"
-                placeholder="Tu email"
-                value={formData.email}
-                onChange={handleInputChange}
-                style={{
-                  padding: '1rem',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                }}
-                disabled={isSubmitting}
-              />
-            </div>
-            
-            <input 
-              type="text"
-              name="asunto"
-              placeholder="Asunto"
-              value={formData.asunto}
-              onChange={handleInputChange}
-              style={{
-                padding: '1rem',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-              }}
-              disabled={isSubmitting}
-            />
-            
-            <textarea 
-              name="mensaje"
-              placeholder="Tu mensaje"
-              rows="5"
-              value={formData.mensaje}
-              onChange={handleInputChange}
-              style={{
-                padding: '1rem',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                resize: 'vertical',
-              }}
-              disabled={isSubmitting}
-            />
-            
-            <button 
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                backgroundColor: isSubmitting ? '#ccc' : (colores?.primario || '#fff'),
-                color: isSubmitting ? '#666' : (colores?.primario ? '#fff' : '#333'),
-                border: 'none',
-                padding: '1rem 2rem',
-                borderRadius: '8px',
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.3s ease',
-                opacity: isSubmitting ? 0.7 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isSubmitting) {
-                  e.target.style.transform = 'translateY(-2px)'
-                  e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isSubmitting) {
-                  e.target.style.transform = 'translateY(0)'
-                  e.target.style.boxShadow = 'none'
-                }
-              }}
-            >
-              {isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
-            </button>
-          </form>
+                <div className="contact__form-row">
+                  <input 
+                    type="text"
+                    name="nombre"
+                    placeholder="Tu nombre"
+                    value={formData.nombre}
+                    onChange={handleInputChange}
+                    className="contact__input"
+                    disabled={isSubmitting}
+                  />
+                  <input 
+                    type="email"
+                    name="email"
+                    placeholder="Tu email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="contact__input"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                
+                <input 
+                  type="text"
+                  name="asunto"
+                  placeholder="Asunto"
+                  value={formData.asunto}
+                  onChange={handleInputChange}
+                  className="contact__input"
+                  disabled={isSubmitting}
+                />
+                
+                <textarea 
+                  name="mensaje"
+                  placeholder="Tu mensaje"
+                  rows="5"
+                  value={formData.mensaje}
+                  onChange={handleInputChange}
+                  className="contact__textarea"
+                  disabled={isSubmitting}
+                />
+                
+                <button 
+                  type="submit"
+                  className={`contact__submit btn ${isSubmitting ? 'btn--disabled' : 'btn-primary'}`}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
+                </button>
+              </form>
             </>
           )}
         </div>
       </div>
+
+      {/* Estilos CSS */}
+      <style jsx>{`
+        .contact {
+          padding: var(--space-20) var(--space-4);
+          color: var(--color-white);
+        }
+
+        .contact__header {
+          text-align: center;
+          margin-bottom: var(--space-16);
+        }
+
+        .contact__title {
+          font-size: var(--text-4xl);
+          font-weight: bold;
+          margin-bottom: var(--space-4);
+          line-height: 1.2;
+        }
+
+        .contact__subtitle {
+          font-size: var(--text-lg);
+          opacity: 0.9;
+        }
+
+        .contact__content {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: var(--space-12);
+          margin-bottom: var(--space-16);
+        }
+
+        .contact__info,
+        .contact__social {
+          background-color: rgba(255,255,255,0.1);
+          backdrop-filter: blur(10px);
+          border-radius: var(--border-radius-2xl);
+          padding: var(--space-8);
+        }
+
+        .contact__info-title,
+        .contact__social-title {
+          font-size: var(--text-xl);
+          font-weight: bold;
+          margin-bottom: var(--space-6);
+          color: ${colores?.primario || 'var(--color-primary)'};
+        }
+
+        .contact__details {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-4);
+        }
+
+        .contact__item {
+          display: flex;
+          align-items: center;
+          gap: var(--space-4);
+        }
+
+        .contact__icon {
+          font-size: var(--text-xl);
+          flex-shrink: 0;
+        }
+
+        .contact__item-content {
+          flex: 1;
+        }
+
+        .contact__link {
+          color: ${colores?.primario || 'var(--color-primary)'};
+          text-decoration: none;
+          transition: color var(--transition-fast);
+        }
+
+        .contact__link:hover {
+          color: var(--color-white);
+        }
+
+        .contact__social-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          gap: var(--space-4);
+        }
+
+        .contact__social-link {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: var(--space-4);
+          background-color: rgba(255,255,255,0.1);
+          border-radius: var(--border-radius-lg);
+          text-decoration: none;
+          color: var(--color-white);
+          transition: all var(--transition-normal);
+        }
+
+        .contact__social-link:hover {
+          transform: translateY(-3px);
+          background-color: rgba(255,255,255,0.2);
+        }
+
+        .contact__social-icon {
+          font-size: var(--text-2xl);
+          margin-bottom: var(--space-2);
+        }
+
+        .contact__social-name {
+          font-size: var(--text-sm);
+          text-align: center;
+        }
+
+        .contact__form-section {
+          text-align: center;
+        }
+
+        .contact__form-title {
+          font-size: var(--text-2xl);
+          font-weight: bold;
+          margin-bottom: var(--space-8);
+        }
+
+        .contact__warning {
+          background-color: rgba(255,255,255,0.1);
+          backdrop-filter: blur(10px);
+          border-radius: var(--border-radius-2xl);
+          padding: var(--space-8);
+          margin-bottom: var(--space-8);
+        }
+
+        .contact__warning-title {
+          color: var(--color-warning);
+          margin-bottom: var(--space-4);
+          font-size: var(--text-lg);
+        }
+
+        .contact__warning-text {
+          color: var(--color-white);
+          opacity: 0.8;
+          margin-bottom: var(--space-4);
+        }
+
+        .contact__warning-subtext {
+          color: var(--color-white);
+          opacity: 0.7;
+          font-size: var(--text-sm);
+        }
+
+        .contact__warning-details {
+          color: var(--color-white);
+          opacity: 0.7;
+          font-size: var(--text-sm);
+          text-align: left;
+        }
+
+        .contact__warning-details ul {
+          margin: var(--space-2) 0 0 var(--space-6);
+          padding: 0;
+        }
+
+        .contact__status {
+          padding: var(--space-4);
+          border-radius: var(--border-radius-lg);
+          margin-bottom: var(--space-4);
+          text-align: center;
+        }
+
+        .contact__status--success {
+          color: var(--color-success);
+          background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .contact__status--error {
+          color: var(--color-error);
+          background-color: rgba(244, 67, 54, 0.1);
+        }
+
+        .contact__errors {
+          color: var(--color-error);
+          background-color: rgba(244, 67, 54, 0.1);
+          padding: var(--space-4);
+          border-radius: var(--border-radius-lg);
+          margin-bottom: var(--space-4);
+          text-align: left;
+        }
+
+        .contact__errors ul {
+          margin: var(--space-2) 0 0 var(--space-6);
+          padding: 0;
+        }
+
+        .contact__form {
+          max-width: 600px;
+          margin: 0 auto;
+          display: grid;
+          gap: var(--space-4);
+        }
+
+        .contact__form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: var(--space-4);
+        }
+
+        .contact__input,
+        .contact__textarea {
+          padding: var(--space-4);
+          border: none;
+          border-radius: var(--border-radius-lg);
+          font-size: var(--text-base);
+          background-color: var(--color-white);
+          color: var(--color-gray-900);
+        }
+
+        .contact__textarea {
+          resize: vertical;
+          min-height: 120px;
+        }
+
+        .contact__submit {
+          font-size: var(--text-lg);
+          padding: var(--space-4) var(--space-8);
+          border-radius: var(--border-radius-lg);
+          transition: all var(--transition-normal);
+          opacity: 1;
+        }
+
+        .contact__submit:hover:not(.btn--disabled) {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-lg);
+        }
+
+        .btn--disabled {
+          background-color: var(--color-gray-400) !important;
+          color: var(--color-gray-600) !important;
+          cursor: not-allowed !important;
+          opacity: 0.7;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .contact {
+            padding: var(--space-12) var(--space-4);
+          }
+
+          .contact__content {
+            grid-template-columns: 1fr;
+            gap: var(--space-8);
+          }
+
+          .contact__title {
+            font-size: var(--text-3xl);
+          }
+
+          .contact__form-title {
+            font-size: var(--text-xl);
+          }
+
+          .contact__form-row {
+            grid-template-columns: 1fr;
+          }
+
+          .contact__social-grid {
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+          }
+        }
+
+        @media (max-width: 480px) {
+          .contact {
+            padding: var(--space-8) var(--space-3);
+          }
+
+          .contact__title {
+            font-size: var(--text-2xl);
+          }
+
+          .contact__subtitle {
+            font-size: var(--text-base);
+          }
+
+          .contact__info,
+          .contact__social {
+            padding: var(--space-6);
+          }
+
+          .contact__social-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        /* Accesibilidad */
+        .contact__link:focus-visible,
+        .contact__social-link:focus-visible,
+        .contact__input:focus-visible,
+        .contact__textarea:focus-visible,
+        .contact__submit:focus-visible {
+          outline: 2px solid ${colores?.primario || 'var(--color-primary)'};
+          outline-offset: 2px;
+        }
+
+        /* Reducir movimiento */
+        @media (prefers-reduced-motion: reduce) {
+          .contact__social-link,
+          .contact__submit {
+            transition: none;
+          }
+
+          .contact__social-link:hover {
+            transform: none;
+          }
+
+          .contact__submit:hover:not(.btn--disabled) {
+            transform: none;
+          }
+        }
+      `}</style>
     </section>
   )
 }
