@@ -1,0 +1,53 @@
+import {expect, test} from '@playwright/test'
+
+test('home shows the public bands directory', async ({page}) => {
+  await page.goto('/')
+
+  await expect(page.getByRole('heading', {name: 'Bandas listas para descubrir'})).toBeVisible()
+  await expect(page.getByRole('heading', {name: 'Bandas publicadas'})).toBeVisible()
+  await expect(page.getByRole('link', {name: /Cuatrero/i}).first()).toBeVisible()
+})
+
+test('dashboard redirects guests to login', async ({page}) => {
+  await page.goto('/dashboard')
+
+  await expect(page).toHaveURL(/\/login$/)
+  await expect(page.getByRole('heading', {name: 'Entrar al dashboard'})).toBeVisible()
+  await expect(page.getByRole('button', {name: 'Continuar con Google'})).toBeVisible()
+})
+
+test('unknown band slugs render the custom not found state', async ({page}) => {
+  await page.goto('/bandas/__slug-que-no-existe__')
+
+  await expect(page.getByRole('heading', {name: 'Pagina no encontrada'})).toBeVisible()
+  await expect(page.getByText('La pagina que buscas no existe o todavia no esta publicada.')).toBeVisible()
+})
+
+test('login shows a readable auth message from the query string', async ({page}) => {
+  await page.goto('/login?message=email-not-confirmed')
+
+  await expect(page.getByRole('heading', {name: 'Entrar al dashboard'})).toBeVisible()
+  await expect(page.getByText('Confirma tu email antes de iniciar sesion.')).toBeVisible()
+})
+
+test('login rate limit eventually shows a temporary block message', async ({page}) => {
+  const email = `rate-limit-${Date.now()}@example.com`
+  const password = 'password-incorrecto'
+
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    await page.goto('/login')
+    await page.getByLabel('Email').fill(email)
+    await page.getByLabel('Password').fill(password)
+    await page.getByRole('button', {name: 'Entrar'}).click()
+
+    if (attempt < 6) {
+      await expect(
+        page.getByText('El email o el password no coinciden con una cuenta valida.')
+      ).toBeVisible()
+    }
+  }
+
+  await expect(
+    page.getByText('Demasiados intentos por ahora. Espera unos minutos antes de volver a intentar.')
+  ).toBeVisible()
+})
