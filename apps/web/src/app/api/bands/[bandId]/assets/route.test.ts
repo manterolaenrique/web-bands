@@ -33,12 +33,13 @@ vi.mock('@/lib/sanity/document-id', () => ({
 
 vi.mock('@/lib/sanity/mutations', () => ({
   isBandImageField: (value: string | null) =>
-    ['logo', 'logoFavicon', 'heroImage', 'aboutImage'].includes(value || ''),
+    ['logo', 'logoFavicon', 'heroImage', 'aboutImage', 'featuredReleaseCover'].includes(value || ''),
   isBandArrayImageCollection: (value: string | null) =>
-    ['about.integrantes', 'timelineSection.events'].includes(value || ''),
+    ['about.integrantes', 'timelineSection.events', 'gallerySection.items'].includes(value || ''),
   isBandArrayImageField: (collection: string, value: string | null) =>
     (collection === 'about.integrantes' && value === 'foto') ||
-    (collection === 'timelineSection.events' && value === 'image'),
+    (collection === 'timelineSection.events' && value === 'image') ||
+    (collection === 'gallerySection.items' && value === 'image'),
   uploadBandImage: mockUploadBandImage,
 }))
 
@@ -379,17 +380,15 @@ describe('POST /api/bands/[bandId]/assets', () => {
         userId: 'user-1',
       })
     )
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       ok: true,
       image: {
         field: 'logo',
-        collection: undefined,
-        itemKey: undefined,
-        imageField: undefined,
         fieldPath: 'logo',
         assetId: 'image-asset-1',
       },
     })
+    expect(body.image.url === null || typeof body.image.url === 'string').toBe(true)
     expect(mockRevalidatePath).toHaveBeenCalledWith('/')
     expect(mockRevalidatePath).toHaveBeenCalledWith('/bandas/demo-band')
     expect(mockWriteAuditLog).toHaveBeenCalledWith(
@@ -439,10 +438,9 @@ describe('POST /api/bands/[bandId]/assets', () => {
         },
       })
     )
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       ok: true,
       image: {
-        field: undefined,
         collection: 'about.integrantes',
         itemKey: 'member-1',
         imageField: 'foto',
@@ -450,5 +448,6 @@ describe('POST /api/bands/[bandId]/assets', () => {
         assetId: 'image-asset-2',
       },
     })
+    expect(body.image.url === null || typeof body.image.url === 'string').toBe(true)
   })
 })

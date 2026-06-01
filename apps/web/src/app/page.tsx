@@ -1,4 +1,4 @@
-import {BandCard} from '@/components/bands/BandCard'
+import {BandDirectoryExplorer} from '@/components/bands/BandDirectoryExplorer'
 import {getPublishedBands} from '@/lib/sanity/queries'
 import type {PublicBandListItem} from '@/types/band'
 
@@ -16,20 +16,66 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="hero-band">
-        <div className="container">
-          <p className="eyebrow">Directorio publico</p>
-          <h1 className="hero-title">Bandas listas para descubrir</h1>
-          <p className="lead">
-            La V2 mantiene la lectura publica desde Sanity y prepara el camino para perfiles
-            administrables por cada banda.
-          </p>
+      <section className="hero-band hero-band--home">
+        <div className="hero-orbit hero-orbit--primary" aria-hidden="true" />
+        <div className="hero-orbit hero-orbit--secondary" aria-hidden="true" />
+        <div className="container hero-band__home-grid reveal reveal--visible">
+          <div className="hero-band__copy">
+            <p className="eyebrow">Directorio Web Bands</p>
+            <h1 className="hero-title">Bandas listas para descubrir</h1>
+            <p className="lead">
+              Explora proyectos con identidad propia, perfiles vivos y una presencia visual lista
+              para tocar fuerte en cada pantalla.
+            </p>
+            <div className="hero-actions">
+              <a href="#directory" className="button button--primary">
+                Explorar bandas
+              </a>
+              <a href="/dashboard" className="button button--ghost">
+                Ir al dashboard
+              </a>
+            </div>
+          </div>
+          <div className="hero-panel reveal reveal--visible">
+            <div className="hero-panel__header">
+              <span className="eyebrow eyebrow--muted">Curated surface</span>
+              <span className="status-dot" aria-hidden="true" />
+            </div>
+            <div className="hero-panel__wave" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="hero-panel__stats">
+              <article className="metric-card">
+                <span className="metric-card__label">Bandas</span>
+                <strong>{bands.length}</strong>
+              </article>
+              <article className="metric-card">
+                <span className="metric-card__label">Publicadas</span>
+                <strong>{bands.length}</strong>
+              </article>
+              <article className="metric-card">
+                <span className="metric-card__label">Escena</span>
+                <strong>Activa</strong>
+              </article>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="section section--surface">
+      <section id="directory" className="section section--surface">
         <div className="container">
-          <h2 className="section-heading">Bandas publicadas</h2>
+          <div className="section-heading-row reveal reveal--visible">
+            <div>
+              <p className="eyebrow">Catalogo publico</p>
+              <h2 className="section-heading">Bandas publicadas</h2>
+            </div>
+            <p className="muted section-heading-row__copy">
+              Busqueda rapida, filtros por genero y tarjetas con una presencia mucho mas
+              cinematica.
+            </p>
+          </div>
           {error ? (
             <div className="status status--error">
               No se pudieron cargar las bandas desde Sanity. Revisa las variables publicas de
@@ -44,11 +90,7 @@ export default async function HomePage() {
               </p>
             </div>
           ) : (
-            <div className="band-grid">
-              {bands.map((band) => (
-                <BandCard key={band._id} band={band} />
-              ))}
-            </div>
+            <BandDirectoryExplorer bands={bands} />
           )}
         </div>
       </section>

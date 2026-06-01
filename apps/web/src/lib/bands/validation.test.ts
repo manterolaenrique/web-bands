@@ -92,6 +92,41 @@ const validPayload = {
       ],
     },
   },
+  featuredRelease: {
+    eyebrow: 'Nuevo lanzamiento',
+    title: 'Cybernetic Pulse',
+    description: 'Nuestro nuevo corte principal.',
+    coverImage: createSanityImageRef('image-cover-1-jpg'),
+    spotifyUrl: 'https://open.spotify.com/track/demo',
+    youtubeUrl: 'https://www.youtube.com/watch?v=feature123',
+    appleMusicUrl: '',
+  },
+  showsSection: {
+    titulo: 'Proximos shows',
+    descripcion: 'Fechas destacadas.',
+    shows: [
+      {
+        _key: 'show-1',
+        date: '2026-08-12',
+        venue: 'Teatro Neon',
+        location: 'Buenos Aires',
+        ticketUrl: 'https://example.com/tickets',
+        status: 'tickets',
+      },
+    ],
+  },
+  gallerySection: {
+    titulo: 'Galeria',
+    items: [
+      {
+        _key: 'gallery-1',
+        image: createSanityImageRef('image-gallery-1-jpg'),
+        alt: 'Live at the warehouse',
+        caption: 'Show principal',
+        link: 'https://example.com/gallery',
+      },
+    ],
+  },
   seo: {
     title: 'Demo Band',
     description: 'Demo Band en Web Bands.',
@@ -106,6 +141,7 @@ describe('bandUpdateSchema', () => {
     expect(parsed.contact.youtube).toBeUndefined()
     expect(parsed.status).toBe('published')
     expect(parsed.timelineSection.events[0]?.date).toContain('2024-01-15')
+    expect(parsed.showsSection.shows[0]?.date).toContain('2026-08-12')
   })
 
   it('rejects invalid slugs', () => {
@@ -188,6 +224,8 @@ describe('toSanityBandPatch', () => {
     expect(patch.visibility).toBe('public')
     expect(patch.about.integrantes[0]?.foto?.asset?._ref).toBe('image-member-1-jpg')
     expect(patch.timelineSection?.events?.[0]?.image?.asset?._ref).toBe('image-event-1-jpg')
+    expect(patch.featuredRelease?.coverImage?.asset?._ref).toBe('image-cover-1-jpg')
+    expect(patch.gallerySection?.items?.[0]?.image?.asset?._ref).toBe('image-gallery-1-jpg')
   })
 
   it('creates dotted Sanity set paths and preserves nested arrays with image refs', () => {
@@ -215,6 +253,26 @@ describe('toSanityBandPatch', () => {
           image: expect.objectContaining({
             asset: expect.objectContaining({
               _ref: 'image-event-1-jpg',
+            }),
+          }),
+        }),
+      ])
+    )
+    expect(patchSet['showsSection.shows']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          _key: 'show-1',
+          venue: 'Teatro Neon',
+        }),
+      ])
+    )
+    expect(patchSet['gallerySection.items']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          _key: 'gallery-1',
+          image: expect.objectContaining({
+            asset: expect.objectContaining({
+              _ref: 'image-gallery-1-jpg',
             }),
           }),
         }),
@@ -257,6 +315,23 @@ describe('toSanityBandPatch', () => {
           playlists: [],
         },
       },
+      featuredRelease: {
+        eyebrow: '',
+        title: '',
+        description: '',
+        spotifyUrl: '',
+        youtubeUrl: '',
+        appleMusicUrl: '',
+      },
+      showsSection: {
+        titulo: '',
+        descripcion: '',
+        shows: [],
+      },
+      gallerySection: {
+        titulo: '',
+        items: [],
+      },
     })
 
     expect(toSanityBandUnset(parsed)).toEqual(
@@ -266,6 +341,9 @@ describe('toSanityBandPatch', () => {
         'timelineSection',
         'contacto.redes.instagram',
         'escuchanos',
+        'featuredRelease',
+        'showsSection',
+        'gallerySection',
       ])
     )
   })

@@ -10,6 +10,53 @@ export type SanityImage = {
   }
 }
 
+export type BandSocialLinks = {
+  instagram?: string
+  youtube?: string
+  facebook?: string
+  twitter?: string
+  spotify?: string
+  tiktok?: string
+}
+
+export type FeaturedRelease = {
+  eyebrow?: string
+  title?: string
+  description?: string
+  coverImage?: SanityImage
+  spotifyUrl?: string
+  youtubeUrl?: string
+  appleMusicUrl?: string
+}
+
+export type BandShow = {
+  _key?: string
+  date?: string
+  venue?: string
+  location?: string
+  ticketUrl?: string
+  status?: string
+}
+
+export type ShowsSection = {
+  titulo?: string
+  descripcion?: string
+  shows?: BandShow[]
+}
+
+export type GalleryItem = {
+  _key?: string
+  image?: SanityImage
+  alt?: string
+  caption?: string
+  link?: string
+}
+
+export type GallerySection = {
+  titulo?: string
+  items?: GalleryItem[]
+}
+
 export type PublicBandListItem = {
   _id: string
   bandId?: string
@@ -70,7 +117,7 @@ export type PublicBand = PublicBandListItem & {
     email?: string
     telefono?: string
     ubicacion?: string
-    redes?: Record<string, string | undefined>
+    redes?: BandSocialLinks
   }
   escuchanos?: {
     titulo?: string
@@ -102,6 +149,9 @@ export type PublicBand = PublicBandListItem & {
     descripcion_seo?: string
     palabras_clave?: string[]
   }
+  featuredRelease?: FeaturedRelease
+  showsSection?: ShowsSection
+  gallerySection?: GallerySection
 }
 
 export type SupabaseBand = {

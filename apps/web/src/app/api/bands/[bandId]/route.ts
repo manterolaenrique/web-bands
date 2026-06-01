@@ -99,9 +99,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const typedBandRow = bandRow as SupabaseBand
   const oldSlug = typedBandRow.slug
   const documentId = resolveBandDocumentId(typedBandRow)
+  const syncedAt = new Date().toISOString()
 
   try {
-    await upsertBandDocument(documentId, typedBandRow.id, parsed.data, user.id)
+    await upsertBandDocument(documentId, typedBandRow.id, parsed.data, user.id, syncedAt)
   } catch (error) {
     logServerError('bands.patch.sanity_upsert_failed', error, {
       bandId,
@@ -127,7 +128,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       slug: parsed.data.slug,
       status: parsed.data.status,
       sanity_document_id: documentId,
-      updated_at: new Date().toISOString(),
+      updated_at: syncedAt,
     })
     .eq('id', typedBandRow.id)
 
@@ -174,6 +175,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       id: typedBandRow.id,
       slug: parsed.data.slug,
       sanityDocumentId: documentId,
+      syncedAt,
     },
   })
 }

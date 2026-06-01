@@ -25,14 +25,18 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
   }
 
   return (
-    <main className="auth-wrap">
-      <section className="auth-card">
-        <p className="eyebrow">Acceso privado</p>
-        <h1>Entrar al dashboard</h1>
-        <p className="muted">
-          Cada banda accede a su propio panel. La autorizacion real vive en Supabase RLS y en
-          validaciones server-side.
-        </p>
+    <main className="auth-wrap auth-wrap--immersive">
+      <div className="auth-ambient auth-ambient--primary" aria-hidden="true" />
+      <div className="auth-ambient auth-ambient--secondary" aria-hidden="true" />
+      <section className="auth-card reveal reveal--visible">
+        <div className="auth-card__intro">
+          <p className="eyebrow">Acceso privado</p>
+          <h1>Entrar al dashboard</h1>
+          <p className="muted">
+            Cada banda entra a su panel con permisos reales en Supabase, validaciones server-side
+            y una superficie pensada para editar sin friccion.
+          </p>
+        </div>
 
         {!isSupabaseConfigured() ? (
           <div className="status status--warning">
@@ -47,7 +51,7 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
 
         <form action={signInWithGoogle} className="auth-oauth-form">
           <input type="hidden" name="returnTo" value={returnTo} />
-          <button className="button auth-oauth-button" type="submit">
+          <button className="button button--ghost auth-oauth-button" type="submit">
             Continuar con Google
           </button>
         </form>
@@ -60,7 +64,14 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
           <input type="hidden" name="returnTo" value={returnTo} />
           <label className="form-field form-field--full">
             <span className="form-label">Email</span>
-            <input className="form-input" type="email" name="email" required autoComplete="email" />
+            <input
+              className="form-input"
+              type="email"
+              name="email"
+              required
+              autoComplete="email"
+              placeholder="nombre@ejemplo.com"
+            />
           </label>
           <label className="form-field form-field--full">
             <span className="form-label">Password</span>
@@ -71,9 +82,10 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
               minLength={8}
               required
               autoComplete="current-password"
+              placeholder="••••••••"
             />
           </label>
-          <div className="row-actions form-field--full">
+          <div className="row-actions row-actions--stack-mobile form-field--full">
             <button className="button button--primary" type="submit">
               Entrar
             </button>

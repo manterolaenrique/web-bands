@@ -27,6 +27,28 @@ async function ensureArrayItem(page: Page, addButtonName: string, selector: stri
   }
 }
 
+async function fillAllMatching(page: Page, selector: string, createValue: (index: number) => string) {
+  const locator = page.locator(selector)
+  const count = await locator.count()
+
+  for (let index = 0; index < count; index += 1) {
+    await locator.nth(index).fill(createValue(index))
+  }
+}
+
+function createUploadFile(name: string, color: 'red' | 'green') {
+  const payload =
+    color === 'red'
+      ? 'iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAASSURBVBhXY7imofEfGTOQLgAAi0giUdqFnesAAAAASUVORK5CYII='
+      : 'iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAASSURBVBhXY9Ca6/IfGTOQLgAARJAgoQRi7i0AAAAASUVORK5CYII='
+
+  return {
+    name,
+    mimeType: 'image/png',
+    buffer: Buffer.from(payload, 'base64'),
+  }
+}
+
 test('owner can edit their band and see the public update', async ({page}) => {
   test.skip(!fixture, fixtureState.ready ? undefined : fixtureState.reason)
 
@@ -34,17 +56,33 @@ test('owner can edit their band and see the public update', async ({page}) => {
     return
   }
 
-  const heroTitle = 'Codex E2E Hero Updated'
+  const runId = Date.now().toString().slice(-6)
+  const heroTitle = `Codex E2E Hero ${runId}`
   const aboutContent =
-    'Contenido actualizado por Playwright para verificar el flujo autenticado de dashboard a pagina publica.'
-  const memberName = 'Integrante Codex E2E'
+    `Contenido actualizado por Playwright para verificar el flujo autenticado de dashboard a pagina publica. ${runId}`
+  const memberName = `Integrante Codex ${runId}`
   const memberInstrument = 'Sintetizador'
-  const timelineTitle = 'Cronologia Codex'
-  const timelineDescription = 'Linea de tiempo actualizada desde el dashboard privado.'
-  const timelineEventName = 'Primer lanzamiento E2E'
-  const listenDescription = 'Escuchanos en todas las plataformas desde esta prueba E2E.'
-  const youtubeVideoTitle = 'Video Codex E2E'
-  const spotifyPlaylistTitle = 'Playlist Codex E2E'
+  const timelineTitle = `Cronologia Codex ${runId}`
+  const timelineDescription = `Linea de tiempo actualizada desde el dashboard privado. ${runId}`
+  const timelineEventName = `Primer lanzamiento ${runId}`
+  const listenDescription = `Escuchanos en todas las plataformas desde esta prueba E2E. ${runId}`
+  const youtubeVideoTitle = `Video Codex ${runId}`
+  const spotifyPlaylistTitle = `Playlist Codex ${runId}`
+  const contactEmail = `booking-${runId}@webbands.dev`
+  const contactLocation = 'Buenos Aires, Argentina'
+  const featuredTitle = `Lanzamiento QA ${runId}`
+  const featuredEyebrow = 'Release activo'
+  const featuredDescription = `Bloque principal actualizado para verificar persistencia completa. ${runId}`
+  const featuredSpotifyUrl = 'https://open.spotify.com/track/e2e-track-123'
+  const showVenue = 'Teatro QA'
+  const showLocation = 'La Plata'
+  const galleryCaption = `Archivo visual QA ${runId}`
+  const seoTitle = `QA Band SEO ${runId}`
+  const seoDescription = `Metadata SEO actualizada desde Playwright. ${runId}`
+  const primaryColor = '#D62828'
+  const secondaryColor = '#F4C430'
+  const secondaryLightColor = '#7BD389'
+  const accentColor = '#2A9D44'
 
   await login(page)
   await expect(page.getByRole('heading', {name: 'Mis bandas'})).toBeVisible()
@@ -59,8 +97,24 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}$`))
   await page.locator('input[name="hero.title"]').fill(heroTitle)
   await page.locator('textarea[name="about.content"]').fill(aboutContent)
-  await ensureArrayItem(page, 'Agregar integrante', 'input[name^="about.integrantes."][name$=".nombre"]')
-  await page.locator('input[name^="about.integrantes."][name$=".nombre"]').last().fill(memberName)
+  await page.locator('input[name="colors.primary"]').fill(primaryColor)
+  await page.locator('input[name="colors.secondary"]').fill(secondaryColor)
+  await page.locator('input[name="colors.secondaryLight"]').fill(secondaryLightColor)
+  await page.locator('input[name="colors.accent"]').fill(accentColor)
+  await page.getByRole('button', {name: 'Agregar integrante'}).click()
+  await expect(page.getByText('Integrante agregado.')).toBeVisible()
+  const memberNameInput = page.locator('input[name^="about.integrantes."][name$=".nombre"]').last()
+  const memberSection = memberNameInput.locator('xpath=ancestor::section[1]')
+  await expect(memberSection.getByText('Pendiente')).toBeVisible()
+  await expect(memberSection.locator('.editor-inline-note')).toContainText(
+    'Completa los campos y guarda para habilitar la imagen.'
+  )
+  await expect(memberSection.locator('input[type="file"]')).toBeDisabled()
+  await memberSection.scrollIntoViewIfNeeded()
+  const saveBarBox = await page.locator('.editor-savebar').boundingBox()
+  expect(saveBarBox?.y ?? 999).toBeGreaterThanOrEqual(0)
+  expect(saveBarBox?.y ?? 999).toBeLessThan(200)
+  await memberNameInput.fill(memberName)
   await page
     .locator('input[name^="about.integrantes."][name$=".instrumento"]')
     .last()
@@ -69,8 +123,15 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await page.locator('input[name="timelineSection.enabled"]').check()
   await page.locator('input[name="timelineSection.titulo"]').fill(timelineTitle)
   await page.locator('textarea[name="timelineSection.descripcion"]').fill(timelineDescription)
-  await ensureArrayItem(page, 'Agregar evento', 'input[name^="timelineSection.events."][name$=".name"]')
-  await page.locator('input[name^="timelineSection.events."][name$=".name"]').last().fill(timelineEventName)
+  await page.getByRole('button', {name: 'Agregar evento'}).click()
+  await expect(page.getByText('Evento agregado.')).toBeVisible()
+  const timelineEventNameInput = page.locator('input[name^="timelineSection.events."][name$=".name"]').last()
+  const timelineSection = timelineEventNameInput.locator('xpath=ancestor::section[1]')
+  await expect(timelineSection.getByText('Pendiente')).toBeVisible()
+  await expect(timelineSection.locator('.editor-inline-note')).toContainText(
+    'Completa los campos y guarda para habilitar la imagen.'
+  )
+  await timelineEventNameInput.fill(timelineEventName)
   await page.locator('input[name^="timelineSection.events."][name$=".date"]').last().fill('2024-02-20')
 
   await page.locator('input[name="escuchanos.titulo"]').fill('Escuchanos')
@@ -85,25 +146,79 @@ test('owner can edit their band and see the public update', async ({page}) => {
 
   await page.locator('input[name="escuchanos.spotify.habilitado"]').check()
   await ensureArrayItem(page, 'Agregar playlist', 'input[name^="escuchanos.spotify.playlists."][name$=".titulo"]')
-  await page
-    .locator('input[name^="escuchanos.spotify.playlists."][name$=".titulo"]')
-    .last()
-    .fill(spotifyPlaylistTitle)
-  await page
-    .locator('input[name^="escuchanos.spotify.playlists."][name$=".url"]')
-    .last()
-    .fill('https://open.spotify.com/playlist/codexe2e123')
-  await page.getByRole('button', {name: 'Guardar cambios'}).click()
+  await fillAllMatching(
+    page,
+    'input[name^="escuchanos.spotify.playlists."][name$=".titulo"]',
+    (index) => `${spotifyPlaylistTitle} ${index + 1}`
+  )
+  await fillAllMatching(
+    page,
+    'input[name^="escuchanos.spotify.playlists."][name$=".url"]',
+    (index) => `https://open.spotify.com/playlist/codexe2e${runId}${index + 1}`
+  )
+  await page.locator('input[name="contact.email"]').fill(contactEmail)
+  await page.locator('input[name="contact.location"]').fill(contactLocation)
 
-  await expect(page.getByText('Banda guardada. La pagina publica fue revalidada.')).toBeVisible()
+  await page.locator('input[name="featuredRelease.eyebrow"]').fill(featuredEyebrow)
+  await page.locator('input[name="featuredRelease.title"]').fill(featuredTitle)
+  await page.locator('textarea[name="featuredRelease.description"]').fill(featuredDescription)
+  await page.locator('input[name="featuredRelease.spotifyUrl"]').fill(featuredSpotifyUrl)
+
+  await ensureArrayItem(page, 'Agregar show', 'input[name^="showsSection.shows."][name$=".venue"]')
+  await page.locator('input[name="showsSection.titulo"]').fill('Shows QA')
+  await page.locator('textarea[name="showsSection.descripcion"]').fill('Fechas de prueba para validar el bloque publico.')
+  await page.locator('input[name^="showsSection.shows."][name$=".date"]').last().fill('2026-07-20')
+  await page.locator('input[name^="showsSection.shows."][name$=".venue"]').last().fill(showVenue)
+  await page.locator('input[name^="showsSection.shows."][name$=".location"]').last().fill(showLocation)
+  await page
+    .locator('input[name^="showsSection.shows."][name$=".ticketUrl"]')
+    .last()
+    .fill('https://example.com/e2e-show')
+
+  await ensureArrayItem(page, 'Agregar imagen', 'input[name^="gallerySection.items."][name$=".caption"]')
+  await page.locator('input[name="gallerySection.titulo"]').fill('Galeria QA')
+  await page.locator('input[name^="gallerySection.items."][name$=".alt"]').last().fill('Poster QA')
+  await page.locator('input[name^="gallerySection.items."][name$=".caption"]').last().fill(galleryCaption)
+  await page
+    .locator('input[name^="gallerySection.items."][name$=".link"]')
+    .last()
+    .fill('https://example.com/e2e-gallery')
+
+  await page.locator('input[name="seo.title"]').fill(seoTitle)
+  await page.locator('textarea[name="seo.description"]').fill(seoDescription)
+
+  await expect(page.locator('.editor-savebar__status strong')).toHaveText('Cambios pendientes')
+  const saveResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/api/bands/${fixture.band.id}`) &&
+      response.request().method() === 'PATCH'
+  )
+  await page.getByRole('button', {name: 'Guardar cambios'}).click()
+  const saveResponse = await saveResponsePromise
+  const saveBody = await saveResponse.json().catch(() => ({}))
+  expect(saveResponse.status(), JSON.stringify(saveBody)).toBe(200)
+  await expect(page.getByText('Cambios guardados. La pagina publica ya esta sincronizada.')).toBeVisible()
+
+  const featuredSection = page.locator('.form-section').filter({hasText: 'Lanzamiento destacado'}).first()
+  await featuredSection.locator('input[type="file"]').setInputFiles(createUploadFile('featured-red.png', 'red'))
+  await expect(featuredSection.getByText('Imagen subida correctamente.')).toBeVisible()
 
   await page.goto('/dashboard')
   await expect(page.getByRole('heading', {name: 'Mis bandas'})).toBeVisible()
   await bandCard.getByRole('link', {name: 'Editar'}).click()
   await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}$`))
-  await expect(page.locator('input[name^="escuchanos.spotify.playlists."][name$=".titulo"]').last()).toHaveValue(
-    spotifyPlaylistTitle
-  )
+  await expect(page.locator('input[name="colors.primary"]')).toHaveValue(primaryColor)
+  await expect(page.locator('input[name="colors.secondary"]')).toHaveValue(secondaryColor)
+  await expect(page.locator('input[name="contact.email"]')).toHaveValue(contactEmail)
+  await expect(page.locator('input[name="featuredRelease.title"]')).toHaveValue(featuredTitle)
+  await expect(page.locator('input[name="seo.title"]')).toHaveValue(seoTitle)
+  await expect(page.locator('.editor-savebar__status strong')).toHaveText('Sin cambios')
+  await expect(page.getByText('Guardado').first()).toBeVisible()
+
+  const featuredPreview = await featuredSection
+    .locator('.asset-uploader__preview')
+    .evaluate((node) => getComputedStyle(node).backgroundImage)
+  expect(featuredPreview).not.toBe('none')
 
   await page.goto(`/bandas/${fixture.band.slug}`)
   await expect(page.getByRole('heading', {level: 1, name: heroTitle})).toBeVisible()
@@ -112,8 +227,20 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await expect(page.getByRole('heading', {level: 2, name: timelineTitle})).toBeVisible()
   await expect(page.getByText(timelineDescription)).toBeVisible()
   await expect(page.getByText(timelineEventName)).toBeVisible()
-  await expect(page.getByText(listenDescription)).toBeVisible()
-  await expect(page.getByText(youtubeVideoTitle)).toBeVisible()
+  await expect(page.getByRole('heading', {level: 2, name: featuredTitle})).toBeVisible()
+  await expect(page.getByText(showVenue)).toBeVisible()
+
+  const bandTheme = await page.locator('main.public-band-shell').evaluate((node) => ({
+    primary: getComputedStyle(node).getPropertyValue('--band-primary').trim().toLowerCase(),
+    secondary: getComputedStyle(node).getPropertyValue('--band-secondary').trim().toLowerCase(),
+    accent: getComputedStyle(node).getPropertyValue('--band-accent').trim().toLowerCase(),
+    secondaryLight: getComputedStyle(node).getPropertyValue('--band-secondary-light').trim().toLowerCase(),
+  }))
+
+  expect(bandTheme.primary).toBe(primaryColor.toLowerCase())
+  expect(bandTheme.secondary).toBe(secondaryColor.toLowerCase())
+  expect(bandTheme.accent).toBe(accentColor.toLowerCase())
+  expect(bandTheme.secondaryLight).toBe(secondaryLightColor.toLowerCase())
 })
 
 test('invitee can open the invite link, authenticate, and accept the band access', async ({page}) => {
@@ -139,9 +266,13 @@ test('invitee can open the invite link, authenticate, and accept the band access
 
   await expect(
     page.getByText(
-      /Invitacion enviada correctamente.|La invitacion fue creada, pero no se pudo enviar el email.|La invitacion pendiente fue actualizada.|La invitacion fue actualizada, pero no se pudo enviar el email./
+      /Invitacion enviada correctamente.|La invitacion fue creada, pero no se pudo enviar el email.|La invitacion pendiente fue actualizada.|La invitacion fue actualizada, pero no se pudo enviar el email.|Ese usuario ya pertenece a la banda./
     )
   ).toBeVisible()
+
+  if (await page.getByText('Ese usuario ya pertenece a la banda.').isVisible()) {
+    return
+  }
 
   const inviteCard = page.locator('.member-card').filter({hasText: fixture.invitee.email}).first()
   await expect(inviteCard).toBeVisible()

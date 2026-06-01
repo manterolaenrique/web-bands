@@ -141,6 +141,21 @@ export default async function DashboardPage({searchParams}: DashboardPageProps) 
         </div>
       </div>
 
+      <section className="dashboard-metrics reveal reveal--visible">
+        <article className="metric-card metric-card--dashboard">
+          <span className="metric-card__label">Bandas asignadas</span>
+          <strong>{memberships.length}</strong>
+        </article>
+        <article className="metric-card metric-card--dashboard">
+          <span className="metric-card__label">Invitaciones activas</span>
+          <strong>{pendingInvites.length}</strong>
+        </article>
+        <article className="metric-card metric-card--dashboard">
+          <span className="metric-card__label">Perfiles publicos</span>
+          <strong>{memberships.filter((membership) => isBandPublic(getBandFromMembership(membership)?.status || 'draft')).length}</strong>
+        </article>
+      </section>
+
       {flash ? <div className={`status status--${flash.tone}`}>{flash.message}</div> : null}
 
       {error ? (

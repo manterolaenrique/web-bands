@@ -4,6 +4,7 @@ import {NextResponse, type NextRequest} from 'next/server'
 import {canEditBand, getMembershipRole} from '@/lib/auth/permissions'
 import {isSupabaseConfigured} from '@/lib/env'
 import {shouldUpdateBandDocumentId} from '@/lib/sanity/document-id'
+import {getSanityImageUrl} from '@/lib/sanity/image'
 import {
   isBandArrayImageCollection,
   isBandArrayImageField,
@@ -16,6 +17,7 @@ import {resolveRequestContext} from '@/lib/server/request-context'
 import {consumeRateLimit, getRateLimitHeaders, RATE_LIMIT_POLICIES} from '@/lib/server/rate-limit'
 import {createClient} from '@/lib/supabase/server'
 import type {SupabaseBand} from '@/types/band'
+import {createSanityImageRef} from '@/lib/bands/validation'
 
 export const runtime = 'nodejs'
 
@@ -209,6 +211,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         imageField: target.kind === 'array' ? target.imageField : undefined,
         fieldPath,
         assetId: asset._id,
+        url: getSanityImageUrl(createSanityImageRef(asset._id), {width: 640, height: 640, fit: 'max'}),
       },
     })
   } catch (error) {

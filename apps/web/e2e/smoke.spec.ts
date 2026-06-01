@@ -5,7 +5,7 @@ test('home shows the public bands directory', async ({page}) => {
 
   await expect(page.getByRole('heading', {name: 'Bandas listas para descubrir'})).toBeVisible()
   await expect(page.getByRole('heading', {name: 'Bandas publicadas'})).toBeVisible()
-  await expect(page.getByRole('link', {name: /Cuatrero/i}).first()).toBeVisible()
+  await expect(page.locator('a[href^="/bandas/"]').first()).toBeVisible()
 })
 
 test('dashboard redirects guests to login', async ({page}) => {

@@ -79,6 +79,37 @@ const bandFields = `{
       }
     }
   },
+  featuredRelease{
+    eyebrow,
+    title,
+    description,
+    coverImage,
+    spotifyUrl,
+    youtubeUrl,
+    appleMusicUrl
+  },
+  showsSection{
+    titulo,
+    descripcion,
+    shows[]{
+      _key,
+      date,
+      venue,
+      location,
+      ticketUrl,
+      status
+    }
+  },
+  gallerySection{
+    titulo,
+    items[]{
+      _key,
+      image,
+      alt,
+      caption,
+      link
+    }
+  },
   seo{
     titulo_seo,
     descripcion_seo,
@@ -99,10 +130,10 @@ const publishedBandsQuery = `*[${publicBandFilter}] | order(nombre asc) {
   visibility
 }`
 
-const bandBySlugQuery = `*[${publicBandFilter} && slug.current == $slug][0]${bandFields}`
+const bandBySlugQuery = `*[${publicBandFilter} && slug.current == $slug] | order(coalesce(lastSyncedAt, _updatedAt) desc)[0]${bandFields}`
 
 const bandByDocumentIdQuery = `*[_type == "banda" && _id == $id][0]${bandFields}`
-const bandByBandIdQuery = `*[_type == "banda" && bandId == $bandId][0]${bandFields}`
+const bandByBandIdQuery = `*[_type == "banda" && bandId == $bandId] | order(coalesce(lastSyncedAt, _updatedAt) desc)[0]${bandFields}`
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))

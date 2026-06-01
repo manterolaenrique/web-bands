@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import {notFound} from 'next/navigation'
 
-import {BandEditorForm, type BandEditorValues} from '@/components/dashboard/BandEditorForm'
+import {BandEditorForm} from '@/components/dashboard/BandEditorForm'
 import {BandTeamPanel} from '@/components/dashboard/BandTeamPanel'
 import {getDashboardFlash} from '@/lib/dashboard/messages'
 import {formatTimelineDateForInput} from '@/lib/bands/content'
+import type {BandEditorValues} from '@/lib/bands/editor'
 import {
   getBandStatusLabel,
   getBandStatusTone,
@@ -44,6 +45,14 @@ function resolveYoutubeVideoKey(key: string | undefined, index: number) {
 
 function resolveSpotifyPlaylistKey(key: string | undefined, index: number) {
   return key || `spotify-${index}`
+}
+
+function resolveShowKey(key: string | undefined, index: number) {
+  return key || `show-${index}`
+}
+
+function resolveGalleryItemKey(key: string | undefined, index: number) {
+  return key || `gallery-${index}`
 }
 
 function createInitialValues(bandRow: SupabaseBand, sanityBand: PublicBand | null): BandEditorValues {
@@ -123,6 +132,37 @@ function createInitialValues(bandRow: SupabaseBand, sanityBand: PublicBand | nul
           })) || [],
       },
     },
+    featuredRelease: {
+      eyebrow: sanityBand?.featuredRelease?.eyebrow || '',
+      title: sanityBand?.featuredRelease?.title || '',
+      description: sanityBand?.featuredRelease?.description || '',
+      coverImage: sanityBand?.featuredRelease?.coverImage,
+      spotifyUrl: sanityBand?.featuredRelease?.spotifyUrl || '',
+      youtubeUrl: sanityBand?.featuredRelease?.youtubeUrl || '',
+      appleMusicUrl: sanityBand?.featuredRelease?.appleMusicUrl || '',
+    },
+    showsSection: {
+      titulo: sanityBand?.showsSection?.titulo || '',
+      descripcion: sanityBand?.showsSection?.descripcion || '',
+      shows: sanityBand?.showsSection?.shows?.map((show, index) => ({
+          _key: resolveShowKey(show._key, index),
+          date: formatTimelineDateForInput(show.date),
+          venue: show.venue || '',
+          location: show.location || '',
+          ticketUrl: show.ticketUrl || '',
+          status: (show.status || 'tickets') as 'tickets' | 'sold-out' | 'soon',
+        })) || [],
+    },
+    gallerySection: {
+      titulo: sanityBand?.gallerySection?.titulo || '',
+      items: sanityBand?.gallerySection?.items?.map((item, index) => ({
+          _key: resolveGalleryItemKey(item._key, index),
+          image: item.image,
+          alt: item.alt || '',
+          caption: item.caption || '',
+          link: item.link || '',
+        })) || [],
+    },
     seo: {
       title: sanityBand?.seo?.titulo_seo || '',
       description: sanityBand?.seo?.descripcion_seo || '',
@@ -136,6 +176,7 @@ function createInitialImages(sanityBand: PublicBand | null) {
     logoFavicon: getSanityImageUrl(sanityBand?.logo_favicon, {width: 160, height: 160, fit: 'max'}),
     heroImage: getSanityImageUrl(sanityBand?.hero?.imagen, {width: 800, height: 520, fit: 'crop'}),
     aboutImage: getSanityImageUrl(sanityBand?.about?.imagen, {width: 700, height: 480, fit: 'crop'}),
+    featuredReleaseCover: getSanityImageUrl(sanityBand?.featuredRelease?.coverImage, {width: 480, height: 480, fit: 'crop'}),
     integrantes: Object.fromEntries(
       (sanityBand?.about?.integrantes || []).map((member, index) => [
         resolveMemberKey(member._key, index),
@@ -146,6 +187,12 @@ function createInitialImages(sanityBand: PublicBand | null) {
       (sanityBand?.timelineSection?.events || []).map((event, index) => [
         resolveTimelineEventKey(event._key, index),
         getSanityImageUrl(event.image, {width: 560, height: 360, fit: 'crop'}),
+      ])
+    ),
+    galleryItems: Object.fromEntries(
+      (sanityBand?.gallerySection?.items || []).map((item, index) => [
+        resolveGalleryItemKey(item._key, index),
+        getSanityImageUrl(item.image, {width: 480, height: 480, fit: 'crop'}),
       ])
     ),
   }
@@ -176,8 +223,8 @@ export default async function EditBandPage({params, searchParams}: PageProps) {
   const typedBandRow = bandRow as SupabaseBand
   const documentId = resolveBandDocumentId(typedBandRow)
   const sanityBand =
-    (await getBandByBandId(typedBandRow.id).catch(() => null)) ||
-    (await getBandByDocumentId(documentId).catch(() => null))
+    (await getBandByDocumentId(documentId).catch(() => null)) ||
+    (await getBandByBandId(typedBandRow.id).catch(() => null))
   const publicBandHref = isBandPublic(typedBandRow.status) ? `/bandas/${typedBandRow.slug}` : null
   let teamMembers: BandMemberSummary[] = []
   let pendingInvites: BandInviteSummary[] = []
@@ -296,6 +343,7 @@ export default async function EditBandPage({params, searchParams}: PageProps) {
           bandId={typedBandRow.id}
           initialValues={createInitialValues(typedBandRow, sanityBand)}
           initialImages={createInitialImages(sanityBand)}
+          initialServerSavedAt={sanityBand?.lastSyncedAt || typedBandRow.updated_at}
         />
       )}
 

@@ -1,9 +1,22 @@
 import type {Metadata} from 'next'
 import Link from 'next/link'
+import {Inter, Montserrat} from 'next/font/google'
 import type {ReactNode} from 'react'
 
+import {SiteHeader} from '@/components/layout/SiteHeader'
 import {siteUrl} from '@/lib/env'
 import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-body',
+})
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['700', '800', '900'],
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -16,29 +29,28 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: {children: ReactNode}) {
   return (
-    <html lang="es" data-scroll-behavior="smooth">
+    <html lang="es" data-scroll-behavior="smooth" className={`${inter.variable} ${montserrat.variable}`}>
       <body>
         <div className="app-shell">
-          <header className="site-header">
-            <div className="site-header__inner">
-              <Link href="/" className="brand">
-                <span className="brand__mark">WB</span>
-                <span>Web Bands</span>
-              </Link>
-              <nav className="site-nav" aria-label="Principal">
-                <Link href="/" className="nav-link">
-                  Bandas
-                </Link>
-                <Link href="/dashboard" className="nav-link">
-                  Dashboard
-                </Link>
-                <Link href="/login" className="button button--primary">
-                  Login
-                </Link>
-              </nav>
-            </div>
-          </header>
+          <SiteHeader />
           {children}
+          <footer className="site-footer">
+            <div className="site-footer__inner">
+              <div>
+                <p className="eyebrow">Web Bands Platform</p>
+                <h2 className="site-footer__brand">Experiencia Web Bands</h2>
+                <p className="muted">
+                  Directorio, dashboards privados y perfiles publicos con una identidad visual
+                  unificada.
+                </p>
+              </div>
+              <div className="site-footer__links">
+                <Link href="/">Bandas</Link>
+                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/login">Login</Link>
+              </div>
+            </div>
+          </footer>
         </div>
       </body>
     </html>

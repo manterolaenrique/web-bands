@@ -386,7 +386,8 @@ describe('PATCH /api/bands/[bandId]', () => {
         slug: 'demo-band',
         status: 'published',
       }),
-      'user-1'
+      'user-1',
+      expect.any(String)
     )
     expect(body).toEqual({
       ok: true,
@@ -394,6 +395,7 @@ describe('PATCH /api/bands/[bandId]', () => {
         id: 'band-1',
         slug: 'demo-band',
         sanityDocumentId: 'banda-band-1',
+        syncedAt: expect.any(String),
       },
     })
     expect(mockRevalidatePath).toHaveBeenCalledWith('/')

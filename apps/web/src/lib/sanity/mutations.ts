@@ -8,6 +8,7 @@ const ALLOWED_IMAGE_FIELDS = {
   logoFavicon: 'logo_favicon',
   heroImage: 'hero.imagen',
   aboutImage: 'about.imagen',
+  featuredReleaseCover: 'featuredRelease.coverImage',
 } as const
 
 const ALLOWED_ARRAY_IMAGE_FIELDS = {
@@ -16,6 +17,9 @@ const ALLOWED_ARRAY_IMAGE_FIELDS = {
   },
   'timelineSection.events': {
     image: 'timelineSection.events',
+  },
+  'gallerySection.items': {
+    image: 'gallerySection.items',
   },
 } as const
 
@@ -38,6 +42,13 @@ const BAND_DOCUMENT_SHAPE = {
     spotify: {
       playlists: [],
     },
+  },
+  featuredRelease: {},
+  showsSection: {
+    shows: [],
+  },
+  gallerySection: {
+    items: [],
   },
   seo: {},
 } as const
@@ -90,10 +101,11 @@ export async function upsertBandDocument(
   documentId: string,
   bandId: string,
   input: BandUpdateInput,
-  userId: string
+  userId: string,
+  syncedAt = new Date().toISOString()
 ) {
   const client = getSanityWriteClient()
-  const patch = toSanityBandSet(input)
+  const patch = toSanityBandSet(input, syncedAt)
   const unsetPaths = toSanityBandUnset(input)
 
   await client.createIfNotExists({

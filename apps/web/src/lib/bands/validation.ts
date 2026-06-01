@@ -42,19 +42,22 @@ const optionalUrlSchema = z
 
 const requiredUrlSchema = z.string().trim().url()
 
-const sanityImageSchema = z
-  .object({
-    _type: z.literal('image').optional(),
-    asset: z
-      .object({
-        _type: z.literal('reference').optional(),
-        _ref: z.string().trim().min(1),
-      })
-      .partial()
-      .optional(),
-  })
-  .passthrough()
-  .optional()
+const sanityImageSchema = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  z
+    .object({
+      _type: z.literal('image').optional(),
+      asset: z
+        .object({
+          _type: z.literal('reference').optional(),
+          _ref: z.string().trim().min(1),
+        })
+        .partial()
+        .optional(),
+    })
+    .passthrough()
+    .optional()
+)
 
 const itemKeySchema = z.string().trim().min(1).max(120)
 
@@ -96,6 +99,38 @@ const listenSpotifyPlaylistSchema = z.object({
   titulo: requiredTrimmedString,
   url: requiredUrlSchema,
   descripcion: optionalTrimmedString,
+})
+
+const featuredReleaseSchema = z.object({
+  eyebrow: optionalTrimmedString,
+  title: optionalTrimmedString,
+  description: optionalTrimmedString,
+  coverImage: sanityImageSchema,
+  spotifyUrl: optionalUrlSchema,
+  youtubeUrl: optionalUrlSchema,
+  appleMusicUrl: optionalUrlSchema,
+})
+
+const bandShowSchema = z.object({
+  _key: itemKeySchema,
+  date: z
+    .string()
+    .trim()
+    .min(1, 'Date is required.')
+    .refine((value) => !Number.isNaN(new Date(value).getTime()), 'Use a valid date.')
+    .transform((value) => new Date(value).toISOString()),
+  venue: requiredTrimmedString,
+  location: requiredTrimmedString,
+  ticketUrl: optionalUrlSchema,
+  status: z.enum(['tickets', 'sold-out', 'soon']).default('tickets'),
+})
+
+const galleryItemSchema = z.object({
+  _key: itemKeySchema,
+  image: sanityImageSchema,
+  alt: optionalTrimmedString,
+  caption: optionalTrimmedString,
+  link: optionalUrlSchema,
 })
 
 const timelineSectionSchema = z
@@ -183,6 +218,35 @@ export const bandUpdateSchema = z.object({
       playlists: [],
     },
   }),
+  featuredRelease: featuredReleaseSchema.default({
+    eyebrow: undefined,
+    title: undefined,
+    description: undefined,
+    coverImage: undefined,
+    spotifyUrl: undefined,
+    youtubeUrl: undefined,
+    appleMusicUrl: undefined,
+  }),
+  showsSection: z
+    .object({
+      titulo: optionalTrimmedString,
+      descripcion: optionalTrimmedString,
+      shows: z.array(bandShowSchema).default([]),
+    })
+    .default({
+      titulo: undefined,
+      descripcion: undefined,
+      shows: [],
+    }),
+  gallerySection: z
+    .object({
+      titulo: optionalTrimmedString,
+      items: z.array(galleryItemSchema).default([]),
+    })
+    .default({
+      titulo: undefined,
+      items: [],
+    }),
   seo: z.object({
     title: optionalTrimmedString,
     description: z.string().trim().max(300).optional().or(z.literal('').transform(() => undefined)),
@@ -262,6 +326,33 @@ function toSanitySpotifyPlaylists(input: BandUpdateInput['escuchanos']['spotify'
   )
 }
 
+function toSanityShows(input: BandUpdateInput['showsSection']['shows']) {
+  return input.map((show) =>
+    compactObject({
+      _key: show._key,
+      _type: 'object',
+      date: show.date,
+      venue: show.venue,
+      location: show.location,
+      ticketUrl: show.ticketUrl,
+      status: show.status,
+    })
+  )
+}
+
+function toSanityGalleryItems(input: BandUpdateInput['gallerySection']['items']) {
+  return input.map((item) =>
+    compactObject({
+      _key: item._key,
+      _type: 'object',
+      image: toSanityImageReference(item.image),
+      alt: item.alt,
+      caption: item.caption,
+      link: item.link,
+    })
+  )
+}
+
 function hasEscuchanosContent(input: BandUpdateInput['escuchanos']) {
   return Boolean(
     input.titulo ||
@@ -278,7 +369,27 @@ function hasTimelineContent(input: BandUpdateInput['timelineSection']) {
   return Boolean(input.enabled || input.titulo || input.descripcion || input.events.length > 0)
 }
 
-export function toSanityBandPatch(input: BandUpdateInput) {
+function hasFeaturedReleaseContent(input: BandUpdateInput['featuredRelease']) {
+  return Boolean(
+    input.eyebrow ||
+      input.title ||
+      input.description ||
+      input.coverImage?.asset?._ref ||
+      input.spotifyUrl ||
+      input.youtubeUrl ||
+      input.appleMusicUrl
+  )
+}
+
+function hasShowsContent(input: BandUpdateInput['showsSection']) {
+  return Boolean(input.titulo || input.descripcion || input.shows.length > 0)
+}
+
+function hasGalleryContent(input: BandUpdateInput['gallerySection']) {
+  return Boolean(input.titulo || input.items.length > 0)
+}
+
+export function toSanityBandPatch(input: BandUpdateInput, syncedAt = new Date().toISOString()) {
   return {
     nombre: input.name,
     genero: input.genre,
@@ -341,16 +452,40 @@ export function toSanityBandPatch(input: BandUpdateInput) {
           }),
         })
       : undefined,
+    featuredRelease: hasFeaturedReleaseContent(input.featuredRelease)
+      ? compactObject({
+          eyebrow: input.featuredRelease.eyebrow,
+          title: input.featuredRelease.title,
+          description: input.featuredRelease.description,
+          coverImage: toSanityImageReference(input.featuredRelease.coverImage),
+          spotifyUrl: input.featuredRelease.spotifyUrl,
+          youtubeUrl: input.featuredRelease.youtubeUrl,
+          appleMusicUrl: input.featuredRelease.appleMusicUrl,
+        })
+      : undefined,
+    showsSection: hasShowsContent(input.showsSection)
+      ? compactObject({
+          titulo: input.showsSection.titulo,
+          descripcion: input.showsSection.descripcion,
+          shows: toSanityShows(input.showsSection.shows),
+        })
+      : undefined,
+    gallerySection: hasGalleryContent(input.gallerySection)
+      ? compactObject({
+          titulo: input.gallerySection.titulo,
+          items: toSanityGalleryItems(input.gallerySection.items),
+        })
+      : undefined,
     seo: {
       titulo_seo: input.seo.title,
       descripcion_seo: input.seo.description,
     },
-    lastSyncedAt: new Date().toISOString(),
+    lastSyncedAt: syncedAt,
   }
 }
 
-export function toSanityBandSet(input: BandUpdateInput) {
-  const patch = toSanityBandPatch(input)
+export function toSanityBandSet(input: BandUpdateInput, syncedAt?: string) {
+  const patch = toSanityBandPatch(input, syncedAt)
   const values: Record<string, unknown> = {
     nombre: patch.nombre,
     genero: patch.genero,
@@ -388,6 +523,18 @@ export function toSanityBandSet(input: BandUpdateInput) {
     'escuchanos.spotify.titulo': patch.escuchanos?.spotify?.titulo,
     'escuchanos.spotify.perfil_url': patch.escuchanos?.spotify?.perfil_url,
     'escuchanos.spotify.playlists': patch.escuchanos?.spotify?.playlists,
+    'featuredRelease.eyebrow': patch.featuredRelease?.eyebrow,
+    'featuredRelease.title': patch.featuredRelease?.title,
+    'featuredRelease.description': patch.featuredRelease?.description,
+    'featuredRelease.coverImage': patch.featuredRelease?.coverImage,
+    'featuredRelease.spotifyUrl': patch.featuredRelease?.spotifyUrl,
+    'featuredRelease.youtubeUrl': patch.featuredRelease?.youtubeUrl,
+    'featuredRelease.appleMusicUrl': patch.featuredRelease?.appleMusicUrl,
+    'showsSection.titulo': patch.showsSection?.titulo,
+    'showsSection.descripcion': patch.showsSection?.descripcion,
+    'showsSection.shows': patch.showsSection?.shows,
+    'gallerySection.titulo': patch.gallerySection?.titulo,
+    'gallerySection.items': patch.gallerySection?.items,
     'seo.titulo_seo': patch.seo.titulo_seo,
     'seo.descripcion_seo': patch.seo.descripcion_seo,
     lastSyncedAt: patch.lastSyncedAt,
@@ -418,6 +565,16 @@ export function toSanityBandUnset(input: BandUpdateInput) {
     'escuchanos.youtube.titulo': input.escuchanos.youtube.titulo,
     'escuchanos.spotify.titulo': input.escuchanos.spotify.titulo,
     'escuchanos.spotify.perfil_url': input.escuchanos.spotify.perfil_url,
+    'featuredRelease.eyebrow': input.featuredRelease.eyebrow,
+    'featuredRelease.title': input.featuredRelease.title,
+    'featuredRelease.description': input.featuredRelease.description,
+    'featuredRelease.coverImage': input.featuredRelease.coverImage,
+    'featuredRelease.spotifyUrl': input.featuredRelease.spotifyUrl,
+    'featuredRelease.youtubeUrl': input.featuredRelease.youtubeUrl,
+    'featuredRelease.appleMusicUrl': input.featuredRelease.appleMusicUrl,
+    'showsSection.titulo': input.showsSection.titulo,
+    'showsSection.descripcion': input.showsSection.descripcion,
+    'gallerySection.titulo': input.gallerySection.titulo,
     'seo.titulo_seo': input.seo.title,
     'seo.descripcion_seo': input.seo.description,
   }
@@ -432,6 +589,18 @@ export function toSanityBandUnset(input: BandUpdateInput) {
 
   if (!hasEscuchanosContent(input.escuchanos)) {
     unsetPaths.push('escuchanos')
+  }
+
+  if (!hasFeaturedReleaseContent(input.featuredRelease)) {
+    unsetPaths.push('featuredRelease')
+  }
+
+  if (!hasShowsContent(input.showsSection)) {
+    unsetPaths.push('showsSection')
+  }
+
+  if (!hasGalleryContent(input.gallerySection)) {
+    unsetPaths.push('gallerySection')
   }
 
   return Array.from(new Set(unsetPaths))
