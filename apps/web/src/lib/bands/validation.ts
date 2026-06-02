@@ -15,6 +15,11 @@ const optionalTrimmedString = z
   .transform((value) => (value.length === 0 ? undefined : value))
   .optional()
 
+const optionalKeywordsSchema = z
+  .array(z.string().trim().min(1).max(80))
+  .transform((values) => values.map((value) => value.trim()).filter(Boolean))
+  .optional()
+
 const requiredTrimmedString = z.string().trim().min(2).max(120)
 
 const slugSchema = z
@@ -181,6 +186,7 @@ export const bandUpdateSchema = z.object({
     title: requiredTrimmedString,
     subtitle: optionalTrimmedString,
     description: optionalTrimmedString,
+    showSpotlightCard: z.boolean().default(true),
   }),
   about: z.object({
     title: optionalTrimmedString,
@@ -200,6 +206,7 @@ export const bandUpdateSchema = z.object({
     instagram: optionalUrlSchema,
     youtube: optionalUrlSchema,
     facebook: optionalUrlSchema,
+    twitter: optionalUrlSchema,
     spotify: optionalUrlSchema,
     tiktok: optionalUrlSchema,
   }),
@@ -250,6 +257,7 @@ export const bandUpdateSchema = z.object({
   seo: z.object({
     title: optionalTrimmedString,
     description: z.string().trim().max(300).optional().or(z.literal('').transform(() => undefined)),
+    keywords: optionalKeywordsSchema,
   }),
 })
 
@@ -409,6 +417,7 @@ export function toSanityBandPatch(input: BandUpdateInput, syncedAt = new Date().
       titulo: input.hero.title,
       subtitulo: input.hero.subtitle,
       descripcion: input.hero.description,
+      showSpotlightCard: input.hero.showSpotlightCard,
     },
     about: {
       titulo: input.about.title || 'Quienes Somos',
@@ -431,6 +440,7 @@ export function toSanityBandPatch(input: BandUpdateInput, syncedAt = new Date().
         instagram: input.contact.instagram,
         youtube: input.contact.youtube,
         facebook: input.contact.facebook,
+        twitter: input.contact.twitter,
         spotify: input.contact.spotify,
         tiktok: input.contact.tiktok,
       },
@@ -479,6 +489,7 @@ export function toSanityBandPatch(input: BandUpdateInput, syncedAt = new Date().
     seo: {
       titulo_seo: input.seo.title,
       descripcion_seo: input.seo.description,
+      palabras_clave: input.seo.keywords?.length ? input.seo.keywords : undefined,
     },
     lastSyncedAt: syncedAt,
   }
@@ -499,6 +510,7 @@ export function toSanityBandSet(input: BandUpdateInput, syncedAt?: string) {
     'hero.titulo': patch.hero.titulo,
     'hero.subtitulo': patch.hero.subtitulo,
     'hero.descripcion': patch.hero.descripcion,
+    'hero.showSpotlightCard': patch.hero.showSpotlightCard,
     'about.titulo': patch.about.titulo,
     'about.contenido': patch.about.contenido,
     'about.integrantes': patch.about.integrantes,
@@ -512,6 +524,7 @@ export function toSanityBandSet(input: BandUpdateInput, syncedAt?: string) {
     'contacto.redes.instagram': patch.contacto.redes.instagram,
     'contacto.redes.youtube': patch.contacto.redes.youtube,
     'contacto.redes.facebook': patch.contacto.redes.facebook,
+    'contacto.redes.twitter': patch.contacto.redes.twitter,
     'contacto.redes.spotify': patch.contacto.redes.spotify,
     'contacto.redes.tiktok': patch.contacto.redes.tiktok,
     'escuchanos.titulo': patch.escuchanos?.titulo,
@@ -537,6 +550,7 @@ export function toSanityBandSet(input: BandUpdateInput, syncedAt?: string) {
     'gallerySection.items': patch.gallerySection?.items,
     'seo.titulo_seo': patch.seo.titulo_seo,
     'seo.descripcion_seo': patch.seo.descripcion_seo,
+    'seo.palabras_clave': patch.seo.palabras_clave,
     lastSyncedAt: patch.lastSyncedAt,
   }
 
@@ -558,6 +572,7 @@ export function toSanityBandUnset(input: BandUpdateInput) {
     'contacto.redes.instagram': input.contact.instagram,
     'contacto.redes.youtube': input.contact.youtube,
     'contacto.redes.facebook': input.contact.facebook,
+    'contacto.redes.twitter': input.contact.twitter,
     'contacto.redes.spotify': input.contact.spotify,
     'contacto.redes.tiktok': input.contact.tiktok,
     'escuchanos.titulo': input.escuchanos.titulo,
@@ -577,6 +592,7 @@ export function toSanityBandUnset(input: BandUpdateInput) {
     'gallerySection.titulo': input.gallerySection.titulo,
     'seo.titulo_seo': input.seo.title,
     'seo.descripcion_seo': input.seo.description,
+    'seo.palabras_clave': input.seo.keywords?.length ? input.seo.keywords : undefined,
   }
 
   const unsetPaths = Object.entries(optionalValues)

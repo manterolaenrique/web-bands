@@ -23,6 +23,7 @@ const validPayload = {
     title: 'Demo Band',
     subtitle: 'Rock desde Buenos Aires',
     description: 'Una banda preparada para la V2.',
+    showSpotlightCard: true,
   },
   about: {
     title: 'Quienes Somos',
@@ -60,6 +61,7 @@ const validPayload = {
     instagram: 'https://instagram.com/demo',
     youtube: '',
     facebook: '',
+    twitter: 'https://x.com/demo-band',
     spotify: '',
     tiktok: '',
   },
@@ -130,6 +132,7 @@ const validPayload = {
   seo: {
     title: 'Demo Band',
     description: 'Demo Band en Web Bands.',
+    keywords: ['metal argentino', 'doom', 'show en vivo'],
   },
 }
 
@@ -142,6 +145,8 @@ describe('bandUpdateSchema', () => {
     expect(parsed.status).toBe('published')
     expect(parsed.timelineSection.events[0]?.date).toContain('2024-01-15')
     expect(parsed.showsSection.shows[0]?.date).toContain('2026-08-12')
+    expect(parsed.seo.keywords).toEqual(['metal argentino', 'doom', 'show en vivo'])
+    expect(parsed.hero.showSpotlightCard).toBe(true)
   })
 
   it('rejects invalid slugs', () => {
@@ -221,11 +226,14 @@ describe('toSanityBandPatch', () => {
     expect(patch.slug.current).toBe('demo-band')
     expect(patch.colores.primario).toBe('#111827')
     expect(patch.contacto.redes.instagram).toBe('https://instagram.com/demo')
+    expect(patch.contacto.redes.twitter).toBe('https://x.com/demo-band')
     expect(patch.visibility).toBe('public')
+    expect(patch.hero.showSpotlightCard).toBe(true)
     expect(patch.about.integrantes[0]?.foto?.asset?._ref).toBe('image-member-1-jpg')
     expect(patch.timelineSection?.events?.[0]?.image?.asset?._ref).toBe('image-event-1-jpg')
     expect(patch.featuredRelease?.coverImage?.asset?._ref).toBe('image-cover-1-jpg')
     expect(patch.gallerySection?.items?.[0]?.image?.asset?._ref).toBe('image-gallery-1-jpg')
+    expect(patch.seo.palabras_clave).toEqual(['metal argentino', 'doom', 'show en vivo'])
   })
 
   it('creates dotted Sanity set paths and preserves nested arrays with image refs', () => {
@@ -233,6 +241,7 @@ describe('toSanityBandPatch', () => {
     const patchSet = toSanityBandSet(parsed)
 
     expect(patchSet['hero.titulo']).toBe('Demo Band')
+    expect(patchSet['hero.showSpotlightCard']).toBe(true)
     expect(patchSet['about.contenido']).toBe('Una historia con suficiente contenido para pasar la validacion.')
     expect(patchSet['about.integrantes']).toEqual(
       expect.arrayContaining([
@@ -280,6 +289,7 @@ describe('toSanityBandPatch', () => {
     )
     expect(patchSet).not.toHaveProperty('hero')
     expect(patchSet).not.toHaveProperty('contacto')
+    expect(patchSet['seo.palabras_clave']).toEqual(['metal argentino', 'doom', 'show en vivo'])
   })
 
   it('creates unset paths for optional fields cleared in the dashboard', () => {
@@ -299,6 +309,7 @@ describe('toSanityBandPatch', () => {
       contact: {
         ...validPayload.contact,
         instagram: '',
+        twitter: '',
       },
       escuchanos: {
         titulo: '',
@@ -332,6 +343,10 @@ describe('toSanityBandPatch', () => {
         titulo: '',
         items: [],
       },
+      seo: {
+        ...validPayload.seo,
+        keywords: [],
+      },
     })
 
     expect(toSanityBandUnset(parsed)).toEqual(
@@ -340,10 +355,12 @@ describe('toSanityBandPatch', () => {
         'hero.subtitulo',
         'timelineSection',
         'contacto.redes.instagram',
+        'contacto.redes.twitter',
         'escuchanos',
         'featuredRelease',
         'showsSection',
         'gallerySection',
+        'seo.palabras_clave',
       ])
     )
   })

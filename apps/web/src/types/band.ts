@@ -86,6 +86,7 @@ export type PublicBand = PublicBandListItem & {
     subtitulo?: string
     imagen?: SanityImage
     descripcion?: string
+    showSpotlightCard?: boolean
   }
   about?: {
     titulo?: string

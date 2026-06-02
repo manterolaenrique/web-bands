@@ -27,6 +27,7 @@ function createValues(): BandEditorValues {
       title: 'QA Band',
       subtitle: 'Testing',
       description: 'Hero description',
+      showSpotlightCard: true,
     },
     about: {
       title: 'Sobre nosotros',
@@ -62,6 +63,7 @@ function createValues(): BandEditorValues {
       instagram: 'https://instagram.com/qaband',
       youtube: '',
       facebook: '',
+      twitter: 'https://x.com/qaband',
       spotify: '',
       tiktok: '',
     },
@@ -130,6 +132,7 @@ function createValues(): BandEditorValues {
     seo: {
       title: 'SEO title',
       description: 'SEO description',
+      keywords: ['metal', 'argentina'],
     },
   }
 }

@@ -71,6 +71,7 @@ function createInitialValues(bandRow: SupabaseBand, sanityBand: PublicBand | nul
       title: sanityBand?.hero?.titulo || sanityBand?.nombre || bandRow.name,
       subtitle: sanityBand?.hero?.subtitulo || '',
       description: sanityBand?.hero?.descripcion || '',
+      showSpotlightCard: sanityBand?.hero?.showSpotlightCard ?? true,
     },
     about: {
       title: sanityBand?.about?.titulo || 'Quienes Somos',
@@ -104,6 +105,7 @@ function createInitialValues(bandRow: SupabaseBand, sanityBand: PublicBand | nul
       instagram: sanityBand?.contacto?.redes?.instagram || '',
       youtube: sanityBand?.contacto?.redes?.youtube || '',
       facebook: sanityBand?.contacto?.redes?.facebook || '',
+      twitter: sanityBand?.contacto?.redes?.twitter || '',
       spotify: sanityBand?.contacto?.redes?.spotify || '',
       tiktok: sanityBand?.contacto?.redes?.tiktok || '',
     },
@@ -166,6 +168,7 @@ function createInitialValues(bandRow: SupabaseBand, sanityBand: PublicBand | nul
     seo: {
       title: sanityBand?.seo?.titulo_seo || '',
       description: sanityBand?.seo?.descripcion_seo || '',
+      keywords: sanityBand?.seo?.palabras_clave || [],
     },
   }
 }

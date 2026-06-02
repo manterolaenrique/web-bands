@@ -20,7 +20,8 @@ const bandFields = `{
     titulo,
     subtitulo,
     imagen,
-    descripcion
+    descripcion,
+    showSpotlightCard
   },
   about{
     titulo,

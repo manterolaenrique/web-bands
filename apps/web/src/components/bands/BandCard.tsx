@@ -10,6 +10,7 @@ import {Reveal} from '@/components/ui/Reveal'
 export function BandCard({band, index = 0}: {band: PublicBandListItem; index?: number}) {
   const slug = band.slug?.current
   const imageUrl = getSanityImageUrl(band.heroImage, {width: 640, height: 360, fit: 'crop'})
+  const logoUrl = getSanityImageUrl(band.logo, {width: 120, height: 120, fit: 'max'})
 
   return (
     <Reveal as="article" className="band-card" delay={Math.min(index * 70, 420)}>
@@ -25,6 +26,17 @@ export function BandCard({band, index = 0}: {band: PublicBandListItem; index?: n
             />
           ) : null}
           <div className="band-card__veil" />
+          {logoUrl ? (
+            <div className="band-card__logo">
+              <Image
+                src={logoUrl}
+                alt={band.nombre ? `Logo de ${band.nombre}` : 'Logo de la banda'}
+                width={120}
+                height={120}
+                sizes="3.25rem"
+              />
+            </div>
+          ) : null}
           {band.genero ? <span className="band-card__flag">{band.genero}</span> : null}
         </div>
         <div className="band-card__body">

@@ -370,6 +370,13 @@ function getPendingArrayNotice(itemState: 'saved' | 'pending' | 'error', imageLo
   return null
 }
 
+function parseKeywordList(rawValue: string) {
+  return rawValue
+    .split(',')
+    .map((keyword) => keyword.trim())
+    .filter(Boolean)
+}
+
 function SectionHeading({
   title,
   description,
@@ -853,6 +860,16 @@ export function BandEditorForm({
       : pendingSectionCount === 1
         ? '1 seccion con cambios pendientes'
         : `${pendingSectionCount} secciones con cambios pendientes`
+  const publicationSections = [
+    {href: '#editor-hero', label: 'Hero'},
+    {href: '#editor-about', label: 'Historia'},
+    {href: '#editor-members', label: 'Integrantes'},
+    {href: '#editor-featured', label: 'Musica'},
+    {href: '#editor-shows', label: 'Shows'},
+    {href: '#editor-timeline', label: 'Timeline'},
+    {href: '#editor-gallery', label: 'Galeria'},
+    {href: '#editor-contact', label: 'Contacto'},
+  ]
 
   return (
     <form className="dashboard-card" onSubmit={handleSubmit}>
@@ -901,6 +918,23 @@ export function BandEditorForm({
           <button className="button button--primary editor-savebar__button" disabled={isSaving || !hasPendingChanges} type="submit">
             {isSaving ? 'Guardando...' : hasPendingChanges ? 'Guardar cambios' : 'Todo guardado'}
           </button>
+        </div>
+      </div>
+
+      <div className="editor-publication-map">
+        <div>
+          <p className="eyebrow">Vista previa de publicacion</p>
+          <h2 className="editor-publication-map__title">Que bloques impactan en la web publica</h2>
+          <p className="muted">
+            Usa estos accesos rapidos para editar cada seccion sabiendo exactamente donde se vera.
+          </p>
+        </div>
+        <div className="editor-publication-map__links">
+          {publicationSections.map((section) => (
+            <a className="editor-publication-map__link" href={section.href} key={section.href}>
+              {section.label}
+            </a>
+          ))}
         </div>
       </div>
 
@@ -957,14 +991,18 @@ export function BandEditorForm({
         </label>
       </div>
 
-      <div className="form-section">
-        <SectionHeading title="Identidad visual" description="Paleta, logo y favicon para la banda." state={identityState} />
+      <div className="form-section" id="editor-identity">
+        <SectionHeading
+          title="Identidad visual"
+          description="Paleta, logo y favicon que impactan la marca publica y la pestana del navegador."
+          state={identityState}
+        />
         <div className="asset-grid">
           <ImageUploadField
             bandId={bandId}
             target={{kind: 'field', field: 'logo'}}
             label="Logo"
-            help="PNG, JPG o WebP. Ideal cuadrado, hasta 5MB."
+            help="Se vera como identidad principal de la banda en la pagina publica. PNG, JPG o WebP."
             previewUrl={initialImages.logo}
             onStatusMessage={pushToast}
           />
@@ -972,7 +1010,7 @@ export function BandEditorForm({
             bandId={bandId}
             target={{kind: 'field', field: 'logoFavicon'}}
             label="Favicon"
-            help="Imagen simple y cuadrada para pestana del navegador."
+            help="Se usara en la pestana del navegador para la pagina publica de la banda."
             previewUrl={initialImages.logoFavicon}
             onStatusMessage={pushToast}
           />
@@ -1029,7 +1067,7 @@ export function BandEditorForm({
         </div>
       </div>
 
-      <div className="form-section">
+      <div className="form-section" id="editor-hero">
         <SectionHeading title="Hero" description="Portada principal de la pagina publica." state={heroState} />
         <div className="asset-grid">
           <ImageUploadField
@@ -1075,10 +1113,25 @@ export function BandEditorForm({
             />
             <FieldError errors={getErrorsForField('hero.description')} />
           </label>
+          <div className="form-field form-field--full">
+            <span className="form-label">Tarjeta lateral</span>
+            <label className="checkbox-field">
+              <input
+                type="checkbox"
+                name="hero.showSpotlightCard"
+                checked={values.hero.showSpotlightCard}
+                onChange={handleChange}
+              />
+              <span>Mostrar tarjeta lateral del hero</span>
+            </label>
+            <p className="muted">
+              Muestra u oculta la tarjeta destacada del costado derecho de la cabecera publica.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="form-section">
+      <div className="form-section" id="editor-about">
         <SectionHeading title="Sobre la banda" description="Historia principal y contenido editorial." state={aboutState} />
         <div className="asset-grid">
           <ImageUploadField
@@ -1117,11 +1170,11 @@ export function BandEditorForm({
         </div>
       </div>
 
-      <div className="form-section">
+      <div className="form-section" id="editor-members">
         <div className="row-actions row-actions--split">
           <SectionHeading
             title="Integrantes"
-            description="Alta, orden y fotos por integrante desde el panel privado."
+            description="Alta, orden y fotos por integrante para la pagina publica."
             state={aboutState}
           />
           <button className="button button--primary" type="button" onClick={handleAddIntegrante}>
@@ -1216,12 +1269,12 @@ export function BandEditorForm({
         </div>
       </div>
 
-      <div className="form-section">
+      <div className="form-section" id="editor-timeline">
         <div className="row-actions row-actions--split">
           <div>
             <h2>Linea de tiempo</h2>
             <StatusBadge state={timelineState} />
-            <p className="muted">Eventos históricos, orden manual y assets por evento.</p>
+            <p className="muted">Eventos historicos para la web publica. Solo aparece si esta habilitada.</p>
           </div>
           <button
             className="button button--primary"
@@ -1348,6 +1401,7 @@ export function BandEditorForm({
                         ))}
                       </select>
                       <FieldError errors={getErrorsForField(`${basePath}.importance`)} />
+                      <p className="muted">Cambia el peso visual del evento en la linea de tiempo publica.</p>
                     </label>
                     <label className="form-field">
                       <span className="form-label">Icono</span>
@@ -1412,8 +1466,12 @@ export function BandEditorForm({
         </div>
       </div>
 
-      <div className="form-section">
-        <SectionHeading title="Contacto y redes" description="Canales de booking y redes oficiales." state={contactState} />
+      <div className="form-section" id="editor-contact">
+        <SectionHeading
+          title="Contacto y redes"
+          description="Canales de booking y redes oficiales que se muestran en la pagina publica."
+          state={contactState}
+        />
         <div className="form-grid">
           <label className="form-field">
             <span className="form-label">Email</span>
@@ -1482,6 +1540,17 @@ export function BandEditorForm({
             <FieldError errors={getErrorsForField('contact.facebook')} />
           </label>
           <label className="form-field">
+            <span className="form-label">X / Twitter</span>
+            <input
+              className={getFieldClassName('form-input', getErrorsForField('contact.twitter').length > 0)}
+              name="contact.twitter"
+              value={values.contact.twitter || ''}
+              onChange={handleChange}
+              aria-invalid={getErrorsForField('contact.twitter').length > 0}
+            />
+            <FieldError errors={getErrorsForField('contact.twitter')} />
+          </label>
+          <label className="form-field">
             <span className="form-label">Spotify</span>
             <input
               className={getFieldClassName('form-input', getErrorsForField('contact.spotify').length > 0)}
@@ -1506,8 +1575,12 @@ export function BandEditorForm({
         </div>
       </div>
 
-      <div className="form-section">
-        <SectionHeading title="Escuchanos" description="Videos, playlists y perfiles musicales." state={listenState} />
+      <div className="form-section" id="editor-listen">
+        <SectionHeading
+          title="Escuchanos"
+          description="Videos, playlists y perfiles musicales. Estos bloques aparecen solo si estan habilitados."
+          state={listenState}
+        />
         <div className="form-grid">
           <label className="form-field">
             <span className="form-label">Titulo de seccion</span>
@@ -1535,7 +1608,7 @@ export function BandEditorForm({
           <div className="row-actions row-actions--split">
             <div>
               <h3 className="array-item__title">YouTube</h3>
-              <p className="muted">Videos embebibles y enlaces públicos de la banda.</p>
+              <p className="muted">Videos y enlaces publicos que se listan en la seccion Escuchanos.</p>
             </div>
             <button className="button button--primary" type="button" onClick={handleAddYoutubeVideo}>
               Agregar video
@@ -1652,7 +1725,7 @@ export function BandEditorForm({
           <div className="row-actions row-actions--split">
             <div>
               <h3 className="array-item__title">Spotify</h3>
-              <p className="muted">Perfil principal y playlists destacadas.</p>
+              <p className="muted">Perfil principal y playlists destacadas para la web publica.</p>
             </div>
             <button className="button button--primary" type="button" onClick={handleAddSpotifyPlaylist}>
               Agregar playlist
@@ -1696,6 +1769,10 @@ export function BandEditorForm({
               />
               <FieldError errors={getErrorsForField('escuchanos.spotify.perfil_url')} />
             </label>
+            <p className="form-help form-help--full">
+              Usa el link publico del artista o perfil. Ejemplos:{' '}
+              <code>open.spotify.com/artist/...</code> o <code>open.spotify.com/intl-es/artist/...</code>
+            </p>
           </div>
           <div className="array-list">
             {values.escuchanos.spotify.playlists.map((playlist, index) => {
@@ -1761,6 +1838,10 @@ export function BandEditorForm({
                       />
                       <FieldError errors={getErrorsForField(`${basePath}.url`)} />
                     </label>
+                    <p className="form-help form-help--full">
+                      Acepta links publicos de Spotify de <code>album</code>, <code>playlist</code> o{' '}
+                      <code>track</code>, incluso con formato <code>intl-es</code>.
+                    </p>
                     <label className="form-field form-field--full">
                       <span className="form-label">Descripcion</span>
                       <textarea
@@ -1782,7 +1863,7 @@ export function BandEditorForm({
         </section>
       </div>
 
-      <div className="form-section">
+      <div className="form-section" id="editor-featured">
         <SectionHeading
           title="Lanzamiento destacado"
           description="Bloque principal para destacar el release activo."
@@ -1793,7 +1874,7 @@ export function BandEditorForm({
             bandId={bandId}
             target={{kind: 'field', field: 'featuredReleaseCover'}}
             label="Portada destacada"
-            help="Imagen cuadrada para el bloque principal de musica."
+            help="Imagen cuadrada para el bloque principal de musica en la pagina publica."
             previewUrl={initialImages.featuredReleaseCover}
             onStatusMessage={pushToast}
           />
@@ -1840,6 +1921,7 @@ export function BandEditorForm({
               value={values.featuredRelease.spotifyUrl || ''}
               onChange={handleChange}
             />
+            <p className="muted">Pega un link publico de track, album o playlist de Spotify.</p>
             <FieldError errors={getErrorsForField('featuredRelease.spotifyUrl')} />
           </label>
           <label className="form-field">
@@ -1868,7 +1950,7 @@ export function BandEditorForm({
         </div>
       </div>
 
-      <div className="form-section">
+      <div className="form-section" id="editor-shows">
         <div className="row-actions row-actions--split">
           <SectionHeading
             title="Shows"
@@ -2004,7 +2086,7 @@ export function BandEditorForm({
         </div>
       </div>
 
-      <div className="form-section">
+      <div className="form-section" id="editor-gallery">
         <div className="row-actions row-actions--split">
           <SectionHeading
             title="Galeria"
@@ -2127,8 +2209,12 @@ export function BandEditorForm({
         </div>
       </div>
 
-      <div className="form-section">
-        <SectionHeading title="SEO" description="Metadatos para buscadores y previews." state={seoState} />
+      <div className="form-section" id="editor-seo">
+        <SectionHeading
+          title="SEO"
+          description="Metadatos para buscadores, previews y la pestana de la pagina publica."
+          state={seoState}
+        />
         <div className="form-grid">
           <label className="form-field">
             <span className="form-label">Titulo SEO</span>
@@ -2151,6 +2237,24 @@ export function BandEditorForm({
               aria-invalid={getErrorsForField('seo.description').length > 0}
             />
             <FieldError errors={getErrorsForField('seo.description')} />
+          </label>
+          <label className="form-field form-field--full">
+            <span className="form-label">Palabras clave SEO</span>
+            <input
+              className={getFieldClassName('form-input', getErrorsForField('seo.keywords').length > 0)}
+              name="seo.keywords"
+              value={(values.seo.keywords || []).join(', ')}
+              onChange={(event) => {
+                const keywords = parseKeywordList(event.currentTarget.value)
+                setValues((current) => setValueAtPath(current, 'seo.keywords', keywords))
+                setFieldErrors((current) => clearFieldErrorByPath(current, 'seo.keywords'))
+                setSubmitError(null)
+              }}
+              aria-invalid={getErrorsForField('seo.keywords').length > 0}
+              placeholder="metal argentino, doom, banda en vivo"
+            />
+            <FieldError errors={getErrorsForField('seo.keywords')} />
+            <p className="muted">Separalas con comas. Se usan en metadata, no como texto visible.</p>
           </label>
         </div>
       </div>

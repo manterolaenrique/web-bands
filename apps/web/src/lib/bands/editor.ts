@@ -74,6 +74,7 @@ export type BandEditorValues = {
     title: string
     subtitle?: string
     description?: string
+    showSpotlightCard: boolean
   }
   about: {
     title?: string
@@ -93,6 +94,7 @@ export type BandEditorValues = {
     instagram?: string
     youtube?: string
     facebook?: string
+    twitter?: string
     spotify?: string
     tiktok?: string
   }
@@ -124,6 +126,7 @@ export type BandEditorValues = {
   seo: {
     title?: string
     description?: string
+    keywords?: string[]
   }
 }
 

@@ -68,8 +68,10 @@ test('owner can edit their band and see the public update', async ({page}) => {
   const listenDescription = `Escuchanos en todas las plataformas desde esta prueba E2E. ${runId}`
   const youtubeVideoTitle = `Video Codex ${runId}`
   const spotifyPlaylistTitle = `Playlist Codex ${runId}`
+  const spotifyProfileUrl = 'https://open.spotify.com/artist/4NHQUGzhtTLFvgF5SZesLK'
   const contactEmail = `booking-${runId}@webbands.dev`
   const contactLocation = 'Buenos Aires, Argentina'
+  const contactTwitter = `https://x.com/webbands_${runId}`
   const featuredTitle = `Lanzamiento QA ${runId}`
   const featuredEyebrow = 'Release activo'
   const featuredDescription = `Bloque principal actualizado para verificar persistencia completa. ${runId}`
@@ -79,6 +81,7 @@ test('owner can edit their band and see the public update', async ({page}) => {
   const galleryCaption = `Archivo visual QA ${runId}`
   const seoTitle = `QA Band SEO ${runId}`
   const seoDescription = `Metadata SEO actualizada desde Playwright. ${runId}`
+  const seoKeywords = 'metal argentino, doom, directo en vivo'
   const primaryColor = '#D62828'
   const secondaryColor = '#F4C430'
   const secondaryLightColor = '#7BD389'
@@ -96,6 +99,7 @@ test('owner can edit their band and see the public update', async ({page}) => {
 
   await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}$`))
   await page.locator('input[name="hero.title"]').fill(heroTitle)
+  await page.locator('input[name="hero.showSpotlightCard"]').uncheck()
   await page.locator('textarea[name="about.content"]').fill(aboutContent)
   await page.locator('input[name="colors.primary"]').fill(primaryColor)
   await page.locator('input[name="colors.secondary"]').fill(secondaryColor)
@@ -137,14 +141,21 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await page.locator('input[name="escuchanos.titulo"]').fill('Escuchanos')
   await page.locator('textarea[name="escuchanos.descripcion"]').fill(listenDescription)
   await page.locator('input[name="escuchanos.youtube.habilitado"]').check()
+  await page.locator('input[name="escuchanos.youtube.titulo"]').fill('Canal principal')
   await ensureArrayItem(page, 'Agregar video', 'input[name^="escuchanos.youtube.videos."][name$=".titulo"]')
   await page.locator('input[name^="escuchanos.youtube.videos."][name$=".titulo"]').last().fill(youtubeVideoTitle)
   await page
     .locator('input[name^="escuchanos.youtube.videos."][name$=".url"]')
     .last()
     .fill('https://www.youtube.com/watch?v=codexe2e123')
+  await page
+    .locator('textarea[name^="escuchanos.youtube.videos."][name$=".descripcion"]')
+    .last()
+    .fill('Video destacado desde la prueba E2E.')
 
   await page.locator('input[name="escuchanos.spotify.habilitado"]').check()
+  await page.locator('input[name="escuchanos.spotify.titulo"]').fill('Perfil oficial')
+  await page.locator('input[name="escuchanos.spotify.perfil_url"]').fill(spotifyProfileUrl)
   await ensureArrayItem(page, 'Agregar playlist', 'input[name^="escuchanos.spotify.playlists."][name$=".titulo"]')
   await fillAllMatching(
     page,
@@ -158,6 +169,7 @@ test('owner can edit their band and see the public update', async ({page}) => {
   )
   await page.locator('input[name="contact.email"]').fill(contactEmail)
   await page.locator('input[name="contact.location"]').fill(contactLocation)
+  await page.locator('input[name="contact.twitter"]').fill(contactTwitter)
 
   await page.locator('input[name="featuredRelease.eyebrow"]').fill(featuredEyebrow)
   await page.locator('input[name="featuredRelease.title"]').fill(featuredTitle)
@@ -186,8 +198,9 @@ test('owner can edit their band and see the public update', async ({page}) => {
 
   await page.locator('input[name="seo.title"]').fill(seoTitle)
   await page.locator('textarea[name="seo.description"]').fill(seoDescription)
+  await page.locator('input[name="seo.keywords"]').fill(seoKeywords)
 
-  await expect(page.locator('.editor-savebar__status strong')).toHaveText('Cambios pendientes')
+  await expect(page.getByRole('button', {name: 'Guardar cambios'})).toBeEnabled()
   const saveResponsePromise = page.waitForResponse(
     (response) =>
       response.url().includes(`/api/bands/${fixture.band.id}`) &&
@@ -198,6 +211,9 @@ test('owner can edit their band and see the public update', async ({page}) => {
   const saveBody = await saveResponse.json().catch(() => ({}))
   expect(saveResponse.status(), JSON.stringify(saveBody)).toBe(200)
   await expect(page.getByText('Cambios guardados. La pagina publica ya esta sincronizada.')).toBeVisible()
+  await expect(memberSection.locator('input[type="file"]')).toBeEnabled()
+  await memberSection.locator('input[type="file"]').setInputFiles(createUploadFile('member-red.png', 'red'))
+  await expect(memberSection.getByText('Imagen subida correctamente.')).toBeVisible()
 
   const featuredSection = page.locator('.form-section').filter({hasText: 'Lanzamiento destacado'}).first()
   await featuredSection.locator('input[type="file"]').setInputFiles(createUploadFile('featured-red.png', 'red'))
@@ -209,10 +225,12 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}$`))
   await expect(page.locator('input[name="colors.primary"]')).toHaveValue(primaryColor)
   await expect(page.locator('input[name="colors.secondary"]')).toHaveValue(secondaryColor)
+  await expect(page.locator('input[name="hero.showSpotlightCard"]')).not.toBeChecked()
   await expect(page.locator('input[name="contact.email"]')).toHaveValue(contactEmail)
+  await expect(page.locator('input[name="contact.twitter"]')).toHaveValue(contactTwitter)
   await expect(page.locator('input[name="featuredRelease.title"]')).toHaveValue(featuredTitle)
   await expect(page.locator('input[name="seo.title"]')).toHaveValue(seoTitle)
-  await expect(page.locator('.editor-savebar__status strong')).toHaveText('Sin cambios')
+  await expect(page.locator('input[name="seo.keywords"]')).toHaveValue(seoKeywords)
   await expect(page.getByText('Guardado').first()).toBeVisible()
 
   const featuredPreview = await featuredSection
@@ -229,6 +247,16 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await expect(page.getByText(timelineEventName)).toBeVisible()
   await expect(page.getByRole('heading', {level: 2, name: featuredTitle})).toBeVisible()
   await expect(page.getByText(showVenue)).toBeVisible()
+  await expect(page.locator(`img[alt="Foto de ${memberName}"]`)).toBeVisible()
+  await expect(page.locator('.spotlight-card')).toHaveCount(0)
+  await expect(page.locator('.public-hero__content')).toHaveClass(/public-hero__content--single/)
+  await expect(page.getByText(youtubeVideoTitle)).toBeVisible()
+  await expect(page.getByText(`${spotifyPlaylistTitle} 1`)).toBeVisible()
+  await expect(page.locator(`iframe[title="YouTube: ${youtubeVideoTitle}"]`)).toBeVisible()
+  await expect(page.locator('iframe[title="Spotify: perfil oficial"]')).toBeVisible()
+  await expect(page.locator(`iframe[title="Spotify: ${spotifyPlaylistTitle} 1"]`)).toBeVisible()
+  await expect(page.locator('.contact-panel--social[data-network="twitter"] .contact-panel__icon')).toBeVisible()
+  await expect(page.getByRole('link', {name: 'X / Twitter'})).toHaveAttribute('href', contactTwitter)
 
   const bandTheme = await page.locator('main.public-band-shell').evaluate((node) => ({
     primary: getComputedStyle(node).getPropertyValue('--band-primary').trim().toLowerCase(),
