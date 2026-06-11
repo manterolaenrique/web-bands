@@ -1,24 +1,68 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getGalleryImageUrl } from '../utils/sanityImage'
 import { getSecondaryColors } from '../utils/colorUtils'
 
 const TimelineSection = ({ timelineSection, colores }) => {
   const [hoveredEvent, setHoveredEvent] = useState(null)
-  const [hoveredImage, setHoveredImage] = useState(null)
+  const [activeEvent, setActiveEvent] = useState(null)
+  const timelineRef = useRef(null)
+  const scrollContainerRef = useRef(null)
 
-  if (!timelineSection || !timelineSection.enabled || !timelineSection.events || timelineSection.events.length === 0) {
+  // Validaciones defensivas
+  if (!timelineSection?.enabled || !timelineSection?.events?.length) {
     return null
   }
 
   const secondaryColors = getSecondaryColors(colores)
 
-  // Ordenar eventos por fecha
-  const sortedEvents = [...timelineSection.events].sort((a, b) => new Date(a.date) - new Date(b.date))
+  // Ordenar eventos por fecha y validar datos
+  const sortedEvents = timelineSection.events
+    .filter(event => event?.name && event?.date) // Filtrar eventos válidos
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+
+  if (sortedEvents.length === 0) {
+    return null
+  }
+
+  // Función para obtener iconos según el tipo de evento (fallback)
+  const getEventIcon = (event, importance) => {
+    // DEBUG: Verificar qué datos llegan del evento
+    console.log('Evento recibido:', event)
+    console.log('Icono del evento:', event?.icon)
+    
+    // Si hay un icono configurado en Sanity, usarlo PRIORITARIAMENTE
+    if (event?.icon && event.icon.trim() !== '') {
+      console.log('Usando icono de Sanity:', event.icon)
+      return event.icon
+    }
+    
+    // Fallback a la lógica automática basada en el nombre
+    const name = event?.name?.toLowerCase() || ''
+    console.log('Nombre del evento para fallback:', name)
+    
+    // Iconos contextuales según el contenido del nombre
+    if (name.includes('concierto') || name.includes('show') || name.includes('gig')) return '🎤'
+    if (name.includes('álbum') || name.includes('disco') || name.includes('cd')) return '💿'
+    if (name.includes('single') || name.includes('canción')) return '🎵'
+    if (name.includes('video') || name.includes('clip') || name.includes('youtube')) return '🎬'
+    if (name.includes('premio') || name.includes('reconocimiento')) return '🏆'
+    if (name.includes('inicio') || name.includes('formación') || name.includes('banda')) return '🎸'
+    if (name.includes('tour') || name.includes('gira')) return '🚌'
+    if (name.includes('colaboración') || name.includes('feat')) return '🤝'
+    
+    // Iconos por importancia si no hay contexto específico
+    switch (importance) {
+      case 'principal': return '⭐'
+      case 'secundario': return '🎯'
+      case 'tercero': return '📅'
+      default: return '📌'
+    }
+  }
 
   // Función para obtener estilos según la importancia
   const getEventStyles = (importance) => {
     const baseStyles = {
-      transition: 'all 0.3s ease',
+      transition: 'all var(--transition-normal)',
       cursor: 'pointer',
     }
 
@@ -26,266 +70,248 @@ const TimelineSection = ({ timelineSection, colores }) => {
       case 'principal':
         return {
           ...baseStyles,
-          circleSize: '80px',
-          fontSize: '1.2rem',
+          circleSize: 'clamp(60px, 8vw, 80px)',
+          fontSize: 'clamp(0.9rem, 2vw, 1.2rem)',
           fontWeight: 'bold',
-          color: colores?.primario || '#333',
-          backgroundColor: colores?.primario || '#333',
+          color: colores?.primario || 'var(--color-primary)',
+          backgroundColor: colores?.primario || 'var(--color-primary)',
+          shadow: 'var(--shadow-lg)',
         }
       case 'secundario':
         return {
           ...baseStyles,
-          circleSize: '60px',
-          fontSize: '1rem',
+          circleSize: 'clamp(50px, 6vw, 60px)',
+          fontSize: 'clamp(0.8rem, 1.8vw, 1rem)',
           fontWeight: '600',
-          color: colores?.secundario || '#666',
-          backgroundColor: colores?.secundario || '#666',
+          color: colores?.secundario || 'var(--color-secondary)',
+          backgroundColor: colores?.secundario || 'var(--color-secondary)',
+          shadow: 'var(--shadow-md)',
         }
       case 'tercero':
         return {
           ...baseStyles,
-          circleSize: '50px',
-          fontSize: '0.9rem',
+          circleSize: 'clamp(40px, 5vw, 50px)',
+          fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)',
           fontWeight: '500',
-          color: secondaryColors.light || '#999',
-          backgroundColor: secondaryColors.light || '#999',
+          color: secondaryColors.light || 'var(--color-gray-600)',
+          backgroundColor: secondaryColors.light || 'var(--color-gray-600)',
+          shadow: 'var(--shadow-sm)',
         }
       default:
-        return baseStyles
+        return {
+          ...baseStyles,
+          circleSize: 'clamp(45px, 5.5vw, 55px)',
+          fontSize: 'clamp(0.8rem, 1.6vw, 1rem)',
+          fontWeight: '500',
+          color: 'var(--color-gray-700)',
+          backgroundColor: 'var(--color-gray-700)',
+          shadow: 'var(--shadow-sm)',
+        }
     }
   }
 
+  // Función para formatear fecha
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString)
+      return date.getFullYear().toString()
+    } catch (error) {
+      console.warn('Error formateando fecha:', dateString)
+      return 'N/A'
+    }
+  }
+
+  // Función para validar URL
+  const isValidUrl = (url) => {
+    if (!url || typeof url !== 'string') return false
+    try {
+      new URL(url)
+      return true
+    } catch (error) {
+      console.warn('URL inválida:', url)
+      return false
+    }
+  }
+
+  // Función para scroll suave
+  const scrollToEvent = (index) => {
+    if (!scrollContainerRef.current) return
+    
+    const container = scrollContainerRef.current
+    const eventElement = container.children[index]
+    
+    if (eventElement) {
+      eventElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      })
+    }
+  }
+
+  // Función para manejar clic en enlace
+  const handleLinkClick = (e, url) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('Abriendo enlace:', url)
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  // Efecto para limpiar estados al desmontar
+  useEffect(() => {
+    return () => {
+      setHoveredEvent(null)
+      setActiveEvent(null)
+    }
+  }, [])
+
   return (
     <section
-      className="timeline-section"
-      style={{
-        padding: '5rem 2rem',
+      className="timeline"
+      id="timeline"
+      style={{ 
         backgroundColor: secondaryColors.dark,
-        position: 'relative',
+        '--timeline-primary-color': colores?.primario || 'var(--color-primary)',
+        '--timeline-secondary-color': secondaryColors.main || 'var(--color-secondary)'
       }}
     >
-      <div
-        className="container"
-        style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-        }}
-      >
+      <div className="container">
         {/* Header de la sección */}
-        <div
-          className="timeline-header"
-          style={{
-            textAlign: 'center',
-            marginBottom: '4rem',
-          }}
-        >
-          <h2
-            className="timeline-title"
-            style={{
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-              fontWeight: 'bold',
-              color: colores?.primario || '#333',
-              marginBottom: '1rem',
-            }}
-          >
+        <div className="timeline__header">
+          <h2 className="timeline__title timeline__title--dynamic">
             {timelineSection.titulo || 'Nuestra Historia'}
           </h2>
           {timelineSection.descripcion && (
-            <p
-              className="timeline-description"
-              style={{
-                fontSize: '1.1rem',
-                lineHeight: '1.6',
-                color: '#666',
-                maxWidth: '600px',
-                margin: '0 auto',
-              }}
-            >
+            <p className="timeline__description">
               {timelineSection.descripcion}
             </p>
           )}
-          <div
-            className="title-underline"
-            style={{
-              width: '80px',
-              height: '4px',
-              backgroundColor: secondaryColors.main,
-              margin: '2rem auto 0',
-              borderRadius: '2px',
-            }}
-          />
+          <div className="timeline__underline timeline__underline--dynamic" />
+        </div>
+
+        {/* Controles de navegación */}
+        <div className="timeline__controls">
+          <button 
+            className="timeline__control-btn btn btn-secondary"
+            onClick={() => scrollToEvent(0)}
+            aria-label="Ir al primer evento"
+          >
+            ⏮️ Inicio
+          </button>
         </div>
 
         {/* Línea de tiempo */}
-        <div
-          className="timeline-container"
-          style={{
-            position: 'relative',
-            padding: '2rem 0',
-          }}
-        >
+        <div className="timeline__container" ref={timelineRef}>
           {/* Línea central */}
-          <div
-            className="timeline-line"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '0',
-              right: '0',
-              height: '4px',
-              backgroundColor: secondaryColors.light || '#e0e0e0',
-              transform: 'translateY(-50%)',
-              zIndex: 1,
-            }}
-          />
-
-          {/* Contenedor de eventos */}
-          <div
-            className="timeline-events"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${sortedEvents.length}, 1fr)`,
-              gap: '1rem',
-              position: 'relative',
-              zIndex: 2,
-            }}
+          <div className="timeline__line" />
+          
+          {/* Contenedor de eventos con scroll horizontal */}
+          <div 
+            className="timeline__events-container"
+            ref={scrollContainerRef}
           >
             {sortedEvents.map((event, index) => {
               const eventStyles = getEventStyles(event.importance)
-              const year = new Date(event.date).getFullYear()
+              const year = formatDate(event.date)
               const isEven = index % 2 === 0
+              const isHovered = hoveredEvent === index
+              const isActive = activeEvent === index
+              const hasValidLink = event.link && isValidUrl(event.link)
 
               return (
                 <div
-                  key={index}
-                  className="timeline-event"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    position: 'relative',
-                  }}
-                  onMouseEnter={() => {
-                    setHoveredEvent(index)
-                    if (event.image) {
-                      setHoveredImage(event.image)
+                  key={`${event.name}-${event.date}-${index}`}
+                  className={`timeline__event ${isHovered ? 'timeline__event--hovered' : ''} ${isActive ? 'timeline__event--active' : ''}`}
+                  onMouseEnter={() => setHoveredEvent(index)}
+                  onMouseLeave={() => setHoveredEvent(null)}
+                  onClick={() => setActiveEvent(isActive ? null : index)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setActiveEvent(isActive ? null : index)
                     }
                   }}
-                  onMouseLeave={() => {
-                    setHoveredEvent(null)
-                    setHoveredImage(null)
-                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Evento: ${event.name} en ${year}. ${event.descripcion || ''}`}
+                  aria-expanded={isActive}
                 >
                   {/* Contenido del evento */}
-                  <div
-                    className="event-content"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      order: isEven ? 1 : 3,
-                      marginBottom: isEven ? '1rem' : '0',
-                      marginTop: isEven ? '0' : '1rem',
-                    }}
-                  >
+                  <div className={`timeline__event-content ${isEven ? 'timeline__event-content--top' : 'timeline__event-content--bottom'}`}>
                     {/* Nombre del evento */}
-                    <h3
-                      className="event-name"
-                      style={{
-                        fontSize: eventStyles.fontSize,
-                        fontWeight: eventStyles.fontWeight,
-                        color: eventStyles.color,
-                        textAlign: 'center',
-                        marginBottom: '0.5rem',
-                        lineHeight: '1.2',
-                        maxWidth: '120px',
-                      }}
-                    >
+                    <h3 className="timeline__event-name">
                       {event.name}
                     </h3>
 
                     {/* Año */}
-                    <span
-                      className="event-year"
-                      style={{
-                        fontSize: '0.9rem',
-                        fontWeight: '600',
-                        color: '#666',
-                        backgroundColor: '#f5f5f5',
-                        padding: '0.3rem 0.8rem',
-                        borderRadius: '15px',
-                        border: `2px solid ${eventStyles.color}`,
-                      }}
-                    >
+                    <span className="timeline__event-year timeline__event-year--dynamic">
                       {year}
                     </span>
+
+                    {/* Descripción */}
+                    {event.descripcion && (
+                      <p className="timeline__event-description">
+                        {event.descripcion}
+                      </p>
+                    )}
+
+                    {/* Enlace del evento - CORREGIDO */}
+                    {hasValidLink && (
+                      <div className="timeline__event-link-container">
+                        <span className="timeline__event-link-indicator">
+                          📎 Enlace disponible
+                        </span>
+                        <button 
+                          className="timeline__event-link timeline__event-link--dynamic"
+                          onClick={(e) => handleLinkClick(e, event.link)}
+                          aria-label={`Ver más sobre ${event.name}`}
+                        >
+                          🔗 Ver más
+                        </button>
+                      </div>
+                    )}
+                    {event.link && !isValidUrl(event.link) && (
+                      <div className="timeline__event-link-container timeline__event-link-container--error">
+                        <span className="timeline__event-link-indicator timeline__event-link-indicator--error">
+                          ⚠️ Enlace inválido
+                        </span>
+                        <span className="timeline__event-link-error">
+                          URL mal formada: {event.link}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Círculo del evento */}
-                  <div
-                    className="event-circle"
+                  <div 
+                    className="timeline__event-circle"
                     style={{
                       width: eventStyles.circleSize,
                       height: eventStyles.circleSize,
-                      borderRadius: '50%',
                       backgroundColor: eventStyles.backgroundColor,
-                      border: `4px solid #fff`,
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      order: 2,
-                      position: 'relative',
-                      zIndex: 3,
-                      transform: hoveredEvent === index ? 'scale(1.1)' : 'scale(1)',
-                      transition: 'all 0.3s ease',
+                      boxShadow: eventStyles.shadow,
                     }}
                   >
-                    {/* Icono del evento (puedes personalizar según el tipo de evento) */}
-                    <div
-                      className="event-icon"
-                      style={{
-                        width: '60%',
-                        height: '60%',
-                        backgroundColor: '#fff',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.2rem',
-                        color: eventStyles.backgroundColor,
-                      }}
-                    >
-                      {index + 1}
+                    {/* Icono del evento - CORREGIDO */}
+                    <div className="timeline__event-icon">
+                      {getEventIcon(event, event.importance)}
                     </div>
                   </div>
 
-                  {/* Descripción del evento (solo en hover) */}
-                  {event.descripcion && (
-                    <div
-                      className="event-description"
-                      style={{
-                        position: 'absolute',
-                        top: isEven ? '100%' : 'auto',
-                        bottom: isEven ? 'auto' : '100%',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        backgroundColor: '#fff',
-                        padding: '1rem',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                        maxWidth: '200px',
-                        fontSize: '0.9rem',
-                        lineHeight: '1.4',
-                        color: '#333',
-                        opacity: hoveredEvent === index ? 1 : 0,
-                        visibility: hoveredEvent === index ? 'visible' : 'hidden',
-                        transition: 'all 0.3s ease',
-                        zIndex: 10,
-                        border: `2px solid ${eventStyles.color}`,
-                      }}
-                    >
-                      {event.descripcion}
+                  {/* Imagen del evento - CORREGIDA para que no ocupe tanto espacio */}
+                  {event.image && (
+                    <div className={`timeline__event-image ${isHovered || isActive ? 'timeline__event-image--visible' : ''}`}>
+                      <img
+                        src={getGalleryImageUrl(event.image)}
+                        alt={`Imagen de ${event.name}`}
+                        loading="lazy"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          objectFit: 'contain',
+                          objectPosition: 'center'
+                        }}
+                      />
                     </div>
                   )}
                 </div>
@@ -294,66 +320,18 @@ const TimelineSection = ({ timelineSection, colores }) => {
           </div>
         </div>
 
-        {/* Modal de imagen en hover */}
-        {hoveredImage && (
-          <div
-            className="image-modal"
-            style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 1000,
-              backgroundColor: '#fff',
-              borderRadius: '12px',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-              padding: '1rem',
-              maxWidth: '400px',
-              maxHeight: '400px',
-            }}
-          >
-            <img
-              src={getGalleryImageUrl(hoveredImage)}
-              alt="Evento"
-              style={{
-                width: '100%',
-                height: 'auto',
-                borderRadius: '8px',
-                objectFit: 'cover',
-              }}
+        {/* Indicadores de navegación */}
+        <div className="timeline__indicators">
+          {sortedEvents.map((_, index) => (
+            <button
+              key={index}
+              className={`timeline__indicator timeline__indicator--dynamic ${activeEvent === index ? 'timeline__indicator--active' : ''}`}
+              onClick={() => scrollToEvent(index)}
+              aria-label={`Ir al evento ${index + 1}`}
             />
-          </div>
-        )}
+          ))}
+        </div>
       </div>
-
-      {/* Estilos responsive */}
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .timeline-events {
-            grid-template-columns: 1fr !important;
-            gap: 2rem !important;
-          }
-          
-          .event-content {
-            order: 1 !important;
-            margin-bottom: 1rem !important;
-            margin-top: 0 !important;
-          }
-          
-          .event-circle {
-            order: 2 !important;
-          }
-          
-          .timeline-line {
-            left: 50% !important;
-            right: auto !important;
-            width: 4px !important;
-            height: 100% !important;
-            top: 0 !important;
-            transform: translateX(-50%) !important;
-          }
-        }
-      `}</style>
     </section>
   )
 }

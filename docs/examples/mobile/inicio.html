@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VOLTAGE | Directorio de Bandas</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                    "on-secondary-fixed": "#001f25",
+                    "primary-container": "#b76dff",
+                    "inverse-surface": "#e5e2e1",
+                    "surface": "#131313",
+                    "surface-tint": "#ddb7ff",
+                    "tertiary-fixed-dim": "#fabc4e",
+                    "surface-container-lowest": "#0e0e0e",
+                    "error": "#ffb4ab",
+                    "surface-variant": "#353534",
+                    "surface-bright": "#3a3939",
+                    "surface-container-highest": "#353534",
+                    "error-container": "#93000a",
+                    "surface-elevated": "#1E1E22",
+                    "secondary-fixed": "#a2eeff",
+                    "on-tertiary-fixed-variant": "#604100",
+                    "primary": "#ddb7ff",
+                    "surface-charcoal": "#121214",
+                    "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                    "on-tertiary-container": "#3a2600",
+                    "outline": "#988d9f",
+                    "tertiary-fixed": "#ffdead",
+                    "outline-variant": "#4d4354",
+                    "on-tertiary": "#432c00",
+                    "on-primary-container": "#400071",
+                    "primary-fixed-dim": "#ddb7ff",
+                    "on-primary": "#490080",
+                    "on-primary-fixed-variant": "#6900b3",
+                    "tertiary": "#fabc4e",
+                    "background": "#131313",
+                    "on-secondary-container": "#00515d",
+                    "on-background": "#e5e2e1",
+                    "on-primary-fixed": "#2c0051",
+                    "inverse-on-surface": "#313030",
+                    "surface-dim": "#131313",
+                    "surface-container": "#201f1f",
+                    "on-surface-variant": "#cfc2d6",
+                    "secondary-fixed-dim": "#2fd9f4",
+                    "inverse-primary": "#842bd2",
+                    "on-surface": "#e5e2e1",
+                    "tertiary-container": "#bd871a",
+                    "primary-fixed": "#f0dbff",
+                    "surface-container-low": "#1c1b1b",
+                    "on-error-container": "#ffdad6",
+                    "on-secondary-fixed-variant": "#004e5a",
+                    "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                    "on-error": "#690005",
+                    "on-tertiary-fixed": "#281900",
+                    "on-secondary": "#00363e",
+                    "secondary-container": "#00cbe6",
+                    "surface-container-high": "#2a2a2a",
+                    "secondary": "#5de6ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "stack-lg": "32px",
+                    "stack-sm": "8px",
+                    "stack-md": "16px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "section-gap": "80px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "display-lg": ["Montserrat"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-xl": ["Montserrat"],
+                    "headline-lg": ["Montserrat"],
+                    "display-lg-mobile": ["Montserrat"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                    "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                    "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #050505;
+            color: #e5e2e1;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(18, 18, 20, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-border-purple:focus-within {
+            border-color: #ddb7ff;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+        .neon-glow-cyan-text {
+            text-shadow: 0 0 10px rgba(93, 230, 255, 0.6);
+        }
+        .entry-anim {
+            animation: slideUpFade 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            opacity: 0;
+        }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background font-body-md text-on-background">
+<!-- Top Navigation Anchor -->
+<nav class="fixed top-0 w-full bg-surface/80 dark:bg-surface/80 backdrop-blur-xl z-50 border-b border-glass-stroke flex justify-between items-center px-margin-mobile h-16">
+<span class="font-display-lg-mobile text-display-lg-mobile font-black tracking-tighter text-primary dark:text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">VOLTAGE</span>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary active:scale-90 transition-transform p-2" style="font-variation-settings: 'FILL' 1;">search</button>
+<button class="material-symbols-outlined text-primary active:scale-90 transition-transform p-2">menu</button>
+</div>
+</nav>
+<!-- Content Canvas -->
+<main class="pt-24 pb-32 px-margin-mobile max-w-md mx-auto">
+<!-- Search & Filter Section -->
+<header class="mb-stack-lg space-y-stack-md entry-anim" style="animation-delay: 0.1s;">
+<h1 class="font-headline-xl text-headline-xl text-on-surface">Artistas</h1>
+<!-- Modern Search Bar -->
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
+<input class="w-full bg-surface-charcoal border border-glass-stroke rounded-xl py-4 pl-12 pr-4 font-label-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/30 transition-all placeholder:text-outline" placeholder="Buscar bandas..." type="text"/>
+</div>
+<!-- Horizontal Category Chips -->
+<div class="flex gap-stack-sm overflow-x-auto no-scrollbar py-2">
+<button class="px-6 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md whitespace-nowrap active:scale-95 transition-transform">Todo</button>
+<button class="px-6 py-2 bg-surface-charcoal border border-glass-stroke text-on-surface-variant rounded-full font-label-md whitespace-nowrap active:scale-95 transition-transform hover:border-secondary">Metal</button>
+<button class="px-6 py-2 bg-surface-charcoal border border-glass-stroke text-on-surface-variant rounded-full font-label-md whitespace-nowrap active:scale-95 transition-transform hover:border-secondary">Rock</button>
+<button class="px-6 py-2 bg-surface-charcoal border border-glass-stroke text-on-surface-variant rounded-full font-label-md whitespace-nowrap active:scale-95 transition-transform hover:border-secondary">Electro</button>
+<button class="px-6 py-2 bg-surface-charcoal border border-glass-stroke text-on-surface-variant rounded-full font-label-md whitespace-nowrap active:scale-95 transition-transform hover:border-secondary">Synthwave</button>
+</div>
+</header>
+<!-- Dynamic Grid of Band Cards -->
+<section class="grid grid-cols-1 gap-stack-lg">
+<!-- Band Card 1 -->
+<article class="glass-card rounded-xl overflow-hidden group entry-anim" style="animation-delay: 0.2s;">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A cinematic low-angle photograph of an industrial synth-rock band performing on a dark stage. Intense purple and cyan neon spotlights cut through thick artificial fog, creating a moody, electric atmosphere. The band members are silhouettes against the glowing backdrop of synthesizers and cables, embodying a high-energy, futuristic cyberpunk musical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0Z-HDpdHK1NW3NkAWuPPQnVTKJs4zbUwWC2HlsCov7z_l1ZOTMq6F-eLpXJw5MLunefN213C960JZa3FGb-UK7z8nJH1h8z2P5FULOXzMZdylvCh9-wQEeBW4f6zLZl0U8EY9ObGSOhzVInk7VlE0-Njmo_r0EM5ROCliKHh8fU5v4Q_gIQoJlaydNzCV1TzxnNPxf93rujD2_MGoPoRvnScsiqWakphmjW6yat2-bnrcvcUKYlXJNsfnXUvh3_SGhoytk3ieGP-v"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-charcoal via-transparent to-transparent"></div>
+<div class="absolute top-4 right-4 bg-surface/60 backdrop-blur-md px-3 py-1 rounded-full border border-glass-stroke">
+<span class="font-label-sm text-secondary neon-glow-cyan-text uppercase tracking-widest">En Vivo</span>
+</div>
+</div>
+<div class="p-stack-md space-y-stack-sm">
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">NEON VOID</h2>
+<p class="font-label-sm text-outline uppercase tracking-wider">Electro / Synth Rock</p>
+</div>
+<div class="flex gap-1">
+<span class="material-symbols-outlined text-secondary text-base" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-on-surface">4.9</span>
+</div>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-2">Exploradores del sonido cinemático y ritmos industriales pesados. Una experiencia visual y sonora sin precedentes.</p>
+<button class="w-full mt-stack-md py-4 bg-gradient-to-r from-primary to-secondary text-on-primary-container font-label-md rounded-lg active:scale-95 transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+                        Ver Perfil
+                    </button>
+</div>
+</article>
+<!-- Band Card 2 -->
+<article class="glass-card rounded-xl overflow-hidden group entry-anim" style="animation-delay: 0.3s;">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A close-up shot of a dark, metallic electric guitar resting against a glowing LED wall. The lighting is dominated by deep blues and vibrant pinks, reflecting off the chrome hardware of the instrument. The scene is set in a high-tech recording studio with minimalist black furniture and scattered neon cables, creating a professional yet edgy musical environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEH5SG2Ajjreor-seyIdGcfpTJubaZwCswG8WJeUDhf30keFRIpD9wEnFIteZMtc26KpXEUgvc7SCddHYa71rxjYNIUSZTV2FBUjI7TMLIQZQaorJc8kneRDqOmYFz9o6-0OM3OiNKTguDk2zXy6mfMRioJsWDvohSmEUal7PwBk-Im9MpnBdwsZe7B4ACk-9tVRJLPCn3GbMxhJEtj5ueiQ3RTVqLShG1ycTRc0dSPrzirJvy-OA4Iz_fpMG2UCIUoySSw8ggvU12"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-charcoal via-transparent to-transparent"></div>
+</div>
+<div class="p-stack-md space-y-stack-sm">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">COBALT RAGE</h2>
+<p class="font-label-sm text-outline uppercase tracking-wider">Modern Metal / Core</p>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-2">Riffs agresivos fusionados con texturas electrónicas oscuras. La nueva cara del metal moderno.</p>
+<button class="w-full mt-stack-md py-4 border border-secondary text-secondary font-label-md rounded-lg active:scale-95 transition-all hover:bg-secondary/10">
+                        Ver Perfil
+                    </button>
+</div>
+</article>
+<!-- Band Card 3 -->
+<article class="glass-card rounded-xl overflow-hidden group entry-anim" style="animation-delay: 0.4s;">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A wide-angle interior view of a futuristic music club at night. Asymmetric neon light strips in cyan and magenta crisscross the ceiling, casting long shadows across a dark, polished floor. People are blurred in motion, creating a sense of vibrant energy and nightlife. The overall aesthetic is clean, dark, and technologically advanced, typical of a high-end electronic music venue." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3tbLOXzLIGLlC2NVjUDrms4LJLBRoWgQ3Z677CMwQ9_mhPI7kBgIIUuIPHCoNMKf_sZgUx5mBIyrLB4x_Oe0pSBSUsOZOOSq-CJ7iPVOpVKXR38HphzLuDTgXiirJ_SWnVoJXTz35CbuqKdgbqjNVeG9FwIzfQSqztj4cJHcCyq3JaGnRYcLpaHzoF77VLBwUmlMAwUHqotYlGPUA6x7aRouEUnbpM4eEHCSGAY-fzX-t22_INFS7t8A6ku98CTf52snjF0BP-9SV"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-charcoal via-transparent to-transparent"></div>
+</div>
+<div class="p-stack-md space-y-stack-sm">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">DATA PULSE</h2>
+<p class="font-label-sm text-outline uppercase tracking-wider">Dark Techno / EBM</p>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-2">Ritmos hipnóticos para la era digital. El latido del corazón de la metrópolis sintética.</p>
+<button class="w-full mt-stack-md py-4 border border-secondary text-secondary font-label-md rounded-lg active:scale-95 transition-all hover:bg-secondary/10">
+                        Ver Perfil
+                    </button>
+</div>
+</article>
+</section>
+<!-- CTA Section -->
+<div class="mt-section-gap glass-card p-stack-lg rounded-2xl text-center space-y-stack-md entry-anim" style="animation-delay: 0.5s;">
+<span class="material-symbols-outlined text-primary text-5xl">add_circle</span>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">¿Tienes una Banda?</h3>
+<p class="font-body-md text-on-surface-variant px-4">Únete al directorio más grande de la escena nacional y conecta con nuevos fans.</p>
+<button class="inline-flex items-center gap-2 px-8 py-4 bg-surface-bright border border-primary text-primary font-label-md rounded-full active:scale-95 transition-all">
+                REGISTRAR BANDA
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- Bottom Navigation Shell (Filter Applied: Top-level destination) -->
+<nav class="fixed bottom-0 w-full bg-surface-container-lowest/90 backdrop-blur-2xl z-50 flex justify-around items-center h-20 px-4 md:hidden">
+<button class="flex flex-col items-center gap-1 group active:scale-90 transition-transform text-secondary">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="font-label-sm">Discover</span>
+</button>
+<button class="flex flex-col items-center gap-1 group active:scale-90 transition-transform text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl">mic_external_on</span>
+<span class="font-label-sm">Artists</span>
+</button>
+<button class="flex flex-col items-center gap-1 group active:scale-90 transition-transform text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl">confirmation_number</span>
+<span class="font-label-sm">Tours</span>
+</button>
+<button class="flex flex-col items-center gap-1 group active:scale-90 transition-transform text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl">speed</span>
+<span class="font-label-sm">Dashboard</span>
+</button>
+<button class="flex flex-col items-center gap-1 group active:scale-90 transition-transform text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl">login</span>
+<span class="font-label-sm">Login</span>
+</button>
+</nav>
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.05)_0%,transparent_70%)]"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-20">
+
+</div>
+</div>
+<script>
+        // Micro-interactions for buttons and scroll
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('touchstart', () => {
+                btn.style.opacity = '0.7';
+            });
+            btn.addEventListener('touchend', () => {
+                btn.style.opacity = '1';
+            });
+        });
+
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = "1";
+                    entry.target.classList.add('entry-anim');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body></html>

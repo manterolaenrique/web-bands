@@ -13,7 +13,7 @@ import {
   isInviteExpired,
   normalizeInviteEmail,
 } from '@/lib/bands/members'
-import {sendBandInviteEmail} from '@/lib/email/resend'
+import {isBandInviteEmailConfigured, sendBandInviteEmail} from '@/lib/email/resend'
 import {siteUrl} from '@/lib/env'
 import {requireUser} from '@/lib/auth/session'
 import {writeAuditLog} from '@/lib/server/audit'
@@ -123,6 +123,10 @@ async function sendInviteEmailOrLog({
   token: string
   expiresAt: string
 }) {
+  if (!isBandInviteEmailConfigured()) {
+    return false
+  }
+
   try {
     await sendBandInviteEmail({
       to: email,

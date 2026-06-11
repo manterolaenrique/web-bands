@@ -853,6 +853,108 @@ export default {
       ],
     },
     {
+      name: 'presentation',
+      title: 'Presentacion Publica',
+      type: 'object',
+      fields: [
+        {
+          name: 'sectionOrder',
+          title: 'Orden de Secciones',
+          type: 'array',
+          description: 'Define el orden de las secciones publicas debajo del hero.',
+          of: [{ type: 'string' }],
+          options: {
+            list: [
+              { title: 'Lanzamiento destacado', value: 'featured' },
+              { title: 'Escuchanos', value: 'listen' },
+              { title: 'Historia', value: 'about' },
+              { title: 'Integrantes', value: 'members' },
+              { title: 'Timeline', value: 'timeline' },
+              { title: 'Shows', value: 'shows' },
+              { title: 'Galeria', value: 'gallery' },
+              { title: 'Contacto', value: 'contact' },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      name: 'internalKit',
+      title: 'Kit Interno',
+      type: 'object',
+      description: 'Material privado de la banda para el dashboard. No se publica en la web.',
+      fields: [
+        {
+          name: 'shortPitch',
+          title: 'Resumen corto',
+          type: 'text',
+          rows: 3,
+        },
+        {
+          name: 'contactName',
+          title: 'Nombre de contacto',
+          type: 'string',
+        },
+        {
+          name: 'contactEmail',
+          title: 'Email de contacto',
+          type: 'string',
+        },
+        {
+          name: 'contactPhone',
+          title: 'Telefono de contacto',
+          type: 'string',
+        },
+        {
+          name: 'bookingNotes',
+          title: 'Notas internas',
+          type: 'text',
+          rows: 4,
+        },
+        {
+          name: 'keyLinks',
+          title: 'Links clave',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              fields: [
+                {
+                  name: 'label',
+                  title: 'Etiqueta',
+                  type: 'string',
+                  validation: (Rule: any) => Rule.required(),
+                },
+                {
+                  name: 'url',
+                  title: 'URL',
+                  type: 'url',
+                  validation: (Rule: any) => Rule.required(),
+                },
+                {
+                  name: 'kind',
+                  title: 'Tipo',
+                  type: 'string',
+                  options: {
+                    list: [
+                      { title: 'Press', value: 'press' },
+                      { title: 'Demo', value: 'demo' },
+                      { title: 'Drive', value: 'drive' },
+                      { title: 'Instagram', value: 'instagram' },
+                      { title: 'Spotify', value: 'spotify' },
+                      { title: 'YouTube', value: 'youtube' },
+                      { title: 'Other', value: 'other' },
+                    ],
+                  },
+                  initialValue: 'other',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
       name: 'seo',
       title: 'SEO',
       type: 'object',

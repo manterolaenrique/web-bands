@@ -18,6 +18,10 @@ function getEmailFrom() {
   return process.env.EMAIL_FROM
 }
 
+export function isBandInviteEmailConfigured() {
+  return Boolean(getResendApiKey() && getEmailFrom())
+}
+
 function getResendClient() {
   const apiKey = getResendApiKey()
 
@@ -85,4 +89,3 @@ export async function sendBandInviteEmail(params: BandInviteEmailParams) {
 
   return data
 }
-

@@ -1,3 +1,8 @@
+import {
+  DEFAULT_BAND_SECTION_ORDER,
+  type BandInternalKitLinkKind,
+  type BandPublicSectionKey,
+} from '@/lib/bands/presentation'
 import type {BandStatus, SanityImage} from '@/types/band'
 
 export type BandEditorMember = {
@@ -57,6 +62,13 @@ export type BandEditorGalleryItem = {
   alt?: string
   caption?: string
   link?: string
+}
+
+export type BandEditorInternalKitLink = {
+  _key: string
+  label: string
+  url: string
+  kind: BandInternalKitLinkKind
 }
 
 export type BandEditorValues = {
@@ -122,6 +134,17 @@ export type BandEditorValues = {
   gallerySection: {
     titulo?: string
     items: BandEditorGalleryItem[]
+  }
+  presentation: {
+    sectionOrder: BandPublicSectionKey[]
+  }
+  internalKit: {
+    shortPitch?: string
+    contactName?: string
+    contactEmail?: string
+    contactPhone?: string
+    bookingNotes?: string
+    keyLinks: BandEditorInternalKitLink[]
   }
   seo: {
     title?: string
@@ -280,11 +303,25 @@ export function mergeEditorValues(initialValues: BandEditorValues, snapshot: Par
       ...snapshot.gallerySection,
       items: snapshot.gallerySection?.items || initialValues.gallerySection.items,
     },
+    presentation: {
+      ...initialValues.presentation,
+      ...snapshot.presentation,
+      sectionOrder: snapshot.presentation?.sectionOrder || initialValues.presentation.sectionOrder,
+    },
+    internalKit: {
+      ...initialValues.internalKit,
+      ...snapshot.internalKit,
+      keyLinks: snapshot.internalKit?.keyLinks || initialValues.internalKit.keyLinks,
+    },
     seo: {
       ...initialValues.seo,
       ...snapshot.seo,
     },
   }
+}
+
+export function createDefaultSectionOrder() {
+  return [...DEFAULT_BAND_SECTION_ORDER]
 }
 
 export function serializeEditorValues(values: unknown) {

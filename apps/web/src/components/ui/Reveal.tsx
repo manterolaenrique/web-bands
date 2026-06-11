@@ -7,21 +7,23 @@ export function Reveal({
   className,
   delay = 0,
   threshold = 0.18,
+  disabled = false,
   as: Tag = 'div',
 }: {
   children: ReactNode
   className?: string
   delay?: number
   threshold?: number
+  disabled?: boolean
   as?: 'div' | 'section' | 'article'
 }) {
   const ref = useRef<HTMLElement | null>(null)
   const [isVisible, setIsVisible] = useState(() => {
     if (typeof window === 'undefined') {
-      return false
+      return disabled
     }
 
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    return disabled || window.matchMedia('(prefers-reduced-motion: reduce)').matches
   })
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function Reveal({
       return
     }
 
-    if (isVisible) {
+    if (isVisible || disabled) {
       return
     }
 
@@ -52,7 +54,7 @@ export function Reveal({
     observer.observe(node)
 
     return () => observer.disconnect()
-  }, [isVisible, threshold])
+  }, [disabled, isVisible, threshold])
 
   return (
     <Tag

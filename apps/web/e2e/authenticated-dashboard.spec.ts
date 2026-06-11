@@ -13,12 +13,21 @@ async function login(page: Page) {
   await loginAs(page, fixture.email, fixture.password)
 }
 
+function getVisibleLoginSurface(page: Page) {
+  return page.locator('.mobile-auth-screen:visible, .auth-card:visible').first()
+}
+
 async function loginAs(page: Page, email: string, password: string) {
   await page.goto('/login')
-  await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', {name: 'Entrar'}).click()
+  const loginSurface = getVisibleLoginSurface(page)
+  await loginSurface.getByLabel('Email').fill(email)
+  await loginSurface.getByLabel('Password').fill(password)
+  await loginSurface.getByRole('button', {name: 'Entrar'}).click()
   await expect(page).toHaveURL(/\/dashboard$/)
+}
+
+function getDesktopBandSurface(page: Page, bandName: string) {
+  return page.locator('.dashboard-band-row, article.dashboard-card').filter({hasText: bandName}).first()
 }
 
 async function ensureArrayItem(page: Page, addButtonName: string, selector: string) {
@@ -88,17 +97,22 @@ test('owner can edit their band and see the public update', async ({page}) => {
   const accentColor = '#2A9D44'
 
   await login(page)
-  await expect(page.getByRole('heading', {name: 'Mis bandas'})).toBeVisible()
+  await expect(page.getByRole('heading', {name: 'Dashboard'})).toBeVisible()
+  await expect(page.locator('.dashboard-desktop-toolbar')).toBeVisible()
+  await expect(page.locator('.dashboard-sidebar')).toHaveCount(0)
 
-  const bandCard = page
-    .locator('article.dashboard-card')
-    .filter({hasText: fixture.band.name})
-    .first()
+  const bandCard = getDesktopBandSurface(page, fixture.band.name)
   await expect(bandCard).toBeVisible()
   await bandCard.getByRole('link', {name: 'Editar'}).click()
 
   await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}$`))
+  await expect(page.locator('.editor-preview-panel')).toHaveCount(0)
   await page.locator('input[name="hero.title"]').fill(heroTitle)
+  await page.getByRole('button', {name: 'Vista previa'}).click()
+  await expect(page.locator('.editor-preview-overlay')).toBeVisible()
+  await expect(page.locator('.editor-preview-overlay').getByRole('heading', {level: 1, name: heroTitle})).toBeVisible()
+  await page.locator('.editor-preview-overlay').getByRole('button', {name: 'Cerrar', exact: true}).click()
+  await expect(page.locator('.editor-preview-overlay')).toBeHidden()
   await page.locator('input[name="hero.showSpotlightCard"]').uncheck()
   await page.locator('textarea[name="about.content"]').fill(aboutContent)
   await page.locator('input[name="colors.primary"]').fill(primaryColor)
@@ -147,7 +161,7 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await page
     .locator('input[name^="escuchanos.youtube.videos."][name$=".url"]')
     .last()
-    .fill('https://www.youtube.com/watch?v=codexe2e123')
+    .fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
   await page
     .locator('textarea[name^="escuchanos.youtube.videos."][name$=".descripcion"]')
     .last()
@@ -199,6 +213,16 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await page.locator('input[name="seo.title"]').fill(seoTitle)
   await page.locator('textarea[name="seo.description"]').fill(seoDescription)
   await page.locator('input[name="seo.keywords"]').fill(seoKeywords)
+  const membersOrderItem = page.locator('.section-order-item').filter({hasText: 'Integrantes'}).first()
+  await membersOrderItem.getByRole('button', {name: 'Subir'}).click()
+
+  await page.getByRole('button', {name: 'Kit interno'}).click()
+  await page.locator('textarea[name="internalKit.shortPitch"]').fill('Resumen privado de QA para productores.')
+  await page.getByRole('button', {name: 'Agregar link'}).click()
+  await page.locator('input[name^="internalKit.keyLinks."][name$=".label"]').last().fill('Drive press')
+  await page.locator('input[name^="internalKit.keyLinks."][name$=".url"]').last().fill('https://example.com/press-kit')
+  await page.locator('select[name^="internalKit.keyLinks."][name$=".kind"]').last().selectOption('drive')
+  await page.getByRole('button', {name: 'Contenido publico'}).click()
 
   await expect(page.getByRole('button', {name: 'Guardar cambios'})).toBeEnabled()
   const saveResponsePromise = page.waitForResponse(
@@ -215,13 +239,14 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await memberSection.locator('input[type="file"]').setInputFiles(createUploadFile('member-red.png', 'red'))
   await expect(memberSection.getByText('Imagen subida correctamente.')).toBeVisible()
 
-  const featuredSection = page.locator('.form-section').filter({hasText: 'Lanzamiento destacado'}).first()
-  await featuredSection.locator('input[type="file"]').setInputFiles(createUploadFile('featured-red.png', 'red'))
-  await expect(featuredSection.getByText('Imagen subida correctamente.')).toBeVisible()
+  const featuredUploader = page.locator('.asset-uploader').filter({hasText: 'Portada destacada'}).first()
+  await featuredUploader.locator('input[type="file"]').setInputFiles(createUploadFile('featured-red.png', 'red'))
+  await expect(featuredUploader.getByText('Imagen subida correctamente.')).toBeVisible()
 
   await page.goto('/dashboard')
-  await expect(page.getByRole('heading', {name: 'Mis bandas'})).toBeVisible()
-  await bandCard.getByRole('link', {name: 'Editar'}).click()
+  await expect(page.getByRole('heading', {name: 'Dashboard'})).toBeVisible()
+  const refreshedBandCard = getDesktopBandSurface(page, fixture.band.name)
+  await refreshedBandCard.getByRole('link', {name: 'Editar'}).click()
   await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}$`))
   await expect(page.locator('input[name="colors.primary"]')).toHaveValue(primaryColor)
   await expect(page.locator('input[name="colors.secondary"]')).toHaveValue(secondaryColor)
@@ -232,8 +257,14 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await expect(page.locator('input[name="seo.title"]')).toHaveValue(seoTitle)
   await expect(page.locator('input[name="seo.keywords"]')).toHaveValue(seoKeywords)
   await expect(page.getByText('Guardado').first()).toBeVisible()
+  await page.getByRole('button', {name: 'Kit interno'}).click()
+  await expect(page.locator('textarea[name="internalKit.shortPitch"]')).toHaveValue(
+    'Resumen privado de QA para productores.'
+  )
+  await expect(page.locator('input[name^="internalKit.keyLinks."][name$=".label"]').last()).toHaveValue('Drive press')
+  await page.getByRole('button', {name: 'Contenido publico'}).click()
 
-  const featuredPreview = await featuredSection
+  const featuredPreview = await featuredUploader
     .locator('.asset-uploader__preview')
     .evaluate((node) => getComputedStyle(node).backgroundImage)
   expect(featuredPreview).not.toBe('none')
@@ -257,6 +288,11 @@ test('owner can edit their band and see the public update', async ({page}) => {
   await expect(page.locator(`iframe[title="Spotify: ${spotifyPlaylistTitle} 1"]`)).toBeVisible()
   await expect(page.locator('.contact-panel--social[data-network="twitter"] .contact-panel__icon')).toBeVisible()
   await expect(page.getByRole('link', {name: 'X / Twitter'})).toHaveAttribute('href', contactTwitter)
+  await expect(page.getByText('Resumen privado de QA para productores.')).toHaveCount(0)
+
+  const membersHeadingBox = await page.getByRole('heading', {level: 2, name: 'La formacion actual'}).boundingBox()
+  const historyHeadingBox = await page.locator('#historia .section-heading').boundingBox()
+  expect(membersHeadingBox && historyHeadingBox ? membersHeadingBox.y < historyHeadingBox.y : false).toBe(true)
 
   const bandTheme = await page.locator('main.public-band-shell').evaluate((node) => ({
     primary: getComputedStyle(node).getPropertyValue('--band-primary').trim().toLowerCase(),
@@ -271,6 +307,61 @@ test('owner can edit their band and see the public update', async ({page}) => {
   expect(bandTheme.secondaryLight).toBe(secondaryLightColor.toLowerCase())
 })
 
+test.describe('mobile dashboard', () => {
+  test.use({viewport: {width: 390, height: 844}})
+
+  test('owner can navigate the mobile dashboard and open fullscreen preview', async ({page}) => {
+    test.skip(!fixture, fixtureState.ready ? undefined : fixtureState.reason)
+
+    if (!fixture) {
+      return
+    }
+
+    await page.goto('/login')
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', '/manifest.webmanifest')
+    await loginAs(page, fixture.email, fixture.password)
+    await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length > 0)
+
+    const serviceWorkers = await page.evaluate(async () => {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      return registrations.map((registration) => registration.scope)
+    })
+
+    expect(serviceWorkers.some((scope) => scope.includes('localhost'))).toBe(true)
+    await expect(page.locator('.dashboard-mobile-appbar')).toBeVisible()
+    await expect(page.locator('.dashboard-mobile-nav')).toBeVisible()
+    await expect(page.locator('.dashboard-mobile-cta')).toBeVisible()
+    await page.getByRole('link', {name: 'Cuenta', exact: true}).click()
+    await expect(page).toHaveURL(/\/dashboard\/account$/)
+    await expect(page.locator('.dashboard-account-card').first()).toContainText(fixture.email)
+    await page.getByRole('link', {name: 'Bandas', exact: true}).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await page.getByRole('link', {name: 'Ir a cuenta'}).click()
+    await expect(page).toHaveURL(/\/dashboard\/account$/)
+    await page.getByRole('link', {name: 'Bandas', exact: true}).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
+
+    const bandCard = page.locator('.dashboard-mobile-band-card').filter({hasText: fixture.band.name}).first()
+    await bandCard.getByRole('link', {name: 'Editar'}).click()
+
+    await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}$`))
+    await expect(page.locator('.editor-mobile-route-overview')).toBeVisible()
+    await expect(page.locator('.editor-preview-panel')).toBeHidden()
+    await page.locator(`a[href="/dashboard/bands/${fixture.band.id}/social"]`).first().click()
+    await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/social$`))
+    await expect(page.locator('input[name="contact.email"]')).toBeVisible()
+    await expect(page.locator('.editor-preview-panel')).toBeHidden()
+    await page.locator(`a[href="/dashboard/bands/${fixture.band.id}/preview"]`).first().click()
+    await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/preview$`))
+    await expect(page.locator('.editor-preview-panel')).toBeVisible()
+
+    await page.getByRole('button', {name: 'Pantalla completa'}).click()
+    await expect(page.locator('.editor-preview-overlay')).toBeVisible()
+    await page.locator('.editor-preview-overlay').getByRole('button', {name: 'Cerrar', exact: true}).click()
+    await expect(page.locator('.editor-preview-overlay')).toBeHidden()
+  })
+})
+
 test('invitee can open the invite link, authenticate, and accept the band access', async ({page}) => {
   test.skip(!fixture, fixtureState.ready ? undefined : fixtureState.reason)
   test.skip(!fixture?.invitee, 'Missing invitee fixture. Configure E2E_INVITEE_* or use managed fixture.')
@@ -280,13 +371,10 @@ test('invitee can open the invite link, authenticate, and accept the band access
   }
 
   await login(page)
-  const bandCard = page
-    .locator('article.dashboard-card')
-    .filter({hasText: fixture.band.name})
-    .first()
+  const bandCard = getDesktopBandSurface(page, fixture.band.name)
   await expect(bandCard).toBeVisible()
-  await bandCard.getByRole('link', {name: 'Editar'}).click()
-  await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}$`))
+  await bandCard.getByRole('link', {name: 'Equipo'}).click()
+  await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/team$`))
 
   await page.locator('input[name="email"]').last().fill(fixture.invitee.email)
   await page.locator('select[name="role"]').last().selectOption('editor')
@@ -317,18 +405,54 @@ test('invitee can open the invite link, authenticate, and accept the band access
   await page.getByRole('link', {name: 'Entrar para continuar'}).click()
   await expect(page).toHaveURL(/\/login\?next=/)
 
-  await page.getByLabel('Email').fill(fixture.invitee.email)
-  await page.getByLabel('Password').fill(fixture.invitee.password)
-  await page.getByRole('button', {name: 'Entrar'}).click()
+  const inviteLoginSurface = getVisibleLoginSurface(page)
+  await inviteLoginSurface.getByLabel('Email').fill(fixture.invitee.email)
+  await inviteLoginSurface.getByLabel('Password').fill(fixture.invitee.password)
+  await inviteLoginSurface.getByRole('button', {name: 'Entrar'}).click()
   await expect(page).toHaveURL(new RegExp(`${inviteHref!.replace('/', '\\/')}$`))
   await expect(page.getByText('Todo listo. Acepta la invitacion para sumar esta banda a tu dashboard.')).toBeVisible()
 
   await page.getByRole('button', {name: 'Aceptar invitacion'}).click()
   await expect(page).toHaveURL(/\/dashboard(\?|$)/)
 
-  const inviteeBandCard = page
-    .locator('article.dashboard-card')
-    .filter({hasText: fixture.band.name})
-    .first()
+  const inviteeBandCard = getDesktopBandSurface(page, fixture.band.name)
   await expect(inviteeBandCard).toBeVisible()
+})
+
+test.describe('team mobile route', () => {
+  test.use({viewport: {width: 390, height: 844}})
+
+  test('manager can create an admin invite and see manual link actions', async ({page}) => {
+    test.skip(!fixture, fixtureState.ready ? undefined : fixtureState.reason)
+    test.skip(!fixture?.invitee, 'Missing invitee fixture. Configure E2E_INVITEE_* or use managed fixture.')
+
+    if (!fixture || !fixture.invitee) {
+      return
+    }
+
+    await login(page)
+    await page.goto(`/dashboard/bands/${fixture.band.id}/team`)
+    await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/team$`))
+    await expect(page.getByRole('heading', {name: 'Equipo y permisos'})).toBeVisible()
+
+    await page.locator('input[name="email"]').last().fill(fixture.invitee.email)
+    await page.locator('select[name="role"]').last().selectOption('admin')
+    await page.getByRole('button', {name: 'Enviar invitacion'}).click()
+
+    await expect(
+      page.getByText(
+        /Invitacion enviada correctamente.|La invitacion fue creada, pero no se pudo enviar el email.|Usa el enlace manual para compartirla.|La invitacion pendiente fue actualizada.|La invitacion fue actualizada, pero no se pudo enviar el email.|Ese usuario ya pertenece a la banda./
+      )
+    ).toBeVisible()
+
+    if (await page.getByText('Ese usuario ya pertenece a la banda.').isVisible()) {
+      return
+    }
+
+    const inviteCard = page.locator('.member-card').filter({hasText: fixture.invitee.email}).first()
+    await expect(inviteCard).toBeVisible()
+    await expect(inviteCard.getByRole('link', {name: 'Abrir enlace'})).toBeVisible()
+    await expect(inviteCard.getByRole('button', {name: 'Copiar enlace'})).toBeVisible()
+    await expect(inviteCard).toContainText('Invitado como Admin')
+  })
 })

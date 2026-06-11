@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VOLTAGE | Playlists</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#5de6ff",
+                        "surface-tint": "#ddb7ff",
+                        "on-tertiary-container": "#3a2600",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "secondary-fixed": "#a2eeff",
+                        "on-secondary-fixed": "#001f25",
+                        "on-tertiary": "#432c00",
+                        "inverse-primary": "#842bd2",
+                        "surface-container": "#201f1f",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-lowest": "#0e0e0e",
+                        "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                        "on-tertiary-fixed-variant": "#604100",
+                        "surface-elevated": "#1E1E22",
+                        "surface-charcoal": "#121214",
+                        "primary-fixed-dim": "#ddb7ff",
+                        "on-surface-variant": "#cfc2d6",
+                        "on-background": "#e5e2e1",
+                        "on-tertiary-fixed": "#281900",
+                        "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                        "on-secondary": "#00363e",
+                        "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                        "tertiary-container": "#bd871a",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary-container": "#00515d",
+                        "secondary-container": "#00cbe6",
+                        "inverse-on-surface": "#313030",
+                        "tertiary-fixed": "#ffdead",
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "on-error": "#690005",
+                        "outline": "#988d9f",
+                        "surface-variant": "#353534",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#6900b3",
+                        "on-primary-container": "#400071",
+                        "error-container": "#93000a",
+                        "primary-fixed": "#f0dbff",
+                        "tertiary": "#fabc4e",
+                        "surface-container-high": "#2a2a2a",
+                        "primary-container": "#b76dff",
+                        "on-primary-fixed": "#2c0051",
+                        "error": "#ffb4ab",
+                        "background": "#131313",
+                        "primary": "#ddb7ff",
+                        "tertiary-fixed-dim": "#fabc4e",
+                        "surface-dim": "#131313",
+                        "outline-variant": "#4d4354",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "on-primary": "#490080",
+                        "surface-bright": "#3a3939"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px",
+                        "stack-md": "16px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Montserrat"],
+                        "display-lg": ["Montserrat"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Montserrat"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                        "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(18, 18, 20, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-border-primary:hover {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+            border-color: #ddb7ff;
+        }
+        .neon-border-secondary:hover {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+            border-color: #5de6ff;
+        }
+        .gradient-button {
+            background: linear-gradient(135deg, #ddb7ff 0%, #5de6ff 100%);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .gradient-button:active {
+            transform: scale(0.95);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-md overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full bg-surface/80 backdrop-blur-xl border-b border-glass-stroke flex justify-between items-center px-margin-mobile md:px-gutter h-16 z-50">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined text-primary cursor-pointer lg:hidden">menu</span>
+<span class="font-display-lg-mobile text-display-lg-mobile font-black tracking-tighter text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">VOLTAGE</span>
+</div>
+<nav class="hidden lg:flex items-center gap-gutter">
+<a class="text-on-surface-variant hover:text-secondary hover:scale-105 transition-transform font-label-md" href="#">Discover</a>
+<a class="text-on-surface-variant hover:text-secondary hover:scale-105 transition-transform font-label-md" href="#">Artists</a>
+<a class="text-on-surface-variant hover:text-secondary hover:scale-105 transition-transform font-label-md" href="#">Tours</a>
+<a class="text-secondary font-label-md" href="#">Dashboard</a>
+</nav>
+<button class="px-6 py-2 rounded-full font-label-md text-on-primary gradient-button">JOIN</button>
+</header>
+<!-- Sidebar for Desktop -->
+<aside class="hidden lg:flex fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex-col p-stack-md bg-surface-container border-r border-glass-stroke z-40">
+<div class="flex flex-col gap-base">
+<a class="flex items-center gap-stack-md p-stack-md text-on-surface-variant hover:bg-surface-variant hover:text-primary rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-md">Discover</span>
+</a>
+<a class="flex items-center gap-stack-md p-stack-md text-on-surface-variant hover:bg-surface-variant hover:text-primary rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined">mic_external_on</span>
+<span class="font-label-md">Artists</span>
+</a>
+<a class="flex items-center gap-stack-md p-stack-md text-on-surface-variant hover:bg-surface-variant hover:text-primary rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined">confirmation_number</span>
+<span class="font-label-md">Tours</span>
+</a>
+<a class="flex items-center gap-stack-md p-stack-md bg-primary-container text-on-primary-container rounded-full transition-all" href="#">
+<span class="material-symbols-outlined">speed</span>
+<span class="font-label-md">Dashboard</span>
+</a>
+</div>
+<div class="mt-auto">
+<a class="flex items-center gap-stack-md p-stack-md text-on-surface-variant hover:bg-surface-variant hover:text-primary rounded-full transition-all" href="#">
+<span class="material-symbols-outlined">login</span>
+<span class="font-label-md">Login</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="pt-24 pb-section-gap px-margin-mobile md:px-gutter lg:ml-64 max-w-container-max mx-auto">
+<!-- Header Section -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md mb-stack-lg">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface">Playlists</h1>
+<p class="text-on-surface-variant font-body-md mt-2">Manage your audio stems and setlists for live performances.</p>
+</div>
+<button class="flex items-center justify-center gap-stack-sm px-stack-lg py-stack-md rounded-full font-label-md text-on-primary gradient-button w-full md:w-auto">
+<span class="material-symbols-outlined">add</span>
+                Nueva playlist
+            </button>
+</section>
+<!-- Search & Filter Bar -->
+<section class="mb-stack-lg">
+<div class="relative w-full max-w-2xl">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-charcoal border border-glass-stroke rounded-xl py-4 pl-12 pr-4 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all font-body-md placeholder:text-outline" placeholder="Search playlists, tracks, or tags..." type="text"/>
+</div>
+</section>
+<!-- Bento Grid / Playlists List -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Playlist Card 1 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1 neon-border-secondary">
+<div class="h-48 relative overflow-hidden">
+<img alt="Concert Stage" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A high-contrast wide shot of an electronic rock concert stage bathed in neon cyan and purple light. Silhouette of a musician at a keyboard is visible against the glowing backdrop of laser beams and smoke. The atmosphere is intense, energetic, and futuristic with a dark minimalism aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdZ13es6P7HR9i11MSODaqQvDJa_OWK562_Yg4SDmb1Q7CDi-Uov9lMLBFK4yDB9zBEZ_M-G9VGuriEZMmysdK3auQggAx-vY97eid4XUR8uINW9UkKWag1S2K8EzQz3ZYY_FDTKD8rM0HDkVImiwG75QHL8qeNxGVZUJJtnO002S3mfUlAd29Ehv2hgCvt9Myk-iIuJdqyVBGwxav7-HECzcAu_5tqTbEBZ-DDaYMgFzJDz_eHHl_UF1AtwBzzk65KgeRMZfnICFz"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-charcoal to-transparent"></div>
+<div class="absolute bottom-4 left-4 flex gap-2">
+<span class="px-3 py-1 bg-secondary/20 text-secondary text-[10px] font-bold uppercase rounded-full backdrop-blur-md">Live</span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Setlist en vivo</h3>
+<span class="text-secondary material-symbols-outlined">more_vert</span>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-2 flex-grow">Main setlist for the summer tour. Includes heavy synth-driven tracks and extended transitions.</p>
+<div class="flex items-center justify-between mt-stack-lg">
+<div class="flex items-center gap-2 text-outline text-label-sm">
+<span class="material-symbols-outlined text-[18px]">audiotrack</span>
+<span>12 audios</span>
+</div>
+<button class="px-6 py-2 border border-secondary text-secondary font-label-md rounded-full hover:bg-secondary hover:text-on-secondary transition-colors duration-200">
+                            Abrir
+                        </button>
+</div>
+</div>
+</div>
+<!-- Playlist Card 2 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1 neon-border-primary">
+<div class="h-48 relative overflow-hidden">
+<img alt="Recording Studio" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A macro close-up of a premium audio mixing console in a dimly lit recording studio. The faders and knobs are highlighted by soft purple neon glow, casting moody shadows across the metallic surface. The image conveys technical precision, high-end audio engineering, and a focused late-night creative atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAl2HJJgCs7waXnBfMblCHE2IEvVVDh5XVovR-fEvyd_R0_duKihQCLGNnGuurGcG15lOoUNm2qJY2HfstUvVHVLRSryVEckX6O0j6bZnSIKCBYF7jVwq4PNl_P7yMXqlOwy0pZ7tQH7WrZKV1ZBjfsXCiK5yWlad96ykYdOAeUBwuwc3KjXJomc7mCWSFMBX9JE1PfRmsBMqWt8qnsOlhniP087_o6mP7nvyCfSE6pczNHs-fPOQWU1CjbEIPXGl9gGGPr7eRqKUD-"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-charcoal to-transparent"></div>
+<div class="absolute bottom-4 left-4 flex gap-2">
+<span class="px-3 py-1 bg-primary/20 text-primary text-[10px] font-bold uppercase rounded-full backdrop-blur-md">Practice</span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Ensayo jueves</h3>
+<span class="text-secondary material-symbols-outlined">more_vert</span>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-2 flex-grow">Experimental session focusing on raw signal processing and distortion layers.</p>
+<div class="flex items-center justify-between mt-stack-lg">
+<div class="flex items-center gap-2 text-outline text-label-sm">
+<span class="material-symbols-outlined text-[18px]">audiotrack</span>
+<span>8 audios</span>
+</div>
+<button class="px-6 py-2 border border-secondary text-secondary font-label-md rounded-full hover:bg-secondary hover:text-on-secondary transition-colors duration-200">
+                            Abrir
+                        </button>
+</div>
+</div>
+</div>
+<!-- Playlist Card 3 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1 neon-border-secondary">
+<div class="h-48 relative overflow-hidden">
+<img alt="Audio Hardware" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="An artistic shot of a modular synthesizer with a complex network of colorful patch cables. The scene is set in a dark environment with tactical neon cyan lighting highlighting the geometric arrangement of the cables and knobs. The style is modern, industrial, and highly detailed, representing deep space electronic music production." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgAxhZLWR_iGID--xA37-Nh4DZj2vj88hxR64YM1J5yYmQzz2jx419qe1AJMWz4NKY8NQUE79yu-ZZ04PtD_vPKmz7rUkzS9dtBcggzy0SP7CFm23mmxkmyd63rXvcl1uLU291f-XrHU_TVHQ3o48g4B1OhkdFmI95YCVOi_T3xJa8hvEpFXW8kn-X5-DaxZW2tzR53vtw0uGdRuDLBcdQLsYSJdt7nFhxQPii_5TMB6TL5kPmVsqCsxsKVSiNQVcFNnRNtL-4F5ca"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-charcoal to-transparent"></div>
+<div class="absolute bottom-4 left-4 flex gap-2">
+<span class="px-3 py-1 bg-secondary/20 text-secondary text-[10px] font-bold uppercase rounded-full backdrop-blur-md">Archived</span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Modular Session</h3>
+<span class="text-secondary material-symbols-outlined">more_vert</span>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-2 flex-grow">Recorded modular loops from December sessions. Bass-heavy rhythm section stems.</p>
+<div class="flex items-center justify-between mt-stack-lg">
+<div class="flex items-center gap-2 text-outline text-label-sm">
+<span class="material-symbols-outlined text-[18px]">audiotrack</span>
+<span>24 audios</span>
+</div>
+<button class="px-6 py-2 border border-secondary text-secondary font-label-md rounded-full hover:bg-secondary hover:text-on-secondary transition-colors duration-200">
+                            Abrir
+                        </button>
+</div>
+</div>
+</div>
+<!-- Playlist Card 4 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1 neon-border-primary">
+<div class="h-48 relative overflow-hidden flex items-center justify-center bg-surface-container-low">
+<span class="material-symbols-outlined text-secondary text-6xl opacity-20 group-hover:opacity-40 transition-opacity">playlist_play</span>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-charcoal to-transparent opacity-60"></div>
+</div>
+<div class="p-stack-md flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Unfinished Ideas</h3>
+<span class="text-secondary material-symbols-outlined">more_vert</span>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-2 flex-grow">Quick sketches and melody drafts for the upcoming EP.</p>
+<div class="flex items-center justify-between mt-stack-lg">
+<div class="flex items-center gap-2 text-outline text-label-sm">
+<span class="material-symbols-outlined text-[18px]">audiotrack</span>
+<span>5 audios</span>
+</div>
+<button class="px-6 py-2 border border-secondary text-secondary font-label-md rounded-full hover:bg-secondary hover:text-on-secondary transition-colors duration-200">
+                            Abrir
+                        </button>
+</div>
+</div>
+</div>
+<!-- Empty State / New Card -->
+<div class="border-2 border-dashed border-glass-stroke rounded-xl p-gutter flex flex-col items-center justify-center text-center gap-stack-md hover:border-secondary hover:bg-secondary/5 transition-all cursor-pointer group h-full min-h-[400px]">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-secondary text-3xl">add</span>
+</div>
+<div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Crear nueva</h3>
+<p class="text-outline font-body-md mt-2">Empieza un nuevo setlist o colección de audios.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Section -->
+<footer class="bg-surface-container-lowest border-t border-glass-stroke py-stack-lg flex flex-col items-center gap-stack-md px-margin-mobile w-full mt-section-gap">
+<span class="font-display-lg-mobile text-display-lg-mobile font-black tracking-tighter text-primary opacity-50">VOLTAGE</span>
+<div class="flex gap-gutter">
+<a class="text-outline hover:text-secondary-fixed-dim transition-colors font-label-sm" href="#">Privacy</a>
+<a class="text-outline hover:text-secondary-fixed-dim transition-colors font-label-sm" href="#">Terms</a>
+<a class="text-outline hover:text-secondary-fixed-dim transition-colors font-label-sm" href="#">Support</a>
+</div>
+<p class="text-outline font-label-sm opacity-60">© 2024 VOLTAGE SYNTH RECORDS</p>
+</footer>
+<!-- Bottom Nav for Mobile -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-surface/80 backdrop-blur-xl border-t border-glass-stroke flex justify-around items-center h-16 z-50 px-base">
+<a class="flex flex-col items-center text-on-surface-variant gap-1" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[10px] font-bold uppercase">Discover</span>
+</a>
+<a class="flex flex-col items-center text-on-surface-variant gap-1" href="#">
+<span class="material-symbols-outlined">mic_external_on</span>
+<span class="text-[10px] font-bold uppercase">Artists</span>
+</a>
+<a class="flex flex-col items-center text-secondary gap-1" href="#">
+<span class="material-symbols-outlined">speed</span>
+<span class="text-[10px] font-bold uppercase">Dash</span>
+</a>
+<a class="flex flex-col items-center text-on-surface-variant gap-1" href="#">
+<span class="material-symbols-outlined">login</span>
+<span class="text-[10px] font-bold uppercase">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for search bar focus
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-[1.01]');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-[1.01]');
+        });
+    </script>
+</body></html>

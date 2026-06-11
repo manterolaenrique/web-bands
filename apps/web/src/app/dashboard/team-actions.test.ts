@@ -8,6 +8,7 @@ const {
   mockCreateClient,
   mockCreateAdminClient,
   mockSendBandInviteEmail,
+  mockIsBandInviteEmailConfigured,
   mockLogServerError,
   mockGetServerActionRequestContext,
   mockConsumeRateLimit,
@@ -24,6 +25,7 @@ const {
   mockCreateClient: vi.fn(),
   mockCreateAdminClient: vi.fn(),
   mockSendBandInviteEmail: vi.fn(),
+  mockIsBandInviteEmailConfigured: vi.fn(),
   mockLogServerError: vi.fn(),
   mockGetServerActionRequestContext: vi.fn(),
   mockConsumeRateLimit: vi.fn(),
@@ -44,6 +46,7 @@ vi.mock('@/lib/auth/session', () => ({
 }))
 
 vi.mock('@/lib/email/resend', () => ({
+  isBandInviteEmailConfigured: mockIsBandInviteEmailConfigured,
   sendBandInviteEmail: mockSendBandInviteEmail,
 }))
 
@@ -242,6 +245,7 @@ describe('team actions', () => {
     mockCreateClient.mockResolvedValue({})
     mockGetMembershipRole.mockResolvedValue('owner')
     mockCanManageBand.mockReturnValue(true)
+    mockIsBandInviteEmailConfigured.mockReturnValue(true)
     mockGetServerActionRequestContext.mockResolvedValue({
       ip: '127.0.0.1',
       requestId: 'req-1',
@@ -311,6 +315,24 @@ describe('team actions', () => {
         inviteEmail: 'invitee@example.com',
       })
     )
+  })
+
+  it('keeps the invite and skips email delivery when resend is not configured', async () => {
+    mockCreateAdminClient.mockReturnValue(createAdminMock())
+    mockIsBandInviteEmailConfigured.mockReturnValue(false)
+
+    await expect(
+      createBandInvite(
+        createFormData({
+          bandId: 'band-1',
+          email: 'invitee@example.com',
+          role: 'admin',
+          returnTo: '/dashboard/bands/band-1/team',
+        })
+      )
+    ).rejects.toThrow('NEXT_REDIRECT:/dashboard/bands/band-1/team?message=invite-sent-email-failed')
+
+    expect(mockSendBandInviteEmail).not.toHaveBeenCalled()
   })
 
   it('blocks invite creation when the team action rate limit is exceeded', async () => {

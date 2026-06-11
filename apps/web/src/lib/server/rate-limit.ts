@@ -40,6 +40,16 @@ export const RATE_LIMIT_POLICIES = {
     maxAttempts: 10,
     windowSeconds: 300,
   },
+  demosUpload: {
+    bucket: 'bands.demos_upload',
+    maxAttempts: 12,
+    windowSeconds: 300,
+  },
+  demosWrite: {
+    bucket: 'bands.demos_write',
+    maxAttempts: 30,
+    windowSeconds: 300,
+  },
   teamActions: {
     bucket: 'bands.team_actions',
     maxAttempts: 20,

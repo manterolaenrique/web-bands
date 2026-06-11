@@ -1,8 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent} from 'react'
 
+import {BandEditorPreview} from '@/components/dashboard/BandEditorPreview'
+import {SectionOrderEditor} from '@/components/dashboard/SectionOrderEditor'
 import {
   MAX_TIMELINE_EVENTS,
   TIMELINE_ICON_OPTIONS,
@@ -23,6 +26,7 @@ import {
   type ArrayCollection,
   type BandEditorGalleryItem,
   type BandEditorImages,
+  type BandEditorInternalKitLink,
   type BandEditorMember,
   type BandEditorShow,
   type BandEditorSpotifyPlaylist,
@@ -32,14 +36,23 @@ import {
   type SavedArrayItems,
   type StoredBandEditorSnapshot,
 } from '@/lib/bands/editor'
+import {
+  MOBILE_EDITOR_SECTIONS,
+  getMobileEditorHref,
+  type MobileEditorSectionKey,
+} from '@/components/dashboard/mobile-editor-sections'
+import {
+  updateBandRequest,
+  uploadBandAssetRequest,
+  type DashboardValidationIssue,
+} from '@/lib/dashboard/api'
 import type {SanityImage} from '@/types/band'
+import type {PublicBand} from '@/types/band'
 
 type EditorPhase = 'pristine' | 'dirty' | 'saving' | 'saved' | 'error'
-
-type ValidationIssue = {
-  path: string
-  message: string
-}
+type EditorMode = 'public' | 'kit'
+type PreviewViewport = 'desktop' | 'mobile'
+type EditorSectionState = 'saved' | 'pending' | 'error'
 
 type ImageUploadState =
   | {
@@ -56,27 +69,6 @@ type ImageUploadState =
       status: 'error'
       message: string
     }
-
-type BandEditorResponse = {
-  ok?: boolean
-  band?: {
-    id: string
-    slug: string
-    sanityDocumentId: string
-    syncedAt?: string
-  }
-  message?: string
-  errors?: ValidationIssue[]
-}
-
-type BandAssetResponse = {
-  ok?: boolean
-  image?: {
-    assetId?: string
-    url?: string | null
-  }
-  message?: string
-}
 
 type EditorToast = {
   id: number
@@ -104,7 +96,7 @@ function buildFieldErrors(errors: unknown) {
   }
 
   return errors.reduce<Record<string, string[]>>((result, error) => {
-    const typedError = error as ValidationIssue
+    const typedError = error as DashboardValidationIssue
 
     if (!typedError?.path || !typedError?.message) {
       return result
@@ -168,7 +160,6 @@ function ImageUploadField({
   onUploaded?: (image: SanityImage) => void
   onStatusMessage?: (tone: EditorToast['tone'], message: string) => void
 }) {
-  const router = useRouter()
   const [state, setState] = useState<ImageUploadState>({status: 'idle'})
   const [uploadedPreview, setUploadedPreview] = useState('')
   const preview = previewUrl || uploadedPreview
@@ -190,11 +181,8 @@ function ImageUploadField({
     }
     formData.set('file', file)
 
-    const response = await fetch(`/api/bands/${bandId}/assets`, {
-      method: 'POST',
-      body: formData,
-    })
-    const body = (await response.json().catch(() => ({}))) as BandAssetResponse
+    const response = await uploadBandAssetRequest(bandId, formData)
+    const body = response.body
 
     if (!response.ok) {
       const message = body?.message || 'No se pudo subir la imagen.'
@@ -211,7 +199,7 @@ function ImageUploadField({
       onUploaded(createSanityImageRef(body.image.assetId))
     }
 
-    setUploadedPreview(body.image?.url || URL.createObjectURL(file))
+    setUploadedPreview(body?.image?.url || URL.createObjectURL(file))
     const message = 'Imagen subida correctamente.'
     setState({
       status: 'success',
@@ -219,7 +207,6 @@ function ImageUploadField({
     })
     onStatusMessage?.('success', message)
     input.value = ''
-    router.refresh()
   }
 
   return (
@@ -287,10 +274,13 @@ function formatEditorTimestamp(value: string | null) {
     return null
   }
 
-  return new Intl.DateTimeFormat('es-AR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(date)
+  const day = `${date.getDate()}`.padStart(2, '0')
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const year = `${date.getFullYear()}`.slice(-2)
+  const hours = `${date.getHours()}`.padStart(2, '0')
+  const minutes = `${date.getMinutes()}`.padStart(2, '0')
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`
 }
 
 function StatusBadge({state}: {state: 'saved' | 'pending' | 'error'}) {
@@ -377,6 +367,18 @@ function parseKeywordList(rawValue: string) {
     .filter(Boolean)
 }
 
+function combineSectionStates(...states: EditorSectionState[]): EditorSectionState {
+  if (states.includes('error')) {
+    return 'error'
+  }
+
+  if (states.includes('pending')) {
+    return 'pending'
+  }
+
+  return 'saved'
+}
+
 function SectionHeading({
   title,
   description,
@@ -403,12 +405,18 @@ export function BandEditorForm({
   bandId,
   initialValues,
   initialImages,
+  previewBandBase,
   initialServerSavedAt,
+  routeSection = 'overview',
+  canManage = false,
 }: {
   bandId: string
   initialValues: BandEditorValues
   initialImages: BandEditorImages
+  previewBandBase?: PublicBand | null
   initialServerSavedAt?: string | null
+  routeSection?: MobileEditorSectionKey
+  canManage?: boolean
 }) {
   const router = useRouter()
   const storageKey = `web-bands:editor:${bandId}`
@@ -430,6 +438,11 @@ export function BandEditorForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [savedArrayItems, setSavedArrayItems] = useState<SavedArrayItems>(() => buildSavedArrayItems(initialValues))
   const [toasts, setToasts] = useState<EditorToast[]>([])
+  const [editorMode, setEditorMode] = useState<EditorMode>('public')
+  const [previewViewport, setPreviewViewport] = useState<PreviewViewport>(() =>
+    typeof window !== 'undefined' && window.innerWidth <= 960 ? 'mobile' : 'desktop'
+  )
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   useEffect(() => {
     const snapshot = window.localStorage.getItem(storageKey)
@@ -737,20 +750,28 @@ export function BandEditorForm({
     notifyArrayItemAdded(itemKey, 'Imagen agregada a la galeria.')
   }
 
+  const handleAddInternalKitLink = () => {
+    const itemKey = createBandEditorKey('kit')
+    setValues((current) =>
+      appendArrayItem(current, 'internalKit.keyLinks', {
+        _key: itemKey,
+        label: '',
+        url: '',
+        kind: 'other',
+      } satisfies BandEditorInternalKitLink)
+    )
+    clearStructuralErrors()
+    setSubmitError(null)
+    notifyArrayItemAdded(itemKey, 'Link interno agregado.')
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSaving(true)
     setSubmitError(null)
 
-    const response = await fetch(`/api/bands/${bandId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(values),
-    })
-
-    const body = (await response.json().catch(() => ({}))) as BandEditorResponse
+    const response = await updateBandRequest(bandId, values)
+    const body = response.body
 
     if (!response.ok) {
       const nextFieldErrors = buildFieldErrors(body?.errors)
@@ -768,7 +789,7 @@ export function BandEditorForm({
     setFieldErrors({})
     setSavedArrayItems(buildSavedArrayItems(values))
     setBaselineValues(values)
-    setLastSavedAt(body.band?.syncedAt || new Date().toISOString())
+    setLastSavedAt(body?.band?.syncedAt || new Date().toISOString())
     setLastRestoredDraftAt(null)
     setIgnoredDraftAt(null)
     setHasSavedSinceMount(true)
@@ -794,7 +815,13 @@ export function BandEditorForm({
     values,
     baselineValues,
     fieldErrors,
-    pathPrefixes: ['about.title', 'about.content', 'about.integrantes'],
+    pathPrefixes: ['about.title', 'about.content'],
+  })
+  const membersState = resolveSectionState({
+    values,
+    baselineValues,
+    fieldErrors,
+    pathPrefixes: ['about.integrantes'],
   })
   const timelineState = resolveSectionState({
     values,
@@ -832,12 +859,84 @@ export function BandEditorForm({
     fieldErrors,
     pathPrefixes: ['gallerySection'],
   })
+  const presentationState = resolveSectionState({
+    values,
+    baselineValues,
+    fieldErrors,
+    pathPrefixes: ['presentation'],
+  })
+  const internalKitState = resolveSectionState({
+    values,
+    baselineValues,
+    fieldErrors,
+    pathPrefixes: ['internalKit'],
+  })
   const seoState = resolveSectionState({
     values,
     baselineValues,
     fieldErrors,
     pathPrefixes: ['seo'],
   })
+  const currentRouteSection = routeSection
+  const isOverviewRoute = currentRouteSection === 'overview'
+  const isPreviewRoute = currentRouteSection === 'preview'
+  const showDesktopFullEditor = isOverviewRoute
+  const showGeneralSection = showDesktopFullEditor || currentRouteSection === 'general' || currentRouteSection === 'images'
+  const showPresentationSection = showDesktopFullEditor || currentRouteSection === 'general'
+  const showHeroSection = showDesktopFullEditor || currentRouteSection === 'bio' || currentRouteSection === 'images'
+  const showAboutSection = showDesktopFullEditor || currentRouteSection === 'bio' || currentRouteSection === 'images'
+  const showMembersSection = showDesktopFullEditor || currentRouteSection === 'members'
+  const showTimelineSection = showDesktopFullEditor || currentRouteSection === 'bio'
+  const showContactSection = showDesktopFullEditor || currentRouteSection === 'social'
+  const showListenSection = showDesktopFullEditor || currentRouteSection === 'social'
+  const showFeaturedSection =
+    showDesktopFullEditor || currentRouteSection === 'social' || currentRouteSection === 'images'
+  const showShowsSection = showDesktopFullEditor || currentRouteSection === 'shows'
+  const showGallerySection = showDesktopFullEditor || currentRouteSection === 'images'
+  const showSeoSection = showDesktopFullEditor || currentRouteSection === 'general' || currentRouteSection === 'social'
+  const effectiveEditorMode: EditorMode = isOverviewRoute ? editorMode : 'public'
+
+  useEffect(() => {
+    if (effectiveEditorMode !== 'public' && isPreviewOpen) {
+      setIsPreviewOpen(false)
+    }
+  }, [effectiveEditorMode, isPreviewOpen])
+
+  const mobileEditorSectionKeys = [
+    'general',
+    'images',
+    'bio',
+    'members',
+    'social',
+    'shows',
+    ...(canManage ? (['team'] as const) : []),
+    'preview',
+  ] satisfies MobileEditorSectionKey[]
+
+  const mobileEditorSections = mobileEditorSectionKeys.map((section) => ({
+      key: section,
+      href: getMobileEditorHref(bandId, section),
+      ...MOBILE_EDITOR_SECTIONS[section],
+      state:
+        section === 'general'
+          ? combineSectionStates(identityState, presentationState, seoState)
+          : section === 'images'
+            ? combineSectionStates(identityState, heroState, aboutState, featuredReleaseState, galleryState)
+            : section === 'bio'
+              ? combineSectionStates(heroState, aboutState, timelineState)
+              : section === 'members'
+                ? membersState
+                : section === 'social'
+                  ? combineSectionStates(contactState, listenState, featuredReleaseState, seoState)
+                  : section === 'shows'
+                    ? showsState
+                    : section === 'team'
+                      ? 'saved'
+                    : combineSectionStates(
+                        submitError ? 'error' : 'saved',
+                        hasPendingChanges ? 'pending' : 'saved'
+                      ),
+    }))
 
   const lastSavedLabel = formatEditorTimestamp(lastSavedAt)
   const restoredDraftLabel = formatEditorTimestamp(lastRestoredDraftAt)
@@ -846,12 +945,15 @@ export function BandEditorForm({
     identityState,
     heroState,
     aboutState,
+    membersState,
     timelineState,
     contactState,
     listenState,
     featuredReleaseState,
     showsState,
     galleryState,
+    presentationState,
+    internalKitState,
     seoState,
   ].filter((state) => state !== 'saved').length
   const pendingSummary =
@@ -860,6 +962,16 @@ export function BandEditorForm({
       : pendingSectionCount === 1
         ? '1 seccion con cambios pendientes'
         : `${pendingSectionCount} secciones con cambios pendientes`
+  const stateLabel =
+    editorPhase === 'saving'
+      ? 'Guardando'
+      : editorPhase === 'error'
+        ? 'Error al guardar'
+        : editorPhase === 'dirty'
+          ? 'Cambios pendientes'
+          : editorPhase === 'saved'
+            ? 'Todo guardado'
+            : 'Sin cambios'
   const publicationSections = [
     {href: '#editor-hero', label: 'Hero'},
     {href: '#editor-about', label: 'Historia'},
@@ -872,73 +984,156 @@ export function BandEditorForm({
   ]
 
   return (
-    <form className="dashboard-card" onSubmit={handleSubmit}>
+    <form
+      className={`editor-workspace${isOverviewRoute ? ' editor-workspace--overview' : ' editor-workspace--section'}`}
+      data-editor-route-section={currentRouteSection}
+      onSubmit={handleSubmit}
+    >
       <EditorToastStack toasts={toasts} onDismiss={dismissToast} />
-      <div className={`editor-savebar editor-savebar--${editorPhase}`} aria-live="polite">
-        <div className="editor-savebar__summary">
-          <div className="editor-savebar__status" role="status">
-            <span className={`editor-savebar__dot editor-savebar__dot--${editorPhase}`} />
-            <strong>
-              {editorPhase === 'saving'
-                ? 'Guardando cambios'
-                : editorPhase === 'error'
-                  ? 'Error al guardar'
-                  : editorPhase === 'dirty'
-                    ? 'Cambios pendientes'
-                    : editorPhase === 'saved'
-                      ? 'Todo guardado'
-                      : 'Sin cambios'}
-            </strong>
+      <div className="editor-workspace__main">
+        <div className="dashboard-card editor-main-card">
+          <div className={`editor-savebar editor-savebar--${editorPhase}`} aria-live="polite">
+            <div className="editor-savebar__summary">
+              <div className="editor-savebar__status" role="status">
+                <span className={`editor-savebar__dot editor-savebar__dot--${editorPhase}`} />
+                <strong>{stateLabel}</strong>
+              </div>
+            </div>
+            <div className="editor-savebar__meta">
+              <span className={`editor-savebar__meta-item${pendingSectionCount > 0 ? ' editor-savebar__meta-item--pending' : ''}`}>
+                {pendingSectionCount > 0 ? pendingSummary : 'Todo al dia'}
+              </span>
+              {lastSavedLabel ? <span className="editor-savebar__meta-item">Ultimo guardado: {lastSavedLabel}</span> : null}
+              {restoredDraftLabel ? (
+                <span className="editor-savebar__meta-item">Borrador restaurado: {restoredDraftLabel}</span>
+              ) : null}
+              {!restoredDraftLabel && ignoredDraftLabel ? (
+                <span className="editor-savebar__meta-item editor-savebar__meta-item--warning">
+                  Se ignoro un borrador local mas viejo: {ignoredDraftLabel}
+                </span>
+              ) : null}
+            </div>
+            <div className="editor-savebar__actions">
+              {effectiveEditorMode === 'public' ? (
+                <button
+                  className="button editor-savebar__button editor-savebar__button--secondary"
+                  type="button"
+                  onClick={() => {
+                    setIsPreviewOpen(true)
+                  }}
+                >
+                  Vista previa
+                </button>
+              ) : null}
+              <button
+                className="button button--primary editor-savebar__button"
+                disabled={isSaving || !hasPendingChanges}
+                type="submit"
+              >
+                {isSaving ? 'Guardando...' : hasPendingChanges ? 'Guardar cambios' : 'Sin cambios'}
+              </button>
+            </div>
           </div>
-          <p className="muted">
-            {submitError
-              ? submitError
-              : editorPhase === 'dirty'
-                ? 'Todavia hay cambios que no estan reflejados en la pagina publica.'
-                : editorPhase === 'saved'
-                  ? 'La banda quedo sincronizada y la pagina publica fue revalidada.'
-                  : 'La banda esta alineada con la ultima version publicada en el dashboard.'}
-          </p>
-        </div>
-        <div className="editor-savebar__meta">
-          <span className={`editor-savebar__meta-item${pendingSectionCount > 0 ? ' editor-savebar__meta-item--pending' : ''}`}>
-            {pendingSummary}
-          </span>
-          {lastSavedLabel ? <span className="editor-savebar__meta-item">Ultimo guardado: {lastSavedLabel}</span> : null}
-          {restoredDraftLabel ? (
-            <span className="editor-savebar__meta-item">Borrador restaurado: {restoredDraftLabel}</span>
-          ) : null}
-          {!restoredDraftLabel && ignoredDraftLabel ? (
-            <span className="editor-savebar__meta-item editor-savebar__meta-item--warning">
-              Se ignoro un borrador local mas viejo: {ignoredDraftLabel}
-            </span>
-          ) : null}
-        </div>
-        <div className="editor-savebar__actions">
-          <button className="button button--primary editor-savebar__button" disabled={isSaving || !hasPendingChanges} type="submit">
-            {isSaving ? 'Guardando...' : hasPendingChanges ? 'Guardar cambios' : 'Todo guardado'}
-          </button>
-        </div>
-      </div>
 
-      <div className="editor-publication-map">
-        <div>
-          <p className="eyebrow">Vista previa de publicacion</p>
-          <h2 className="editor-publication-map__title">Que bloques impactan en la web publica</h2>
-          <p className="muted">
-            Usa estos accesos rapidos para editar cada seccion sabiendo exactamente donde se vera.
-          </p>
-        </div>
-        <div className="editor-publication-map__links">
-          {publicationSections.map((section) => (
-            <a className="editor-publication-map__link" href={section.href} key={section.href}>
-              {section.label}
-            </a>
-          ))}
-        </div>
-      </div>
+          {isOverviewRoute ? (
+            <div className="editor-mobile-route-overview">
+              <div className="editor-mobile-section-card">
+                <div>
+                  <p className="eyebrow">Editor mobile</p>
+                  <h2 className="editor-mobile-section-card__title">Indice de secciones</h2>
+                  <p className="muted">
+                    En celular entra primero por una lista clara. Cada bloque abre una vista enfocada en vez de
+                    cargar todo el formulario junto.
+                  </p>
+                </div>
+                <div className="editor-mobile-route-grid">
+                  {mobileEditorSections.map((section) => (
+                    <Link className="editor-route-card" href={section.href} key={section.key}>
+                      <div className="editor-route-card__copy">
+                        <span className="editor-route-card__label">{section.label}</span>
+                        <strong>{section.title}</strong>
+                        <p>{section.description}</p>
+                      </div>
+                      <StatusBadge state={section.state} />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
 
-      <div className="form-grid">
+          {!isOverviewRoute ? (
+            <div className="editor-mobile-section-card editor-mobile-section-card--route-nav">
+              <div>
+                <p className="eyebrow">Editor mobile</p>
+                <h2 className="editor-mobile-section-card__title">Cambiar de seccion</h2>
+              </div>
+              <div className="editor-mobile-route-pills">
+                <Link
+                  className="editor-route-pill editor-route-pill--overview"
+                  href={getMobileEditorHref(bandId, 'overview')}
+                >
+                  Indice
+                </Link>
+                {mobileEditorSections.map((section) => (
+                  <Link
+                    className={`editor-route-pill${section.key === currentRouteSection ? ' editor-route-pill--active' : ''}`}
+                    href={section.href}
+                    key={section.key}
+                  >
+                    <span>{section.label}</span>
+                    <StatusBadge state={section.state} />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {isOverviewRoute ? (
+            <div className="editor-mode-switch editor-mode-switch--desktop" role="tablist" aria-label="Modo del editor">
+              <button
+                className={`button${editorMode === 'public' ? ' button--primary' : ''}`}
+                type="button"
+                onClick={() => {
+                  setEditorMode('public')
+                }}
+              >
+                Contenido publico
+              </button>
+              <button
+                className={`button${editorMode === 'kit' ? ' button--primary' : ''}`}
+                type="button"
+                onClick={() => {
+                  setEditorMode('kit')
+                }}
+              >
+                Kit interno
+              </button>
+            </div>
+          ) : null}
+
+          {effectiveEditorMode === 'public' ? (
+            <>
+              {!isPreviewRoute ? (
+                <>
+                  <div className={`editor-publication-map${isOverviewRoute ? ' editor-publication-map--desktop' : ''}`}>
+                    <div>
+                      <p className="eyebrow">Vista previa de publicacion</p>
+                      <h2 className="editor-publication-map__title">Que bloques impactan en la web publica</h2>
+                      <p className="muted">
+                        Usa estos accesos rapidos para editar cada seccion sabiendo exactamente donde se vera.
+                      </p>
+                    </div>
+                    <div className="editor-publication-map__links">
+                      {publicationSections.map((section) => (
+                        <a className="editor-publication-map__link" href={section.href} key={section.href}>
+                          {section.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={`form-grid${isOverviewRoute ? ' editor-desktop-only' : ''}`}>
         <label className="form-field">
           <span className="form-label">Nombre</span>
           <input
@@ -990,7 +1185,17 @@ export function BandEditorForm({
           <FieldError errors={getErrorsForField('status')} />
         </label>
       </div>
+                </>
+              ) : null}
+            </>
+          ) : null}
 
+      <div
+        className={isOverviewRoute ? 'editor-desktop-only' : undefined}
+        hidden={effectiveEditorMode !== 'public'}
+        aria-hidden={effectiveEditorMode !== 'public'}
+      >
+      {showGeneralSection ? (
       <div className="form-section" id="editor-identity">
         <SectionHeading
           title="Identidad visual"
@@ -1066,7 +1271,27 @@ export function BandEditorForm({
           </label>
         </div>
       </div>
+      ) : null}
 
+      {showPresentationSection ? (
+      <div className="form-section" id="editor-presentation">
+        <SectionHeading
+          title="Orden de la pagina publica"
+          description="Hero queda fijo primero. Reordena el resto de las secciones visibles con drag and drop o con los botones."
+          state={presentationState}
+        />
+        <SectionOrderEditor
+          value={values.presentation.sectionOrder}
+          onChange={(nextValue) => {
+            setValues((current) => setValueAtPath(current, 'presentation.sectionOrder', nextValue))
+            setFieldErrors((current) => clearFieldErrorByPath(current, 'presentation.sectionOrder'))
+            setSubmitError(null)
+          }}
+        />
+      </div>
+      ) : null}
+
+      {showHeroSection ? (
       <div className="form-section" id="editor-hero">
         <SectionHeading title="Hero" description="Portada principal de la pagina publica." state={heroState} />
         <div className="asset-grid">
@@ -1130,7 +1355,9 @@ export function BandEditorForm({
           </div>
         </div>
       </div>
+      ) : null}
 
+      {showAboutSection ? (
       <div className="form-section" id="editor-about">
         <SectionHeading title="Sobre la banda" description="Historia principal y contenido editorial." state={aboutState} />
         <div className="asset-grid">
@@ -1169,13 +1396,15 @@ export function BandEditorForm({
           </label>
         </div>
       </div>
+      ) : null}
 
+      {showMembersSection ? (
       <div className="form-section" id="editor-members">
         <div className="row-actions row-actions--split">
           <SectionHeading
             title="Integrantes"
             description="Alta, orden y fotos por integrante para la pagina publica."
-            state={aboutState}
+            state={membersState}
           />
           <button className="button button--primary" type="button" onClick={handleAddIntegrante}>
             Agregar integrante
@@ -1268,7 +1497,9 @@ export function BandEditorForm({
           })}
         </div>
       </div>
+      ) : null}
 
+      {showTimelineSection ? (
       <div className="form-section" id="editor-timeline">
         <div className="row-actions row-actions--split">
           <div>
@@ -1465,7 +1696,9 @@ export function BandEditorForm({
           })}
         </div>
       </div>
+      ) : null}
 
+      {showContactSection ? (
       <div className="form-section" id="editor-contact">
         <SectionHeading
           title="Contacto y redes"
@@ -1574,7 +1807,9 @@ export function BandEditorForm({
           </label>
         </div>
       </div>
+      ) : null}
 
+      {showListenSection ? (
       <div className="form-section" id="editor-listen">
         <SectionHeading
           title="Escuchanos"
@@ -1862,7 +2097,9 @@ export function BandEditorForm({
           </div>
         </section>
       </div>
+      ) : null}
 
+      {showFeaturedSection ? (
       <div className="form-section" id="editor-featured">
         <SectionHeading
           title="Lanzamiento destacado"
@@ -1949,7 +2186,9 @@ export function BandEditorForm({
           </label>
         </div>
       </div>
+      ) : null}
 
+      {showShowsSection ? (
       <div className="form-section" id="editor-shows">
         <div className="row-actions row-actions--split">
           <SectionHeading
@@ -2085,7 +2324,9 @@ export function BandEditorForm({
           })}
         </div>
       </div>
+      ) : null}
 
+      {showGallerySection ? (
       <div className="form-section" id="editor-gallery">
         <div className="row-actions row-actions--split">
           <SectionHeading
@@ -2208,7 +2449,9 @@ export function BandEditorForm({
           })}
         </div>
       </div>
+      ) : null}
 
+      {showSeoSection ? (
       <div className="form-section" id="editor-seo">
         <SectionHeading
           title="SEO"
@@ -2258,7 +2501,171 @@ export function BandEditorForm({
           </label>
         </div>
       </div>
+      ) : null}
+      </div>
 
+      <div className={isOverviewRoute ? 'editor-desktop-only' : undefined} hidden={effectiveEditorMode !== 'kit'} aria-hidden={effectiveEditorMode !== 'kit'}>
+        <div className="form-section" id="editor-internal-kit">
+          <div className="row-actions row-actions--split">
+            <SectionHeading
+              title="Kit interno"
+              description="Resumen, contacto y links privados para ordenar la biblioteca interna de la banda."
+              state={internalKitState}
+            />
+            <button className="button button--primary" type="button" onClick={handleAddInternalKitLink}>
+              Agregar link
+            </button>
+          </div>
+          <div className="form-grid">
+            <label className="form-field form-field--full">
+              <span className="form-label">Resumen corto</span>
+              <textarea
+                className={getFieldClassName('form-textarea', getErrorsForField('internalKit.shortPitch').length > 0)}
+                name="internalKit.shortPitch"
+                value={values.internalKit.shortPitch || ''}
+                onChange={handleChange}
+              />
+              <FieldError errors={getErrorsForField('internalKit.shortPitch')} />
+            </label>
+            <label className="form-field">
+              <span className="form-label">Nombre de contacto</span>
+              <input
+                className={getFieldClassName('form-input', getErrorsForField('internalKit.contactName').length > 0)}
+                name="internalKit.contactName"
+                value={values.internalKit.contactName || ''}
+                onChange={handleChange}
+              />
+              <FieldError errors={getErrorsForField('internalKit.contactName')} />
+            </label>
+            <label className="form-field">
+              <span className="form-label">Email de contacto</span>
+              <input
+                className={getFieldClassName('form-input', getErrorsForField('internalKit.contactEmail').length > 0)}
+                name="internalKit.contactEmail"
+                value={values.internalKit.contactEmail || ''}
+                onChange={handleChange}
+              />
+              <FieldError errors={getErrorsForField('internalKit.contactEmail')} />
+            </label>
+            <label className="form-field">
+              <span className="form-label">Telefono de contacto</span>
+              <input
+                className={getFieldClassName('form-input', getErrorsForField('internalKit.contactPhone').length > 0)}
+                name="internalKit.contactPhone"
+                value={values.internalKit.contactPhone || ''}
+                onChange={handleChange}
+              />
+              <FieldError errors={getErrorsForField('internalKit.contactPhone')} />
+            </label>
+            <label className="form-field form-field--full">
+              <span className="form-label">Notas internas</span>
+              <textarea
+                className={getFieldClassName('form-textarea', getErrorsForField('internalKit.bookingNotes').length > 0)}
+                name="internalKit.bookingNotes"
+                value={values.internalKit.bookingNotes || ''}
+                onChange={handleChange}
+              />
+              <FieldError errors={getErrorsForField('internalKit.bookingNotes')} />
+            </label>
+          </div>
+          <div className="array-list">
+            {values.internalKit.keyLinks.map((link, index) => {
+              const basePath = `internalKit.keyLinks.${index}`
+              const itemState = resolveArrayItemState({
+                item: link,
+                baselineItems: baselineValues.internalKit.keyLinks,
+                fieldErrors,
+                pathPrefix: basePath,
+              })
+              const itemNotice = getPendingArrayNotice(itemState)
+
+              return (
+                <section
+                  className={`array-item array-item--nested array-item--${itemState}`}
+                  data-array-item-key={link._key}
+                  key={link._key}
+                >
+                  <div className="row-actions row-actions--split">
+                    <div className="array-item__header">
+                      <h4 className="array-item__title">Link interno {index + 1}</h4>
+                      <StatusBadge state={itemState} />
+                    </div>
+                    <ArrayItemActions
+                      onMoveUp={() => {
+                        setValues((current) => moveArrayItem(current, 'internalKit.keyLinks', index, -1))
+                        clearStructuralErrors()
+                      }}
+                      onMoveDown={() => {
+                        setValues((current) => moveArrayItem(current, 'internalKit.keyLinks', index, 1))
+                        clearStructuralErrors()
+                      }}
+                      onRemove={() => {
+                        setValues((current) => removeArrayItem(current, 'internalKit.keyLinks', index))
+                        clearStructuralErrors()
+                      }}
+                      isFirst={index === 0}
+                      isLast={index === values.internalKit.keyLinks.length - 1}
+                    />
+                  </div>
+                  {itemNotice ? <InlineNotice tone={itemNotice.tone} message={itemNotice.message} /> : null}
+                  <div className="form-grid">
+                    <label className="form-field">
+                      <span className="form-label">Etiqueta</span>
+                      <input
+                        className={getFieldClassName('form-input', getErrorsForField(`${basePath}.label`).length > 0)}
+                        name={`${basePath}.label`}
+                        value={link.label}
+                        onChange={handleChange}
+                      />
+                      <FieldError errors={getErrorsForField(`${basePath}.label`)} />
+                    </label>
+                    <label className="form-field">
+                      <span className="form-label">Tipo</span>
+                      <select
+                        className={getFieldClassName('form-select', getErrorsForField(`${basePath}.kind`).length > 0)}
+                        name={`${basePath}.kind`}
+                        value={link.kind}
+                        onChange={handleChange}
+                      >
+                        <option value="press">Press</option>
+                        <option value="demo">Demo</option>
+                        <option value="drive">Drive</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="spotify">Spotify</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="other">Other</option>
+                      </select>
+                      <FieldError errors={getErrorsForField(`${basePath}.kind`)} />
+                    </label>
+                    <label className="form-field form-field--full">
+                      <span className="form-label">URL</span>
+                      <input
+                        className={getFieldClassName('form-input', getErrorsForField(`${basePath}.url`).length > 0)}
+                        name={`${basePath}.url`}
+                        value={link.url}
+                        onChange={handleChange}
+                      />
+                      <FieldError errors={getErrorsForField(`${basePath}.url`)} />
+                    </label>
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+      <BandEditorPreview
+        values={values}
+        baseBand={previewBandBase}
+        mode={effectiveEditorMode}
+        viewport={previewViewport}
+        onViewportChange={setPreviewViewport}
+        inline={isPreviewRoute}
+        isOpen={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+      />
     </form>
   )
 }

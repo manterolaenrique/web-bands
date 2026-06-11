@@ -25,6 +25,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@web-bands/bands-domain": [
+        "../../packages/bands-domain/src/index.ts"
       ]
     }
   },

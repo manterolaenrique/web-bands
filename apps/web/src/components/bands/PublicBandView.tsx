@@ -1,5 +1,8 @@
+import type {ReactNode} from 'react'
 import Image from 'next/image'
 
+import {PublicMobileFooter} from '@/components/layout/PublicMobileFooter'
+import {PublicMobileChrome} from '@/components/layout/PublicMobileChrome'
 import {
   FacebookIcon,
   InstagramIcon,
@@ -10,6 +13,7 @@ import {
 } from '@/components/bands/SocialIcons'
 import {Reveal} from '@/components/ui/Reveal'
 import {resolveSpotifyEmbedUrl, resolveYouTubeEmbedUrl} from '@/lib/bands/embeds'
+import {normalizeBandSectionOrder, type BandPublicSectionKey} from '@/lib/bands/presentation'
 import {buildBandThemeStyle} from '@/lib/bands/theme'
 import {getSanityImageUrl} from '@/lib/sanity/image'
 import type {BandSocialLinks, PublicBand} from '@/types/band'
@@ -110,7 +114,19 @@ function getSocialIcon(network: SocialNetwork) {
   return TwitterXIcon
 }
 
-export function PublicBandView({band}: {band: PublicBand}) {
+type PublicBandViewProps = {
+  band: PublicBand
+  previewMode?: boolean
+  accountHref?: string
+  accountLabel?: string
+}
+
+export function PublicBandView({
+  band,
+  previewMode = false,
+  accountHref = '/login',
+  accountLabel = 'Login',
+}: PublicBandViewProps) {
   const heroImage = getSanityImageUrl(band.hero?.imagen, {width: 1600, height: 1200, fit: 'crop'})
   const aboutImage = getSanityImageUrl(band.about?.imagen, {width: 960, height: 1080, fit: 'crop'})
   const logoImage = getSanityImageUrl(band.logo, {width: 280, height: 280, fit: 'max'})
@@ -161,13 +177,466 @@ export function PublicBandView({band}: {band: PublicBand}) {
       band.featuredRelease?.appleMusicUrl ||
       featuredCover
   )
-  const hasListenSection = hasFeaturedRelease || showListenDetails
   const hasContactSection = Boolean(
     band.contacto?.email || band.contacto?.telefono || band.contacto?.ubicacion || socials.length > 0
   )
+  const sectionOrder = normalizeBandSectionOrder(band.presentation?.sectionOrder)
+  const visibleSectionKeys = sectionOrder.filter((sectionKey) => {
+    if (sectionKey === 'featured') return hasFeaturedRelease
+    if (sectionKey === 'listen') return showListenDetails
+    if (sectionKey === 'about') return Boolean(band.about?.contenido || aboutImage)
+    if (sectionKey === 'members') return memberCards.length > 0
+    if (sectionKey === 'timeline') return timelineEvents.length > 0
+    if (sectionKey === 'shows') return shows.length > 0
+    if (sectionKey === 'gallery') return galleryItems.length > 0
+    return hasContactSection
+  })
+  const firstMusicSectionKey = visibleSectionKeys.find((sectionKey) => sectionKey === 'featured' || sectionKey === 'listen')
+  const musicAnchorId = firstMusicSectionKey === 'listen' ? 'musica-listen' : 'musica-featured'
+  const featuredSection = hasFeaturedRelease ? (
+    <Reveal as="section" className="public-section" key="featured" disabled={previewMode}>
+      <div className="container public-featured" id="musica-featured">
+        <div className={`public-featured__record${featuredCover ? '' : ' public-featured__record--single'}`}>
+          {featuredCover ? (
+            <div className="public-featured__cover">
+              <Image
+                src={featuredCover}
+                alt={band.featuredRelease?.title || `Portada de ${band.nombre || 'la banda'}`}
+                width={640}
+                height={640}
+                sizes="(max-width: 900px) 100vw, 24rem"
+              />
+            </div>
+          ) : null}
+          <div className="public-featured__copy">
+            <p className="eyebrow">{band.featuredRelease?.eyebrow || 'Lanzamiento destacado'}</p>
+            <h2 className="section-heading">{band.featuredRelease?.title || 'Escuchanos'}</h2>
+            <p className="lead">
+              {band.featuredRelease?.description || 'Accede a los lanzamientos principales de la banda.'}
+            </p>
+            <div className="public-link-grid">
+              {band.featuredRelease?.spotifyUrl ? (
+                <a
+                  className="button button--band-primary"
+                  href={band.featuredRelease.spotifyUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Spotify
+                </a>
+              ) : null}
+              {band.featuredRelease?.youtubeUrl ? (
+                <a
+                  className="button button--band-ghost"
+                  href={band.featuredRelease.youtubeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  YouTube
+                </a>
+              ) : null}
+              {band.featuredRelease?.appleMusicUrl ? (
+                <a
+                  className="button button--ghost"
+                  href={band.featuredRelease.appleMusicUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Apple Music
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Reveal>
+  ) : null
+  const aboutSection = band.about?.contenido || aboutImage ? (
+    <Reveal as="section" className="public-section public-section--surface" delay={80} key="about" disabled={previewMode}>
+      <div className="container public-story" id="historia">
+        <div>
+          <p className="eyebrow">Historia</p>
+          <h2 className="section-heading">{band.about?.titulo || 'Quienes somos'}</h2>
+          <div className="story-copy">
+            {aboutParagraphs.length > 0 ? (
+              aboutParagraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)
+            ) : (
+              <p>{band.about?.contenido || 'La historia de esta banda se esta preparando.'}</p>
+            )}
+          </div>
+        </div>
+        {aboutImage ? (
+          <div className="story-frame">
+            <Image
+              src={aboutImage}
+              alt={`Imagen de ${band.nombre || 'la banda'}`}
+              width={960}
+              height={1080}
+              sizes="(max-width: 900px) 100vw, 38vw"
+            />
+          </div>
+        ) : null}
+      </div>
+    </Reveal>
+  ) : null
+  const membersSection = memberCards.length > 0 ? (
+    <Reveal as="section" className="public-section" delay={120} key="members" disabled={previewMode}>
+      <div className="container">
+        <p className="eyebrow">Integrantes</p>
+        <h2 className="section-heading">La formacion actual</h2>
+        <div className="public-grid public-grid--members">
+          {memberCards.map((member, index) => {
+            const memberImage = getSanityImageUrl(member.foto, {width: 480, height: 480, fit: 'crop'})
+
+            return (
+              <article className="glass-panel member-panel" key={`${member._key || member.nombre}-${index}`}>
+                <div className="member-panel__media">
+                  {memberImage ? (
+                    <Image
+                      src={memberImage}
+                      alt={member.nombre ? `Foto de ${member.nombre}` : 'Integrante de la banda'}
+                      width={320}
+                      height={320}
+                      sizes="(max-width: 760px) 100vw, 16rem"
+                    />
+                  ) : (
+                    <div className="member-panel__fallback" aria-hidden="true">
+                      <span>{getInitials(member.nombre)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="member-panel__copy">
+                  <strong>{member.nombre}</strong>
+                  {member.instrumento ? <p className="muted">{member.instrumento}</p> : null}
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </div>
+    </Reveal>
+  ) : null
+  const showsSection = shows.length > 0 ? (
+    <Reveal as="section" className="public-section" delay={140} key="shows" disabled={previewMode}>
+      <div className="container">
+        <p className="eyebrow">Proximas fechas</p>
+        <h2 className="section-heading">{band.showsSection?.titulo || 'Proximas fechas'}</h2>
+        {band.showsSection?.descripcion ? <p className="lead">{band.showsSection.descripcion}</p> : null}
+        <div className="show-list">
+          {shows.map((show) => (
+            <article className="show-card glass-panel" key={`${show._key || show.venue}-${show.date}`}>
+              <div>
+                <span className="eyebrow eyebrow--muted">{formatLongDate(show.date) || 'Fecha por confirmar'}</span>
+                <h3>{show.venue}</h3>
+                <p className="muted">{show.location}</p>
+              </div>
+              <div className="show-card__actions">
+                {show.status ? <span className="band-chip band-chip--soft">{getShowStatusLabel(show.status)}</span> : null}
+                {show.ticketUrl ? (
+                  <a className="button button--band-ghost" href={show.ticketUrl} target="_blank" rel="noreferrer">
+                    Ver entradas
+                  </a>
+                ) : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  ) : null
+  const timelineSectionNode = timelineEvents.length > 0 ? (
+    <Reveal as="section" className="public-section public-section--surface" delay={160} key="timeline" disabled={previewMode}>
+      <div className="container">
+        <p className="eyebrow">Archivo</p>
+        <h2 className="section-heading">{band.timelineSection?.titulo || 'Linea de tiempo'}</h2>
+        {band.timelineSection?.descripcion ? <p className="lead">{band.timelineSection.descripcion}</p> : null}
+        <ol className="timeline-list timeline-list--band">
+          {timelineEvents.map((event, index) => {
+            const eventImage = getSanityImageUrl(event.image, {width: 720, height: 420, fit: 'crop'})
+
+            return (
+              <li
+                className={`timeline-item timeline-item--band ${getTimelineImportanceClassName(event.importance)}`}
+                key={`${event.name}-${event.date}-${index}`}
+              >
+                <div className="timeline-item__year">{formatYear(event.date) || 'Sin fecha'}</div>
+                <div className="timeline-item__content">
+                  <div className="timeline-item__header">
+                    <span className="band-chip">{event.icon || '*'}</span>
+                    <span className="timeline-item__eyebrow">{getTimelineImportanceLabel(event.importance)}</span>
+                  </div>
+                  <h3>{event.name}</h3>
+                  {eventImage ? (
+                    <div className="timeline-item__media">
+                      <Image
+                        src={eventImage}
+                        alt={event.name ? `Imagen de ${event.name}` : 'Imagen del evento'}
+                        width={720}
+                        height={420}
+                        sizes="(max-width: 760px) 100vw, 38rem"
+                      />
+                    </div>
+                  ) : null}
+                  {event.descripcion ? <p className="muted">{event.descripcion}</p> : null}
+                  {event.link ? (
+                    <a className="button button--band-ghost" href={event.link} target="_blank" rel="noreferrer">
+                      Ver mas
+                    </a>
+                  ) : null}
+                </div>
+              </li>
+            )
+          })}
+        </ol>
+      </div>
+    </Reveal>
+  ) : null
+  const gallerySectionNode = galleryItems.length > 0 ? (
+    <Reveal as="section" className="public-section" delay={180} key="gallery" disabled={previewMode}>
+      <div className="container">
+        <div className="section-heading-row">
+          <div>
+            <p className="eyebrow">Galeria</p>
+            <h2 className="section-heading">{band.gallerySection?.titulo || 'Archivo visual'}</h2>
+          </div>
+        </div>
+        <div className="gallery-grid">
+          {galleryItems.map((item, index) => {
+            const imageUrl = getSanityImageUrl(item.image, {width: 900, height: 900, fit: 'crop'})
+            if (!imageUrl) {
+              return null
+            }
+
+            return item.link ? (
+              <a
+                className={`gallery-card${index % 3 === 1 ? ' gallery-card--offset' : ''}`}
+                key={item._key || `${item.caption}-${index}`}
+                href={item.link}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Image
+                  src={imageUrl}
+                  alt={item.alt || item.caption || `Galeria de ${band.nombre || 'la banda'}`}
+                  width={900}
+                  height={900}
+                  sizes="(max-width: 820px) 50vw, 24vw"
+                />
+                {item.caption ? <span className="gallery-card__caption">{item.caption}</span> : null}
+              </a>
+            ) : (
+              <div
+                className={`gallery-card${index % 3 === 1 ? ' gallery-card--offset' : ''}`}
+                key={item._key || `${item.caption}-${index}`}
+              >
+                <Image
+                  src={imageUrl}
+                  alt={item.alt || item.caption || `Galeria de ${band.nombre || 'la banda'}`}
+                  width={900}
+                  height={900}
+                  sizes="(max-width: 820px) 50vw, 24vw"
+                />
+                {item.caption ? <span className="gallery-card__caption">{item.caption}</span> : null}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </Reveal>
+  ) : null
+  const listenSection = showListenDetails ? (
+    <Reveal as="section" className="public-section" delay={190} key="listen" disabled={previewMode}>
+      <div className="container" id="musica-listen">
+        <div className="section-heading-row">
+          <div>
+            <p className="eyebrow">Escuchanos</p>
+            <h2 className="section-heading">{band.escuchanos?.titulo || 'Plataformas activas'}</h2>
+          </div>
+          {band.escuchanos?.descripcion ? <p className="muted section-heading-row__copy">{band.escuchanos.descripcion}</p> : null}
+        </div>
+        <div className="public-grid public-grid--listen">
+          {showYoutube ? (
+            <article className="glass-panel listen-panel">
+              <div className="listen-panel__header">
+                <p className="eyebrow">YouTube</p>
+                <h3>{band.escuchanos?.youtube?.titulo || 'Videos destacados'}</h3>
+              </div>
+              <div className="listen-panel__list">
+                {youtubeEmbeds.map((video) => (
+                  <article className="listen-item listen-item--embed" key={video._key || video.url}>
+                    <div className="listen-item__media listen-item__media--video">
+                      {video.embedUrl ? (
+                        <iframe
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          src={video.embedUrl}
+                          title={`YouTube: ${video.titulo}`}
+                        />
+                      ) : (
+                        <a className="listen-item__fallback" href={video.url} rel="noreferrer" target="_blank">
+                          <strong>No se pudo embeber este video</strong>
+                          <span className="listen-item__cta">Abrir en YouTube</span>
+                        </a>
+                      )}
+                    </div>
+                    <div className="listen-item__copy">
+                      <strong>{video.titulo}</strong>
+                      {video.descripcion ? <p className="muted">{video.descripcion}</p> : null}
+                      {!video.embedUrl ? (
+                        <a className="listen-item__cta" href={video.url} rel="noreferrer" target="_blank">
+                          Abrir video
+                        </a>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </article>
+          ) : null}
+
+          {showSpotify ? (
+            <article className="glass-panel listen-panel">
+              <div className="listen-panel__header">
+                <p className="eyebrow">Spotify</p>
+                <h3>{band.escuchanos?.spotify?.titulo || 'Playlists y perfil oficial'}</h3>
+              </div>
+              <div className="listen-panel__list">
+                {band.escuchanos?.spotify?.perfil_url ? (
+                  <article className="listen-item listen-item--embed listen-item--profile">
+                    <div className="listen-item__media listen-item__media--spotify">
+                      {spotifyProfileEmbed ? (
+                        <iframe
+                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                          loading="lazy"
+                          src={spotifyProfileEmbed.embedUrl}
+                          title="Spotify: perfil oficial"
+                        />
+                      ) : (
+                        <a className="listen-item__fallback" href={band.escuchanos.spotify.perfil_url} rel="noreferrer" target="_blank">
+                          <strong>No se pudo embeber este perfil</strong>
+                          <span className="listen-item__cta">Abrir en Spotify</span>
+                        </a>
+                      )}
+                    </div>
+                    <div className="listen-item__copy">
+                      <strong>Perfil oficial</strong>
+                      <p className="muted">Artista o perfil principal configurado desde el panel.</p>
+                      {!spotifyProfileEmbed ? (
+                        <a className="listen-item__cta" href={band.escuchanos.spotify.perfil_url} rel="noreferrer" target="_blank">
+                          Abrir Spotify
+                        </a>
+                      ) : null}
+                    </div>
+                  </article>
+                ) : null}
+                {spotifyPlaylistEmbeds.map((playlist) => (
+                  <article className="listen-item listen-item--embed" key={playlist._key || playlist.url}>
+                    <div className="listen-item__media listen-item__media--spotify">
+                      {playlist.embed ? (
+                        <iframe
+                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                          loading="lazy"
+                          src={playlist.embed.embedUrl}
+                          title={`Spotify: ${playlist.titulo}`}
+                        />
+                      ) : (
+                        <a className="listen-item__fallback" href={playlist.url} rel="noreferrer" target="_blank">
+                          <strong>No se pudo embeber esta playlist</strong>
+                          <span className="listen-item__cta">Abrir en Spotify</span>
+                        </a>
+                      )}
+                    </div>
+                    <div className="listen-item__copy">
+                      <strong>{playlist.titulo}</strong>
+                      {playlist.descripcion ? <p className="muted">{playlist.descripcion}</p> : null}
+                      {!playlist.embed ? (
+                        <a className="listen-item__cta" href={playlist.url} rel="noreferrer" target="_blank">
+                          Abrir playlist
+                        </a>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </article>
+          ) : null}
+        </div>
+      </div>
+    </Reveal>
+  ) : null
+  const contactSection = hasContactSection ? (
+    <Reveal as="section" className="public-section public-section--surface" delay={200} key="contact" disabled={previewMode}>
+      <div className="container public-contact">
+        <div>
+          <p className="eyebrow">Contacto y redes</p>
+          <h2 className="section-heading">Seguir, escuchar y contratar</h2>
+          <p className="lead">Toda la presencia digital de la banda queda reunida en un mismo punto de contacto.</p>
+        </div>
+
+        <div className="public-grid public-grid--contact">
+          {band.contacto?.email ? (
+            <a className="glass-panel contact-panel" href={`mailto:${band.contacto.email}`}>
+              <strong>Email</strong>
+              <p className="muted">{band.contacto.email}</p>
+            </a>
+          ) : null}
+          {band.contacto?.telefono ? (
+            <a className="glass-panel contact-panel" href={`tel:${band.contacto.telefono}`}>
+              <strong>Telefono</strong>
+              <p className="muted">{band.contacto.telefono}</p>
+            </a>
+          ) : null}
+          {band.contacto?.ubicacion ? (
+            <div className="glass-panel contact-panel">
+              <strong>Ubicacion</strong>
+              <p className="muted">{band.contacto.ubicacion}</p>
+            </div>
+          ) : null}
+          {socials.map((social) => {
+            const Icon = getSocialIcon(social.network)
+
+            return (
+              <a
+                className="glass-panel contact-panel contact-panel--social"
+                data-network={social.network}
+                href={social.href}
+                key={social.label}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className="contact-panel__icon" aria-hidden="true">
+                  <Icon />
+                </span>
+                <div className="contact-panel__copy">
+                  <strong>{social.label}</strong>
+                  <p className="muted">Abrir perfil</p>
+                </div>
+              </a>
+            )
+          })}
+        </div>
+      </div>
+    </Reveal>
+  ) : null
+  const sectionMap: Record<BandPublicSectionKey, ReactNode> = {
+    featured: featuredSection,
+    listen: listenSection,
+    about: aboutSection,
+    members: membersSection,
+    timeline: timelineSectionNode,
+    shows: showsSection,
+    gallery: gallerySectionNode,
+    contact: contactSection,
+  }
 
   return (
-    <main className="public-band-shell" style={buildBandThemeStyle(band.colores)}>
+    <main
+      className={`public-band-shell${previewMode ? ' public-band-shell--preview' : ''}${!previewMode ? ' public-band-shell--page' : ''}`}
+      style={buildBandThemeStyle(band.colores)}
+    >
+      {!previewMode ? <PublicMobileChrome accountHref={accountHref} accountLabel={accountLabel} /> : null}
       <section className="public-hero">
         <div className="public-hero__media">
           {heroImage ? (
@@ -185,7 +654,7 @@ export function PublicBandView({band}: {band: PublicBand}) {
         <div
           className={`container public-hero__content${showHeroSpotlightCard ? '' : ' public-hero__content--single'}`}
         >
-          <Reveal className="public-hero__copy" delay={80}>
+          <Reveal className="public-hero__copy" delay={80} disabled={previewMode}>
             {logoImage ? (
               <div className="public-hero__identity">
                 <div className="public-hero__logo">
@@ -214,8 +683,8 @@ export function PublicBandView({band}: {band: PublicBand}) {
               <a href="#historia" className="button button--band-primary">
                 Conocer banda
               </a>
-              {hasListenSection ? (
-                <a href="#musica" className="button button--band-ghost">
+              {firstMusicSectionKey ? (
+                <a href={`#${musicAnchorId}`} className="button button--band-ghost">
                   Escuchar ahora
                 </a>
               ) : null}
@@ -223,7 +692,7 @@ export function PublicBandView({band}: {band: PublicBand}) {
           </Reveal>
 
           {showHeroSpotlightCard ? (
-            <Reveal className="public-hero__aside" delay={180}>
+            <Reveal className="public-hero__aside" delay={180} disabled={previewMode}>
               <div className="spotlight-card glass-panel">
                 <div className="spotlight-card__header">
                   <span className="eyebrow eyebrow--muted">
@@ -274,491 +743,10 @@ export function PublicBandView({band}: {band: PublicBand}) {
           ) : null}
         </div>
       </section>
-
-      {hasListenSection ? (
-        <Reveal as="section" className="public-section">
-          <div className="container public-featured" id="musica">
-            <div className={`public-featured__record${featuredCover ? '' : ' public-featured__record--single'}`}>
-              {featuredCover ? (
-                <div className="public-featured__cover">
-                  <Image
-                    src={featuredCover}
-                    alt={band.featuredRelease?.title || `Portada de ${band.nombre || 'la banda'}`}
-                    width={640}
-                    height={640}
-                    sizes="(max-width: 900px) 100vw, 24rem"
-                  />
-                </div>
-              ) : null}
-              <div className="public-featured__copy">
-                <p className="eyebrow">{band.featuredRelease?.eyebrow || 'Lanzamiento destacado'}</p>
-                <h2 className="section-heading">
-                  {band.featuredRelease?.title || band.escuchanos?.titulo || 'Escuchanos'}
-                </h2>
-                <p className="lead">
-                  {band.featuredRelease?.description ||
-                    band.escuchanos?.descripcion ||
-                    'Accede a los lanzamientos, videos y plataformas principales de la banda.'}
-                </p>
-                <div className="public-link-grid">
-                  {band.featuredRelease?.spotifyUrl ? (
-                    <a
-                      className="button button--band-primary"
-                      href={band.featuredRelease.spotifyUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Spotify
-                    </a>
-                  ) : null}
-                  {band.featuredRelease?.youtubeUrl ? (
-                    <a
-                      className="button button--band-ghost"
-                      href={band.featuredRelease.youtubeUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      YouTube
-                    </a>
-                  ) : null}
-                  {band.featuredRelease?.appleMusicUrl ? (
-                    <a
-                      className="button button--ghost"
-                      href={band.featuredRelease.appleMusicUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Apple Music
-                    </a>
-                  ) : null}
-                  {!band.featuredRelease?.spotifyUrl && band.escuchanos?.spotify?.perfil_url ? (
-                    <a
-                      className="button button--band-primary"
-                      href={band.escuchanos.spotify.perfil_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Abrir Spotify
-                    </a>
-                  ) : null}
-                  {!band.featuredRelease?.youtubeUrl && band.escuchanos?.youtube?.videos?.[0]?.url ? (
-                    <a
-                      className="button button--band-ghost"
-                      href={band.escuchanos.youtube.videos[0].url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Ver video
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </div>
-        </Reveal>
-      ) : null}
-
-      <Reveal as="section" className="public-section public-section--surface" delay={80}>
-        <div className="container public-story" id="historia">
-          <div>
-            <p className="eyebrow">Historia</p>
-            <h2 className="section-heading">{band.about?.titulo || 'Quienes somos'}</h2>
-            <div className="story-copy">
-              {aboutParagraphs.length > 0 ? (
-                aboutParagraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)
-              ) : (
-                <p>{band.about?.contenido || 'La historia de esta banda se esta preparando.'}</p>
-              )}
-            </div>
-          </div>
-          {aboutImage ? (
-            <div className="story-frame">
-              <Image
-                src={aboutImage}
-                alt={`Imagen de ${band.nombre || 'la banda'}`}
-                width={960}
-                height={1080}
-                sizes="(max-width: 900px) 100vw, 38vw"
-              />
-            </div>
-          ) : null}
-        </div>
-      </Reveal>
-
-      {memberCards.length > 0 ? (
-        <Reveal as="section" className="public-section" delay={120}>
-          <div className="container">
-            <p className="eyebrow">Integrantes</p>
-            <h2 className="section-heading">La formacion actual</h2>
-            <div className="public-grid public-grid--members">
-              {memberCards.map((member, index) => {
-                const memberImage = getSanityImageUrl(member.foto, {width: 480, height: 480, fit: 'crop'})
-
-                return (
-                  <article className="glass-panel member-panel" key={`${member._key || member.nombre}-${index}`}>
-                    <div className="member-panel__media">
-                      {memberImage ? (
-                        <Image
-                          src={memberImage}
-                          alt={member.nombre ? `Foto de ${member.nombre}` : 'Integrante de la banda'}
-                          width={320}
-                          height={320}
-                          sizes="(max-width: 760px) 100vw, 16rem"
-                        />
-                      ) : (
-                        <div className="member-panel__fallback" aria-hidden="true">
-                          <span>{getInitials(member.nombre)}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="member-panel__copy">
-                      <strong>{member.nombre}</strong>
-                      {member.instrumento ? <p className="muted">{member.instrumento}</p> : null}
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          </div>
-        </Reveal>
-      ) : null}
-
-      {shows.length > 0 ? (
-        <Reveal as="section" className="public-section" delay={140}>
-          <div className="container">
-            <p className="eyebrow">Proximas fechas</p>
-            <h2 className="section-heading">{band.showsSection?.titulo || 'Proximas fechas'}</h2>
-            {band.showsSection?.descripcion ? <p className="lead">{band.showsSection.descripcion}</p> : null}
-            <div className="show-list">
-              {shows.map((show) => (
-                <article className="show-card glass-panel" key={`${show._key || show.venue}-${show.date}`}>
-                  <div>
-                    <span className="eyebrow eyebrow--muted">{formatLongDate(show.date) || 'Fecha por confirmar'}</span>
-                    <h3>{show.venue}</h3>
-                    <p className="muted">{show.location}</p>
-                  </div>
-                  <div className="show-card__actions">
-                    {show.status ? (
-                      <span className="band-chip band-chip--soft">{getShowStatusLabel(show.status)}</span>
-                    ) : null}
-                    {show.ticketUrl ? (
-                      <a className="button button--band-ghost" href={show.ticketUrl} target="_blank" rel="noreferrer">
-                        Ver entradas
-                      </a>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </Reveal>
-      ) : null}
-
-      {timelineEvents.length > 0 ? (
-        <Reveal as="section" className="public-section public-section--surface" delay={160}>
-          <div className="container">
-            <p className="eyebrow">Archivo</p>
-            <h2 className="section-heading">{band.timelineSection?.titulo || 'Linea de tiempo'}</h2>
-            {band.timelineSection?.descripcion ? <p className="lead">{band.timelineSection.descripcion}</p> : null}
-            <ol className="timeline-list timeline-list--band">
-              {timelineEvents.map((event, index) => {
-                const eventImage = getSanityImageUrl(event.image, {width: 720, height: 420, fit: 'crop'})
-
-                return (
-                  <li
-                    className={`timeline-item timeline-item--band ${getTimelineImportanceClassName(event.importance)}`}
-                    key={`${event.name}-${event.date}-${index}`}
-                  >
-                    <div className="timeline-item__year">{formatYear(event.date) || 'Sin fecha'}</div>
-                    <div className="timeline-item__content">
-                      <div className="timeline-item__header">
-                        <span className="band-chip">{event.icon || '*'}</span>
-                        <span className="timeline-item__eyebrow">
-                          {getTimelineImportanceLabel(event.importance)}
-                        </span>
-                      </div>
-                      <h3>{event.name}</h3>
-                      {eventImage ? (
-                        <div className="timeline-item__media">
-                          <Image
-                            src={eventImage}
-                            alt={event.name ? `Imagen de ${event.name}` : 'Imagen del evento'}
-                            width={720}
-                            height={420}
-                            sizes="(max-width: 760px) 100vw, 38rem"
-                          />
-                        </div>
-                      ) : null}
-                      {event.descripcion ? <p className="muted">{event.descripcion}</p> : null}
-                      {event.link ? (
-                        <a className="button button--band-ghost" href={event.link} target="_blank" rel="noreferrer">
-                          Ver mas
-                        </a>
-                      ) : null}
-                    </div>
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
-        </Reveal>
-      ) : null}
-
-      {galleryItems.length > 0 ? (
-        <Reveal as="section" className="public-section" delay={180}>
-          <div className="container">
-            <div className="section-heading-row">
-              <div>
-                <p className="eyebrow">Galeria</p>
-                <h2 className="section-heading">{band.gallerySection?.titulo || 'Archivo visual'}</h2>
-              </div>
-            </div>
-            <div className="gallery-grid">
-              {galleryItems.map((item, index) => {
-                const imageUrl = getSanityImageUrl(item.image, {width: 900, height: 900, fit: 'crop'})
-                if (!imageUrl) {
-                  return null
-                }
-
-                return item.link ? (
-                  <a
-                    className={`gallery-card${index % 3 === 1 ? ' gallery-card--offset' : ''}`}
-                    key={item._key || `${item.caption}-${index}`}
-                    href={item.link}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <Image
-                      src={imageUrl}
-                      alt={item.alt || item.caption || `Galeria de ${band.nombre || 'la banda'}`}
-                      width={900}
-                      height={900}
-                      sizes="(max-width: 820px) 50vw, 24vw"
-                    />
-                    {item.caption ? <span className="gallery-card__caption">{item.caption}</span> : null}
-                  </a>
-                ) : (
-                  <div
-                    className={`gallery-card${index % 3 === 1 ? ' gallery-card--offset' : ''}`}
-                    key={item._key || `${item.caption}-${index}`}
-                  >
-                    <Image
-                      src={imageUrl}
-                      alt={item.alt || item.caption || `Galeria de ${band.nombre || 'la banda'}`}
-                      width={900}
-                      height={900}
-                      sizes="(max-width: 820px) 50vw, 24vw"
-                    />
-                    {item.caption ? <span className="gallery-card__caption">{item.caption}</span> : null}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </Reveal>
-      ) : null}
-
-      {showListenDetails ? (
-        <Reveal as="section" className="public-section" delay={190}>
-          <div className="container">
-            <div className="section-heading-row">
-              <div>
-                <p className="eyebrow">Escuchanos</p>
-                <h2 className="section-heading">{band.escuchanos?.titulo || 'Plataformas activas'}</h2>
-              </div>
-              {band.escuchanos?.descripcion ? (
-                <p className="muted section-heading-row__copy">{band.escuchanos.descripcion}</p>
-              ) : null}
-            </div>
-            <div className="public-grid public-grid--listen">
-              {showYoutube ? (
-                <article className="glass-panel listen-panel">
-                  <div className="listen-panel__header">
-                    <p className="eyebrow">YouTube</p>
-                    <h3>{band.escuchanos?.youtube?.titulo || 'Videos destacados'}</h3>
-                  </div>
-                  <div className="listen-panel__list">
-                    {youtubeEmbeds.map((video) => (
-                      <article className="listen-item listen-item--embed" key={video._key || video.url}>
-                        <div className="listen-item__media listen-item__media--video">
-                          {video.embedUrl ? (
-                            <iframe
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              loading="lazy"
-                              referrerPolicy="strict-origin-when-cross-origin"
-                              src={video.embedUrl}
-                              title={`YouTube: ${video.titulo}`}
-                            />
-                          ) : (
-                            <a
-                              className="listen-item__fallback"
-                              href={video.url}
-                              rel="noreferrer"
-                              target="_blank"
-                            >
-                              <strong>No se pudo embeber este video</strong>
-                              <span className="listen-item__cta">Abrir en YouTube</span>
-                            </a>
-                          )}
-                        </div>
-                        <div className="listen-item__copy">
-                          <strong>{video.titulo}</strong>
-                          {video.descripcion ? <p className="muted">{video.descripcion}</p> : null}
-                          {!video.embedUrl ? (
-                            <a className="listen-item__cta" href={video.url} rel="noreferrer" target="_blank">
-                              Abrir video
-                            </a>
-                          ) : null}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </article>
-              ) : null}
-
-              {showSpotify ? (
-                <article className="glass-panel listen-panel">
-                  <div className="listen-panel__header">
-                    <p className="eyebrow">Spotify</p>
-                    <h3>{band.escuchanos?.spotify?.titulo || 'Playlists y perfil oficial'}</h3>
-                  </div>
-                  <div className="listen-panel__list">
-                    {band.escuchanos?.spotify?.perfil_url ? (
-                      <article className="listen-item listen-item--embed listen-item--profile">
-                        <div className="listen-item__media listen-item__media--spotify">
-                          {spotifyProfileEmbed ? (
-                            <iframe
-                              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                              loading="lazy"
-                              src={spotifyProfileEmbed.embedUrl}
-                              title="Spotify: perfil oficial"
-                            />
-                          ) : (
-                            <a
-                              className="listen-item__fallback"
-                              href={band.escuchanos.spotify.perfil_url}
-                              rel="noreferrer"
-                              target="_blank"
-                            >
-                              <strong>No se pudo embeber este perfil</strong>
-                              <span className="listen-item__cta">Abrir en Spotify</span>
-                            </a>
-                          )}
-                        </div>
-                        <div className="listen-item__copy">
-                          <strong>Perfil oficial</strong>
-                          <p className="muted">Artista o perfil principal configurado desde el panel.</p>
-                          {!spotifyProfileEmbed ? (
-                            <a
-                              className="listen-item__cta"
-                              href={band.escuchanos.spotify.perfil_url}
-                              rel="noreferrer"
-                              target="_blank"
-                            >
-                              Abrir Spotify
-                            </a>
-                          ) : null}
-                        </div>
-                      </article>
-                    ) : null}
-                    {spotifyPlaylistEmbeds.map((playlist) => (
-                      <article className="listen-item listen-item--embed" key={playlist._key || playlist.url}>
-                        <div className="listen-item__media listen-item__media--spotify">
-                          {playlist.embed ? (
-                            <iframe
-                              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                              loading="lazy"
-                              src={playlist.embed.embedUrl}
-                              title={`Spotify: ${playlist.titulo}`}
-                            />
-                          ) : (
-                            <a
-                              className="listen-item__fallback"
-                              href={playlist.url}
-                              rel="noreferrer"
-                              target="_blank"
-                            >
-                              <strong>No se pudo embeber esta playlist</strong>
-                              <span className="listen-item__cta">Abrir en Spotify</span>
-                            </a>
-                          )}
-                        </div>
-                        <div className="listen-item__copy">
-                          <strong>{playlist.titulo}</strong>
-                          {playlist.descripcion ? <p className="muted">{playlist.descripcion}</p> : null}
-                          {!playlist.embed ? (
-                            <a className="listen-item__cta" href={playlist.url} rel="noreferrer" target="_blank">
-                              Abrir playlist
-                            </a>
-                          ) : null}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </article>
-              ) : null}
-            </div>
-          </div>
-        </Reveal>
-      ) : null}
-
-      {hasContactSection ? (
-        <Reveal as="section" className="public-section public-section--surface" delay={200}>
-          <div className="container public-contact">
-            <div>
-              <p className="eyebrow">Contacto y redes</p>
-              <h2 className="section-heading">Seguir, escuchar y contratar</h2>
-              <p className="lead">
-                Toda la presencia digital de la banda queda reunida en un mismo punto de contacto.
-              </p>
-            </div>
-
-            <div className="public-grid public-grid--contact">
-              {band.contacto?.email ? (
-                <a className="glass-panel contact-panel" href={`mailto:${band.contacto.email}`}>
-                  <strong>Email</strong>
-                  <p className="muted">{band.contacto.email}</p>
-                </a>
-              ) : null}
-              {band.contacto?.telefono ? (
-                <a className="glass-panel contact-panel" href={`tel:${band.contacto.telefono}`}>
-                  <strong>Telefono</strong>
-                  <p className="muted">{band.contacto.telefono}</p>
-                </a>
-              ) : null}
-              {band.contacto?.ubicacion ? (
-                <div className="glass-panel contact-panel">
-                  <strong>Ubicacion</strong>
-                  <p className="muted">{band.contacto.ubicacion}</p>
-                </div>
-              ) : null}
-              {socials.map((social) => {
-                const Icon = getSocialIcon(social.network)
-
-                return (
-                  <a
-                    className="glass-panel contact-panel contact-panel--social"
-                    data-network={social.network}
-                    href={social.href}
-                    key={social.label}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span className="contact-panel__icon" aria-hidden="true">
-                      <Icon />
-                    </span>
-                    <div className="contact-panel__copy">
-                      <strong>{social.label}</strong>
-                      <p className="muted">Abrir perfil</p>
-                    </div>
-                  </a>
-                )
-              })}
-            </div>
-          </div>
-        </Reveal>
-      ) : null}
+      <div className="public-band-body">
+        {visibleSectionKeys.map((sectionKey) => sectionMap[sectionKey])}
+        {!previewMode ? <PublicMobileFooter /> : null}
+      </div>
     </main>
   )
 }

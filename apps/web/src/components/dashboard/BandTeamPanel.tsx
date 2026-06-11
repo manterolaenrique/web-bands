@@ -12,7 +12,10 @@ import {
   getManageableRoleOptions,
   getRoleLabel,
 } from '@/lib/bands/members'
+import {isBandInviteEmailConfigured} from '@/lib/email/resend'
 import type {BandInviteSummary, BandMemberRole, BandMemberSummary} from '@/types/band'
+
+import {InviteLinkActions} from './InviteLinkActions'
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('es-AR', {
@@ -27,17 +30,20 @@ export function BandTeamPanel({
   managerRole,
   members,
   invites,
+  returnTo,
 }: {
   bandId: string
   currentUserId: string
   managerRole: BandMemberRole
   members: BandMemberSummary[]
   invites: BandInviteSummary[]
+  returnTo: string
 }) {
   const manageableInviteRoles = getManageableRoleOptions(managerRole)
+  const emailDeliveryEnabled = isBandInviteEmailConfigured()
 
   return (
-    <section className="dashboard-card">
+    <section className="dashboard-card dashboard-card--team">
       <div className="dashboard-header">
         <div>
           <p className="eyebrow">Equipo</p>
@@ -48,9 +54,14 @@ export function BandTeamPanel({
 
       <div className="form-section form-section--compact">
         <h3>Invitar miembro</h3>
+        {!emailDeliveryEnabled ? (
+          <div className="status status--warning">
+            El envio automatico no esta configurado. Crea la invitacion y comparte el enlace manualmente.
+          </div>
+        ) : null}
         <form action={createBandInvite} className="form-grid">
           <input type="hidden" name="bandId" value={bandId} />
-          <input type="hidden" name="returnTo" value={`/dashboard/bands/${bandId}`} />
+          <input type="hidden" name="returnTo" value={returnTo} />
           <label className="form-field">
             <span className="form-label">Email</span>
             <input className="form-input" name="email" type="email" placeholder="invitado@ejemplo.com" required />
@@ -101,7 +112,7 @@ export function BandTeamPanel({
                     <form action={updateBandMemberRole} className="member-card__actions">
                       <input type="hidden" name="bandId" value={bandId} />
                       <input type="hidden" name="memberUserId" value={member.userId} />
-                      <input type="hidden" name="returnTo" value={`/dashboard/bands/${bandId}`} />
+                      <input type="hidden" name="returnTo" value={returnTo} />
                       <select className="form-select" name="role" defaultValue={member.role}>
                         {editableRoles.map((role) => (
                           <option key={role} value={role}>
@@ -118,7 +129,7 @@ export function BandTeamPanel({
                     <form action={removeBandMember} className="member-card__actions">
                       <input type="hidden" name="bandId" value={bandId} />
                       <input type="hidden" name="memberUserId" value={member.userId} />
-                      <input type="hidden" name="returnTo" value={`/dashboard/bands/${bandId}`} />
+                      <input type="hidden" name="returnTo" value={returnTo} />
                       <button className="button button--danger" type="submit">
                         Quitar miembro
                       </button>
@@ -158,12 +169,13 @@ export function BandTeamPanel({
                       <form action={revokeBandInvite}>
                         <input type="hidden" name="bandId" value={bandId} />
                         <input type="hidden" name="inviteId" value={invite.id} />
-                        <input type="hidden" name="returnTo" value={`/dashboard/bands/${bandId}`} />
+                        <input type="hidden" name="returnTo" value={returnTo} />
                         <button className="button button--danger" type="submit">
                           Revocar invitacion
                         </button>
                       </form>
                     ) : null}
+                    <InviteLinkActions invitePath={`/invite/${invite.token}`} />
                   </div>
                 </article>
               )

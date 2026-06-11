@@ -4,7 +4,7 @@ import type {PublicBand, PublicBandListItem} from '@/types/band'
 const publicBandFilter =
   '_type == "banda" && coalesce(status, "published") == "published" && coalesce(visibility, "public") == "public"'
 
-const bandFields = `{
+const publicBandFields = `{
   _id,
   bandId,
   lastSyncedAt,
@@ -13,6 +13,9 @@ const bandFields = `{
   slug,
   logo,
   logo_favicon,
+  presentation{
+    sectionOrder
+  },
   colores,
   status,
   visibility,
@@ -118,6 +121,136 @@ const bandFields = `{
   }
 }`
 
+const editorBandFields = `{
+  _id,
+  bandId,
+  lastSyncedAt,
+  nombre,
+  genero,
+  slug,
+  logo,
+  logo_favicon,
+  presentation{
+    sectionOrder
+  },
+  colores,
+  status,
+  visibility,
+  hero{
+    titulo,
+    subtitulo,
+    imagen,
+    descripcion,
+    showSpotlightCard
+  },
+  about{
+    titulo,
+    contenido,
+    imagen,
+    integrantes[]{
+      _key,
+      nombre,
+      instrumento,
+      foto
+    }
+  },
+  timelineSection{
+    enabled,
+    titulo,
+    descripcion,
+    events[]{
+      _key,
+      name,
+      date,
+      importance,
+      image,
+      descripcion,
+      link,
+      icon
+    }
+  },
+  contacto{
+    email,
+    telefono,
+    redes,
+    ubicacion
+  },
+  escuchanos{
+    titulo,
+    descripcion,
+    youtube{
+      habilitado,
+      titulo,
+      videos[]{
+        _key,
+        titulo,
+        url,
+        descripcion
+      }
+    },
+    spotify{
+      habilitado,
+      titulo,
+      perfil_url,
+      playlists[]{
+        _key,
+        titulo,
+        url,
+        descripcion
+      }
+    }
+  },
+  featuredRelease{
+    eyebrow,
+    title,
+    description,
+    coverImage,
+    spotifyUrl,
+    youtubeUrl,
+    appleMusicUrl
+  },
+  showsSection{
+    titulo,
+    descripcion,
+    shows[]{
+      _key,
+      date,
+      venue,
+      location,
+      ticketUrl,
+      status
+    }
+  },
+  gallerySection{
+    titulo,
+    items[]{
+      _key,
+      image,
+      alt,
+      caption,
+      link
+    }
+  },
+  internalKit{
+    shortPitch,
+    contactName,
+    contactEmail,
+    contactPhone,
+    bookingNotes,
+    keyLinks[]{
+      _key,
+      label,
+      url,
+      kind
+    }
+  },
+  seo{
+    titulo_seo,
+    descripcion_seo,
+    palabras_clave
+  }
+}`
+
 const publishedBandsQuery = `*[${publicBandFilter}] | order(nombre asc) {
   _id,
   bandId,
@@ -131,10 +264,10 @@ const publishedBandsQuery = `*[${publicBandFilter}] | order(nombre asc) {
   visibility
 }`
 
-const bandBySlugQuery = `*[${publicBandFilter} && slug.current == $slug] | order(coalesce(lastSyncedAt, _updatedAt) desc)[0]${bandFields}`
+const bandBySlugQuery = `*[${publicBandFilter} && slug.current == $slug] | order(coalesce(lastSyncedAt, _updatedAt) desc)[0]${publicBandFields}`
 
-const bandByDocumentIdQuery = `*[_type == "banda" && _id == $id][0]${bandFields}`
-const bandByBandIdQuery = `*[_type == "banda" && bandId == $bandId] | order(coalesce(lastSyncedAt, _updatedAt) desc)[0]${bandFields}`
+const bandByDocumentIdQuery = `*[_type == "banda" && _id == $id][0]${editorBandFields}`
+const bandByBandIdQuery = `*[_type == "banda" && bandId == $bandId] | order(coalesce(lastSyncedAt, _updatedAt) desc)[0]${editorBandFields}`
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))

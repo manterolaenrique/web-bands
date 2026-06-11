@@ -2,6 +2,7 @@ import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 
 import {PublicBandView} from '@/components/bands/PublicBandView'
+import {getCurrentUser} from '@/lib/auth/session'
 import {getSanityImageUrl} from '@/lib/sanity/image'
 import {getPublicBandBySlug} from '@/lib/sanity/queries'
 
@@ -37,10 +38,11 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
 export default async function BandPage({params}: PageProps) {
   const {slug} = await params
   const band = await getPublicBandBySlug(slug)
+  const user = await getCurrentUser()
 
   if (!band) {
     notFound()
   }
 
-  return <PublicBandView band={band} />
+  return <PublicBandView band={band} accountHref={user ? '/dashboard' : '/login'} accountLabel={user ? 'Cuenta' : 'Login'} />
 }

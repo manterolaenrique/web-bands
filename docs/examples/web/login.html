@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | Web Bands</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Montserrat:wght@700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#ddb7ff",
+                    "secondary": "#5de6ff",
+                    "surface-container-low": "#1c1b1b",
+                    "surface-tint": "#ddb7ff",
+                    "surface-container-high": "#2a2a2a",
+                    "primary-container": "#b76dff",
+                    "on-secondary-container": "#00515d",
+                    "outline-variant": "#4d4354",
+                    "on-primary-container": "#400071",
+                    "on-secondary-fixed-variant": "#004e5a",
+                    "inverse-surface": "#e5e2e1",
+                    "tertiary": "#fabc4e",
+                    "surface-bright": "#3a3939",
+                    "surface-variant": "#353534",
+                    "surface-container-highest": "#353534",
+                    "primary-fixed": "#f0dbff",
+                    "on-primary-fixed-variant": "#6900b3",
+                    "surface-dim": "#131313",
+                    "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                    "primary-fixed-dim": "#ddb7ff",
+                    "inverse-on-surface": "#313030",
+                    "on-tertiary-fixed-variant": "#604100",
+                    "secondary-fixed-dim": "#2fd9f4",
+                    "on-primary-fixed": "#2c0051",
+                    "tertiary-container": "#bd871a",
+                    "outline": "#988d9f",
+                    "on-surface": "#e5e2e1",
+                    "surface": "#131313",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-secondary": "#00363e",
+                    "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                    "background": "#131313",
+                    "tertiary-fixed-dim": "#fabc4e",
+                    "secondary-fixed": "#a2eeff",
+                    "on-background": "#e5e2e1",
+                    "surface-container": "#201f1f",
+                    "surface-charcoal": "#121214",
+                    "on-tertiary": "#432c00",
+                    "error-container": "#93000a",
+                    "surface-elevated": "#1E1E22",
+                    "on-secondary-fixed": "#001f25",
+                    "on-primary": "#490080",
+                    "tertiary-fixed": "#ffdead",
+                    "error": "#ffb4ab",
+                    "secondary-container": "#00cbe6",
+                    "inverse-primary": "#842bd2",
+                    "on-error": "#690005",
+                    "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#281900",
+                    "on-surface-variant": "#cfc2d6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-md": "16px",
+                    "section-gap": "80px",
+                    "gutter": "24px",
+                    "stack-lg": "32px",
+                    "margin-mobile": "16px",
+                    "base": "4px",
+                    "stack-sm": "8px",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "display-lg-mobile": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "headline-xl": ["Montserrat"],
+                    "display-lg": ["Montserrat"],
+                    "headline-lg": ["Montserrat"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                    "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(183, 109, 255, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(183, 109, 255, 0.7); }
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .glow-primary:hover {
+            box-shadow: 0 0 15px rgba(221, 183, 255, 0.4);
+        }
+        
+        .glow-pulse {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+
+        .neon-border-focus:focus-within {
+            border-color: #5de6ff;
+            box-shadow: 0 0 15px rgba(93, 230, 255, 0.3);
+        }
+        
+        body {
+            background-color: #050505;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(168, 85, 247, 0.08) 0%, transparent 60%),
+                radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.08) 0%, transparent 60%);
+            background-size: 200% 200%;
+            animation: gradientMove 15s infinite ease-in-out;
+        }
+
+        .glass-panel {
+            background: rgba(18, 18, 20, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .animate-entry {
+            animation: entryAnimation 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes entryAnimation {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md text-on-surface selection:bg-primary/30">
+<!-- Navigation suppressed per 'Linear/Transactional' rule for login screens -->
+<main class="flex-grow flex items-center justify-center px-margin-mobile py-section-gap relative overflow-hidden">
+<!-- Atmospheric Background Elements -->
+<div class="absolute inset-0 z-0 opacity-20 pointer-events-none">
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-container rounded-full blur-[120px] animate-pulse"></div>
+<div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-on-secondary-container rounded-full blur-[120px] animate-pulse" style="animation-delay: 2s"></div>
+</div>
+<div class="w-full max-w-[440px] z-10 animate-entry">
+<!-- Brand Identity -->
+<div class="text-center mb-stack-lg">
+<h1 class="font-headline-xl text-headline-xl text-primary tracking-tighter mb-base">Web Bands</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Conectando o som do amanhã.</p>
+</div>
+<!-- Login Card -->
+<div class="glass-panel p-stack-lg rounded-xl shadow-2xl">
+<form class="space-y-stack-md" onsubmit="event.preventDefault();">
+<!-- Email Field -->
+<div class="space-y-base">
+<label class="font-label-md text-label-md text-on-surface-variant px-1" for="email">Email</label>
+<div class="relative flex items-center neon-border-focus transition-all duration-300 rounded-lg border border-glass-stroke bg-surface-container-lowest overflow-hidden">
+<span class="material-symbols-outlined ml-stack-md text-on-surface-variant">alternate_email</span>
+<input class="w-full bg-transparent border-none text-on-surface placeholder:text-outline focus:ring-0 py-3 px-stack-sm font-body-md" id="email" placeholder="nome@exemplo.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-base">
+<div class="flex justify-between items-center px-1">
+<label class="font-label-md text-label-md text-on-surface-variant" for="password">Password</label>
+<a class="font-label-sm text-label-sm text-secondary hover:underline transition-all" href="#">Forgot password?</a>
+</div>
+<div class="relative flex items-center neon-border-focus transition-all duration-300 rounded-lg border border-glass-stroke bg-surface-container-lowest overflow-hidden">
+<span class="material-symbols-outlined ml-stack-md text-on-surface-variant">lock</span>
+<input class="w-full bg-transparent border-none text-on-surface placeholder:text-outline focus:ring-0 py-3 px-stack-sm font-body-md" id="password" placeholder="••••••••" type="password"/>
+<button class="mr-stack-md text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Submit Button -->
+<div class="pt-base">
+<button class="w-full py-4 bg-gradient-to-r from-primary-container to-primary text-on-primary-container font-headline-lg text-headline-lg rounded-lg shadow-lg active:scale-95 transition-all duration-300 hover:brightness-110 glow-pulse relative overflow-hidden" id="submit-btn" type="submit">
+                            Entrar
+                        </button>
+</div>
+</form>
+<!-- Divider -->
+<div class="relative my-stack-lg">
+<div class="absolute inset-0 flex items-center"><span class="w-full border-t border-glass-stroke"></span></div>
+<div class="relative flex justify-center text-label-sm uppercase tracking-widest"><span class="bg-surface-charcoal px-stack-sm text-outline">ou continue com</span></div>
+</div>
+<!-- Social Login Placeholder -->
+<div class="grid grid-cols-2 gap-stack-md">
+<button class="flex items-center justify-center gap-stack-sm py-stack-sm border border-glass-stroke rounded-lg font-label-md text-on-surface hover:bg-surface-container-high transition-colors active:scale-95">
+<img alt="Google" class="w-5 h-5 grayscale hover:grayscale-0 transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBt_0tXlRKCkBfzxzrPxWzfJz6r3yk2QDP2lEZM58Zqki6a3lwK6cisWKcn7qKx4nDbOIWhyY2GHwOEBPhnarja6eUID0kJOwFrxNbcoLE9BNsQuU5PsDkN2swmOpIOYHy8hUC99BRI32mZr0EQ_Uwc0VnVjwwhL3Hf8s6TVShX4D3vPH_9XgIA2z1HK80M8D0Q1XczxGu0UDkQCHH6bFvJbT6yQCJAglrCCEZItng2zqIBzwPSupxE8jA9QuMXdnNe1YLN9gD0XjSR"/>
+                        Google
+                    </button>
+<button class="flex items-center justify-center gap-stack-sm py-stack-sm border border-glass-stroke rounded-lg font-label-md text-on-surface hover:bg-surface-container-high transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">brand_awareness</span>
+                        Github
+                    </button>
+</div>
+</div>
+<!-- Footer Links -->
+<div class="mt-stack-lg text-center">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Não tem uma conta? 
+                    <a class="text-secondary font-label-md hover:underline hover:text-secondary-fixed transition-colors" href="#">Create account</a>
+</p>
+</div>
+</div>
+</main>
+<!-- Footer Component -->
+<footer class="w-full py-stack-lg border-t border-glass-stroke bg-surface-container-lowest">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md px-gutter max-w-container-max mx-auto">
+<div class="flex flex-col gap-base">
+<span class="font-headline-xl text-headline-xl text-primary">Web Bands</span>
+<p class="font-label-md text-label-md text-on-surface-variant">© 2024 Web Bands Platform. All rights reserved.</p>
+</div>
+<div class="flex flex-wrap items-center gap-stack-lg md:justify-end">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">Contact</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">Support</a>
+</div>
+</div>
+</footer>
+<script>
+        // Magnetic Button Effect
+        const btn = document.querySelector('#submit-btn');
+        btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const deltaX = (x - centerX) / 8;
+            const deltaY = (y - centerY) / 4;
+            
+            btn.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        });
+
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'translate(0, 0)';
+        });
+
+        // Background Interaction
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            // Subtle shift of background based on mouse
+            document.body.style.backgroundPosition = `${x * 10}% ${y * 10}%`;
+        });
+
+        // Standard Button interactions
+        const allButtons = document.querySelectorAll('button:not(#submit-btn)');
+        allButtons.forEach(button => {
+            button.addEventListener('mousedown', function() {
+                this.classList.add('scale-95');
+            });
+            button.addEventListener('mouseup', function() {
+                this.classList.remove('scale-95');
+            });
+            button.addEventListener('mouseleave', function() {
+                this.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>

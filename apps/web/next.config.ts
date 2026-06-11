@@ -5,6 +5,16 @@ import {fileURLToPath} from 'node:url'
 const appRoot = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(appRoot, '../..')
 const isProduction = process.env.NODE_ENV === 'production'
+const allowedDevOrigins = [
+  '127.0.0.1',
+  'localhost',
+  '192.168.0.233',
+  '10.20.30.13',
+  ...(process.env.ALLOWED_DEV_ORIGINS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+]
 
 function buildContentSecurityPolicyReportOnly() {
   return [
@@ -13,7 +23,7 @@ function buildContentSecurityPolicyReportOnly() {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "object-src 'none'",
-    "img-src 'self' data: blob: https://cdn.sanity.io https://*.sanity.io",
+    "img-src 'self' data: blob: https://cdn.sanity.io https://*.sanity.io https://*.supabase.co https://*.supabase.in",
     "style-src 'self' 'unsafe-inline'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "font-src 'self' data:",
@@ -26,8 +36,9 @@ function buildContentSecurityPolicyReportOnly() {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  allowedDevOrigins: ['127.0.0.1'],
+  allowedDevOrigins,
   outputFileTracingRoot: repoRoot,
+  transpilePackages: ['@web-bands/bands-domain'],
   turbopack: {
     root: repoRoot,
   },
@@ -74,6 +85,15 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: securityHeaders,
+      },
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
       },
       {
         source: '/studio/:path*',

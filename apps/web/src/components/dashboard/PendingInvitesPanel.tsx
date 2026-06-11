@@ -17,11 +17,11 @@ export function PendingInvitesPanel({invites}: {invites: BandInviteSummary[]}) {
   }
 
   return (
-    <section className="dashboard-card">
-      <div className="dashboard-header">
+    <section className="dashboard-card dashboard-card--invites">
+      <div className="dashboard-section-heading">
         <div>
           <p className="eyebrow">Invitaciones</p>
-          <h2 className="dashboard-title">Pendientes para tu cuenta</h2>
+          <h2>Pendientes para tu cuenta</h2>
           <p className="muted">Acepta accesos a otras bandas desde el mismo dashboard.</p>
         </div>
       </div>

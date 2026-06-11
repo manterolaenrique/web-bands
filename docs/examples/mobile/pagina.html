@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEON CIRCUITRY | VOLTAGE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                        "on-secondary-fixed": "#001f25",
+                        "primary-container": "#b76dff",
+                        "inverse-surface": "#e5e2e1",
+                        "surface": "#131313",
+                        "surface-tint": "#ddb7ff",
+                        "tertiary-fixed-dim": "#fabc4e",
+                        "surface-container-lowest": "#0e0e0e",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#353534",
+                        "surface-bright": "#3a3939",
+                        "surface-container-highest": "#353534",
+                        "error-container": "#93000a",
+                        "surface-elevated": "#1E1E22",
+                        "secondary-fixed": "#a2eeff",
+                        "on-tertiary-fixed-variant": "#604100",
+                        "primary": "#ddb7ff",
+                        "surface-charcoal": "#121214",
+                        "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                        "on-tertiary-container": "#3a2600",
+                        "outline": "#988d9f",
+                        "tertiary-fixed": "#ffdead",
+                        "outline-variant": "#4d4354",
+                        "on-tertiary": "#432c00",
+                        "on-primary-container": "#400071",
+                        "primary-fixed-dim": "#ddb7ff",
+                        "on-primary": "#490080",
+                        "on-primary-fixed-variant": "#6900b3",
+                        "tertiary": "#fabc4e",
+                        "background": "#131313",
+                        "on-secondary-container": "#00515d",
+                        "on-background": "#e5e2e1",
+                        "on-primary-fixed": "#2c0051",
+                        "inverse-on-surface": "#313030",
+                        "surface-dim": "#131313",
+                        "surface-container": "#201f1f",
+                        "on-surface-variant": "#cfc2d6",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "inverse-primary": "#842bd2",
+                        "on-surface": "#e5e2e1",
+                        "tertiary-container": "#bd871a",
+                        "primary-fixed": "#f0dbff",
+                        "surface-container-low": "#1c1b1b",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed": "#281900",
+                        "on-secondary": "#00363e",
+                        "secondary-container": "#00cbe6",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary": "#5de6ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Montserrat"],
+                        "headline-lg": ["Montserrat"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                        "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #050505;
+            color: #e5e2e1;
+            overflow-x: hidden;
+        }
+        .glass-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .neon-border-cyan {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+        }
+        .neon-border-purple {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+        .text-glow-purple {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md selection:bg-primary selection:text-on-primary">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-16 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-glass-stroke">
+<div class="flex items-center gap-stack-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">menu</span>
+<span class="font-display-lg-mobile text-display-lg-mobile font-black tracking-tighter text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">VOLTAGE</span>
+</div>
+<button class="font-label-md text-label-md text-secondary border border-secondary px-4 py-1.5 rounded-full hover:scale-105 active:scale-95 transition-all">JOIN</button>
+</nav>
+<!-- Hero Section -->
+<header class="relative w-full h-[751px] flex items-end overflow-hidden">
+<div class="absolute inset-0">
+<img class="w-full h-full object-cover grayscale brightness-50" data-alt="A cinematic low-angle photograph of a futuristic electronic rock band performing on a dark stage. High-intensity neon purple and cyan lasers cut through a dense atmospheric haze. The musicians are silhouettes against a giant glowing LED wall displaying abstract circuitry patterns. The overall mood is high-energy, raw, and technologically advanced, fitting a late-night immersive venue aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8mKTW2jgha5ikNSUcr1bwvMSfmLuWfCyikXbabRPunJbtpbQgbQVFAtHZoqg66kzSeraQg8X32rZ_A3rjo06mS6RgD2ARJaVZAImRNeqd8hUe2EdNtG1XyGcFEz3eZETRyjF7Mfv6rRbcEqQTWbUM_sGWgXz1OyG43QsaQ5v_oVHX2DXxNfCpKPto1rvZM_ton6n5FA1poS3XDEO-gNFqtslWwau6mG5ueofWBlTMRVkX4SVL4LTE77di9P35D0L7PSE6ISGOKtZw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+</div>
+<div class="relative w-full px-margin-mobile pb-24 z-10">
+<div class="flex flex-col gap-2">
+<span class="inline-block w-fit bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-3 py-1 rounded-full tracking-widest uppercase">Artist Spotlight</span>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black tracking-tighter leading-none text-glow-purple">NEON CIRCUITRY</h1>
+<div class="flex items-center gap-4 mt-2">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">SYNTH-ROCK</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">NEO-TOKYO</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="relative z-20 -mt-16 bg-background rounded-t-[32px] px-margin-mobile pt-stack-lg pb-40 flex flex-col gap-section-gap">
+<!-- Band History Section -->
+<section id="history">
+<div class="flex items-center justify-between mb-stack-md">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background font-bold uppercase tracking-tight">The Origin</h2>
+<div class="h-[2px] flex-1 ml-4 bg-gradient-to-r from-primary/30 to-transparent"></div>
+</div>
+<div class="p-stack-md bg-surface-charcoal border border-glass-stroke rounded-xl relative overflow-hidden">
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 blur-3xl"></div>
+<p class="font-body-md text-on-surface-variant leading-relaxed mb-stack-md">
+                    Emerging from the underground data-hubs of Neo-Tokyo, Neon Circuitry fuses industrial grit with high-fidelity synthesis. Founded in 2022, they've redefined electronic performance as a visceral, multi-sensory experience.
+                </p>
+<div class="flex gap-stack-sm overflow-x-auto no-scrollbar pb-2">
+<span class="shrink-0 bg-surface-container-high border border-glass-stroke px-4 py-2 rounded-lg font-label-sm text-secondary">#CYBERPUNK</span>
+<span class="shrink-0 bg-surface-container-high border border-glass-stroke px-4 py-2 rounded-lg font-label-sm text-secondary">#MODULAR_SYNTH</span>
+<span class="shrink-0 bg-surface-container-high border border-glass-stroke px-4 py-2 rounded-lg font-label-sm text-secondary">#GLITCH_CORE</span>
+</div>
+</div>
+</section>
+<!-- Upcoming Events: Voltage Drops -->
+<section id="tours">
+<div class="flex items-center justify-between mb-stack-md">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background font-bold uppercase tracking-tight">Voltage Drops</h2>
+<div class="h-[2px] flex-1 ml-4 bg-gradient-to-r from-secondary/30 to-transparent"></div>
+</div>
+<div class="flex flex-col gap-stack-md">
+<!-- Tour Card 1 -->
+<div class="group relative bg-surface-elevated border border-glass-stroke p-stack-md rounded-xl transition-all duration-300 active:scale-98">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Oct 24, 2024</p>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-white font-black">THE VOID</h3>
+<p class="font-label-md text-label-md text-outline">Berlin, DE</p>
+</div>
+<div class="bg-surface-container-highest px-3 py-1 rounded-full border border-glass-stroke">
+<span class="font-label-sm text-label-sm text-primary">SOLD OUT</span>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-variant text-outline font-label-md text-label-md rounded-lg cursor-not-allowed">NOTIFY ME</button>
+</div>
+<!-- Tour Card 2 -->
+<div class="group relative bg-surface-charcoal border border-glass-stroke p-stack-md rounded-xl overflow-hidden transition-all duration-300 hover:border-secondary/50">
+<div class="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent pointer-events-none"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Nov 12, 2024</p>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-white font-black uppercase">CYBERIA NIGHTS</h3>
+<p class="font-label-md text-label-md text-outline">London, UK</p>
+</div>
+<div class="bg-secondary/10 px-3 py-1 rounded-full border border-secondary/30">
+<span class="font-label-sm text-label-sm text-secondary animate-pulse">LIVE</span>
+</div>
+</div>
+<button class="w-full py-4 bg-gradient-to-r from-primary to-secondary text-on-primary-fixed font-black font-label-md text-label-md rounded-lg neon-border-cyan active:scale-95 transition-transform uppercase">Buy Tickets</button>
+</div>
+<!-- Tour Card 3 -->
+<div class="group relative bg-surface-charcoal border border-glass-stroke p-stack-md rounded-xl overflow-hidden transition-all duration-300 hover:border-primary/50">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Dec 05, 2024</p>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-white font-black uppercase">GRID RUNNER</h3>
+<p class="font-label-md text-label-md text-outline">Paris, FR</p>
+</div>
+</div>
+<button class="w-full py-4 border border-secondary text-secondary font-black font-label-md text-label-md rounded-lg hover:bg-secondary/5 active:scale-95 transition-all uppercase">Secure Spot</button>
+</div>
+</div>
+</section>
+<!-- Photo Gallery Bento -->
+<section id="gallery">
+<div class="flex items-center justify-between mb-stack-md">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background font-bold uppercase tracking-tight">Signal Flow</h2>
+<div class="h-[2px] flex-1 ml-4 bg-gradient-to-r from-primary/30 to-transparent"></div>
+</div>
+<div class="grid grid-cols-2 gap-stack-sm">
+<div class="h-48 rounded-xl overflow-hidden border border-glass-stroke">
+<img class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500" data-alt="A close-up shot of complex analog modular synthesizers with tangled neon purple and blue patch cables. Soft focus highlights the glowing LED indicators and metallic knobs. The aesthetic is purely technical and futuristic, reflecting the hardware used by an electronic rock band in a dark, moody studio environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmQkWkwL3QlaQIbn28FwACmHPgNocPEF9gMYEQzYJCWkzZ-cXav9_Y6smy8w5a-vcLibYSErMTIE71PDMvJbZgBR_iNhwEPOj58PJLBcBNVJ3JFpfHFAPhsET1Wfc-b6RaBM5mw9jAFids-u9UFjJJm37KhADd2_1J8ewT6yl66Ec9IkRozPb2p8Q4sZyVhfrpoEpsqiOqP9jj14Q4KM8hvq_jSZ5_GRMI6M7Bmj2YjmcAblGlFR4r8ScwCxAxXq31q7z5wYD6DfdC"/>
+</div>
+<div class="h-64 row-span-2 rounded-xl overflow-hidden border border-glass-stroke">
+<img class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500" data-alt="An expansive wide shot of a massive outdoor electronic music festival at night. Thousands of fans are illuminated by colossal purple strobe lights and cyan laser beams reaching into the dark sky. The stage is a mountain of glowing screens and speakers. The mood is ecstatic, capturing a moment of intense collective energy in a futuristic concert setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC43KTVMQbGzxAANNdzV4Z58lyTC-dNdBdnpV1Lj6my9mcm8ei9wXmrM_TwBeMF_FWJCU5lVLALNH-J2TbA8PHJL9ikuX644BTiv5mhmOJLJk03zWbjAhCiH27hwoVPqRrCMsU4pIzAhjUtjtNL84CwPUAKOtrSyBFCTZiHZh2HBCME7iwziTDpc19wOh5AgEGneogPRph70exsdbzABPtelWlnse4Kl1Qn7KXIjzt40U1EwDLNiFatq5nmt7lZR3GSYFDBsXsDca7J"/>
+</div>
+<div class="h-32 rounded-xl overflow-hidden border border-glass-stroke">
+<img class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500" data-alt="A high-contrast black and white portrait of a musician wearing futuristic tactical gear and glowing eyewear. Minimalist purple rim lighting defines the edges of their silhouette against a pitch-black background. The expression is focused and intense, embodying the cyberpunk aesthetic of a high-energy electronic performer." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMqoMfynyOBIdvWQbQVjk6hTQnbuRanyB_19RCHtqz_egrbRqMedIE4ZSmFLrP6164kBhWAzMZrJt0UGRdaDmbWy6GK0gRJAPQOl5QsobzHufn8UY0n2t1H6_x1oUnJgIKd0y8Q1T2RePViFpXZ5VZ775wYlnmnG3Z8UUjbzlq8LnccBPNuMSj4-7Eyf7ahChNLOLok57lE2ZsqvPDN_IsoX9S_-HL21ChBqoOU-f15_V0JJlVVA4zFZVU0W0r9eOliZvbXE1ElaXB"/>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Audio Player -->
+<div class="fixed bottom-0 left-0 w-full z-50 glass-blur bg-surface/80 border-t border-glass-stroke p-4 pb-6 safe-area-bottom">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded bg-surface-container-high overflow-hidden shrink-0 border border-secondary/30">
+<img class="w-full h-full object-cover" data-alt="An abstract digital artwork of a square music album cover featuring glitchy neon cyan circuitry and distorted waveforms on a deep charcoal background. The design is sharp and geometric, evoking a sense of high-speed data transmission and modern electronic music." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtYc6ys6Ltha0A23j5kFL8fNf-in0B6SeZjyPuhEUmmGPiyTyMA12JWM5VAzwE-68FBCShWKdfnpZnKQ9qw41zqNfgD4YZC25TCttC1HojffrkR1FtOWpyvF1ouNYQd0FEiA_bVInd4fIM6XiUtusTUmkH23iV6T7zWoDxJp1M3NfURZIS0zfmcISh4eLNmrqHTKkswIESe3gSTQWUm9S00QuZCsZAIZ7nQo7j0iwYKv7oQGIKYQIk8BU6L9HXxLpRr372fMfSbmmL"/>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-label-md text-label-md text-white truncate">SIGNAL_CRUSH.exe</h4>
+<p class="font-label-sm text-label-sm text-secondary truncate">NEON CIRCUITRY</p>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-white" style="font-variation-settings: 'FILL' 0;">shuffle</button>
+<button class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary-fixed shadow-lg shadow-primary/20 transition-transform active:scale-90" id="play-btn">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-white" style="font-variation-settings: 'FILL' 0;">skip_next</button>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="mt-4 w-full h-1 bg-surface-variant rounded-full overflow-hidden">
+<div class="w-1/3 h-full bg-gradient-to-r from-primary to-secondary neon-border-cyan"></div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-glass-stroke px-margin-mobile py-stack-lg flex flex-col items-center gap-stack-md w-full mb-32">
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary font-black tracking-tighter opacity-50">VOLTAGE</span>
+<div class="flex gap-stack-md">
+<a class="font-label-sm text-label-sm text-outline hover:text-secondary transition-colors" href="#">Privacy</a>
+<a class="font-label-sm text-label-sm text-outline hover:text-secondary transition-colors" href="#">Terms</a>
+<a class="font-label-sm text-label-sm text-outline hover:text-secondary transition-colors" href="#">Support</a>
+</div>
+<p class="font-label-sm text-label-sm text-outline/60 text-center">© 2024 VOLTAGE SYNTH RECORDS</p>
+</footer>
+<script>
+        // Micro-interaction for Play Button
+        const playBtn = document.getElementById('play-btn');
+        let isPlaying = false;
+        playBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            const icon = playBtn.querySelector('.material-symbols-outlined');
+            icon.textContent = isPlaying ? 'pause' : 'play_arrow';
+            playBtn.classList.toggle('neon-border-purple', isPlaying);
+        });
+
+        // Simple scroll reveal effect for sections
+        const sections = document.querySelectorAll('section');
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            section.classList.add('transition-all', 'duration-700', 'ease-out', 'opacity-0', 'translate-y-10');
+            observer.observe(section);
+        });
+    </script>
+</body></html>

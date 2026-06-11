@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ensayo jueves - VOLTAGE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(18, 18, 20, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-border-glow:hover {
+            border-color: #5de6ff;
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+        }
+        .row-hover:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #131313;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #353534;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ddb7ff;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#5de6ff",
+                        "surface-tint": "#ddb7ff",
+                        "on-tertiary-container": "#3a2600",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "secondary-fixed": "#a2eeff",
+                        "on-secondary-fixed": "#001f25",
+                        "on-tertiary": "#432c00",
+                        "inverse-primary": "#842bd2",
+                        "surface-container": "#201f1f",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-lowest": "#0e0e0e",
+                        "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                        "on-tertiary-fixed-variant": "#604100",
+                        "surface-elevated": "#1E1E22",
+                        "surface-charcoal": "#121214",
+                        "primary-fixed-dim": "#ddb7ff",
+                        "on-surface-variant": "#cfc2d6",
+                        "on-background": "#e5e2e1",
+                        "on-tertiary-fixed": "#281900",
+                        "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                        "on-secondary": "#00363e",
+                        "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                        "tertiary-container": "#bd871a",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary-container": "#00515d",
+                        "secondary-container": "#00cbe6",
+                        "inverse-on-surface": "#313030",
+                        "tertiary-fixed": "#ffdead",
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "on-error": "#690005",
+                        "outline": "#988d9f",
+                        "surface-variant": "#353534",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#6900b3",
+                        "on-primary-container": "#400071",
+                        "error-container": "#93000a",
+                        "primary-fixed": "#f0dbff",
+                        "tertiary": "#fabc4e",
+                        "surface-container-high": "#2a2a2a",
+                        "primary-container": "#b76dff",
+                        "on-primary-fixed": "#2c0051",
+                        "error": "#ffb4ab",
+                        "background": "#131313",
+                        "primary": "#ddb7ff",
+                        "tertiary-fixed-dim": "#fabc4e",
+                        "surface-dim": "#131313",
+                        "outline-variant": "#4d4354",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "on-primary": "#490080",
+                        "surface-bright": "#3a3939"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px",
+                        "stack-md": "16px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Montserrat"],
+                        "display-lg": ["Montserrat"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Montserrat"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                        "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<header class="bg-surface/80 dark:bg-surface/80 backdrop-blur-xl text-primary dark:text-primary fixed top-0 w-full border-b border-glass-stroke z-50 flex justify-between items-center px-margin-mobile h-16">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined cursor-pointer" data-icon="menu">menu</span>
+<span class="font-display-lg-mobile text-display-lg-mobile font-black tracking-tighter text-primary dark:text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">VOLTAGE</span>
+</div>
+<div class="hidden md:flex items-center gap-gutter">
+<nav class="flex gap-stack-lg">
+<a class="font-label-md text-label-md text-secondary hover:text-secondary hover:scale-105 transition-transform" href="#">Discover</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary hover:scale-105 transition-transform" href="#">Artists</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary hover:scale-105 transition-transform" href="#">Tours</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary hover:scale-105 transition-transform" href="#">Dashboard</a>
+</nav>
+<button class="font-label-md text-label-md px-stack-lg py-2 border border-secondary text-secondary rounded-full hover:bg-secondary/10 transition-all">JOIN</button>
+</div>
+<span class="material-symbols-outlined md:hidden" data-icon="account_circle">account_circle</span>
+</header>
+<main class="pt-24 pb-section-gap max-w-container-max mx-auto px-margin-mobile">
+<section class="flex flex-col md:flex-row gap-gutter items-end md:items-center mb-stack-lg">
+<div class="w-full md:w-64 aspect-square rounded-xl overflow-hidden glass-panel relative group">
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60"></div>
+<img alt="Ensayo Jueves" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A moody, high-contrast photograph of a dark recording studio filled with vintage synthesizers, glowing vacuum tubes, and tangled audio cables. The primary lighting comes from neon cyan and purple status LEDs on the equipment, casting sharp reflections on chrome surfaces. The atmosphere is dense with creative energy, captured in a sharp, cinematic style with deep shadows and vibrant light accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnoIpRk0ATHYVDu6FxjGuhn5VEt7JNOCOE7ccAY26Ex4CqZiP0XqfOT4k7nyVL0JpVF6Fd9O6E-y63x0bynOx0eN6z_YCUOdTjTmi7dUcdVpekS73-HxwlmsNdrf6DdlJa2pcgPwIE6kHM2WBsm06AydC5gmyNjmIi0cmmyi4HWEtrPeXNExu0sGD6z7PaEwl2tfUIl-StosxarpDljENfMxrgDiFA3wj8u24k782nL6ynOMd83cmvv-hAVX-c5_wTTpBGjcW3J4_-"/>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-background/40">
+<span class="material-symbols-outlined text-secondary scale-150" data-icon="edit">edit</span>
+</div>
+</div>
+<div class="flex-1 space-y-stack-sm">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Playlist</span>
+<h1 class="font-headline-xl text-headline-xl text-on-surface drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">Ensayo jueves</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Grabaciones del último ensayo. Capturas directas de consola con efectos de pedalera integrados.</p>
+<div class="flex items-center gap-stack-md pt-stack-md">
+<button class="flex items-center gap-2 px-stack-lg py-3 bg-gradient-to-r from-primary-container to-secondary text-on-primary-fixed font-label-md text-label-md rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg shadow-neon-glow-purple">
+<span class="material-symbols-outlined" data-icon="play_arrow" data-weight="fill">play_arrow</span>
+                        Reproducir playlist
+                    </button>
+<button class="flex items-center gap-2 px-stack-lg py-3 border border-glass-stroke text-on-surface font-label-md text-label-md rounded-full hover:border-secondary hover:text-secondary hover:bg-secondary/5 transition-all">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        Agregar demo
+                    </button>
+<button class="w-12 h-12 flex items-center justify-center border border-glass-stroke rounded-full hover:text-secondary">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+</div>
+</section>
+<section class="mt-section-gap">
+<div class="hidden md:grid grid-cols-[48px_48px_1fr_120px_100px_120px] gap-gutter px-stack-md py-stack-sm border-b border-glass-stroke text-outline font-label-sm text-label-sm uppercase tracking-wider mb-stack-md">
+<span></span>
+<span class="text-center">#</span>
+<span>Título</span>
+<span>Duración</span>
+<span>Tipo</span>
+<span class="text-right">Acciones</span>
+</div>
+<div class="space-y-1">
+<!-- Track 01 -->
+<div class="grid grid-cols-[48px_48px_1fr_80px] md:grid-cols-[48px_48px_1fr_120px_100px_120px] gap-gutter items-center px-stack-md py-4 rounded-xl row-hover transition-colors group">
+<div class="flex items-center justify-center drag-handle text-outline group-hover:text-secondary">
+<span class="material-symbols-outlined" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant group-hover:text-primary">1</div>
+<div class="flex items-center gap-stack-md">
+<button class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary border border-glass-stroke group-hover:border-primary transition-all">
+<span class="material-symbols-outlined" data-icon="play_arrow" data-weight="fill">play_arrow</span>
+</button>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Neon Horizon - Intro Jam</p>
+<p class="font-label-sm text-label-sm text-outline">Vocals &amp; Synth</p>
+</div>
+</div>
+<div class="hidden md:block font-label-sm text-label-sm text-on-surface-variant">04:32</div>
+<div class="hidden md:block">
+<span class="px-2 py-1 bg-surface-container-highest text-secondary text-[10px] font-bold rounded uppercase tracking-tighter border border-secondary/20">WAV 24bit</span>
+</div>
+<div class="flex items-center justify-end gap-stack-md">
+<button class="text-outline hover:text-secondary transition-colors" title="Download">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Track 02 -->
+<div class="grid grid-cols-[48px_48px_1fr_80px] md:grid-cols-[48px_48px_1fr_120px_100px_120px] gap-gutter items-center px-stack-md py-4 rounded-xl row-hover transition-colors group">
+<div class="flex items-center justify-center drag-handle text-outline group-hover:text-secondary">
+<span class="material-symbols-outlined" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant group-hover:text-primary">2</div>
+<div class="flex items-center gap-stack-md">
+<button class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary border border-glass-stroke group-hover:border-primary transition-all">
+<span class="material-symbols-outlined" data-icon="play_arrow" data-weight="fill">play_arrow</span>
+</button>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Digital Ghost - Take 3</p>
+<p class="font-label-sm text-label-sm text-outline">Full Band</p>
+</div>
+</div>
+<div class="hidden md:block font-label-sm text-label-sm text-on-surface-variant">03:15</div>
+<div class="hidden md:block">
+<span class="px-2 py-1 bg-surface-container-highest text-primary text-[10px] font-bold rounded uppercase tracking-tighter border border-primary/20">MP3 320</span>
+</div>
+<div class="flex items-center justify-end gap-stack-md">
+<button class="text-outline hover:text-secondary transition-colors" title="Download">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Track 03 -->
+<div class="grid grid-cols-[48px_48px_1fr_80px] md:grid-cols-[48px_48px_1fr_120px_100px_120px] gap-gutter items-center px-stack-md py-4 rounded-xl row-hover transition-colors group">
+<div class="flex items-center justify-center drag-handle text-outline group-hover:text-secondary">
+<span class="material-symbols-outlined" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant group-hover:text-primary">3</div>
+<div class="flex items-center gap-stack-md">
+<button class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary border border-glass-stroke group-hover:border-primary transition-all">
+<span class="material-symbols-outlined" data-icon="play_arrow" data-weight="fill">play_arrow</span>
+</button>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Voltage Spike (Glitch Edit)</p>
+<p class="font-label-sm text-label-sm text-outline">Solo Drums</p>
+</div>
+</div>
+<div class="hidden md:block font-label-sm text-label-sm text-on-surface-variant">05:58</div>
+<div class="hidden md:block">
+<span class="px-2 py-1 bg-surface-container-highest text-secondary text-[10px] font-bold rounded uppercase tracking-tighter border border-secondary/20">WAV 24bit</span>
+</div>
+<div class="flex items-center justify-end gap-stack-md">
+<button class="text-outline hover:text-secondary transition-colors" title="Download">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Track 04 -->
+<div class="grid grid-cols-[48px_48px_1fr_80px] md:grid-cols-[48px_48px_1fr_120px_100px_120px] gap-gutter items-center px-stack-md py-4 rounded-xl row-hover transition-colors group">
+<div class="flex items-center justify-center drag-handle text-outline group-hover:text-secondary">
+<span class="material-symbols-outlined" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="text-center font-label-md text-label-md text-on-surface-variant group-hover:text-primary">4</div>
+<div class="flex items-center gap-stack-md">
+<button class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary border border-glass-stroke group-hover:border-primary transition-all">
+<span class="material-symbols-outlined" data-icon="play_arrow" data-weight="fill">play_arrow</span>
+</button>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Circuit Breaker - Verse B</p>
+<p class="font-label-sm text-label-sm text-outline">Arp Synths</p>
+</div>
+</div>
+<div class="hidden md:block font-label-sm text-label-sm text-on-surface-variant">02:44</div>
+<div class="hidden md:block">
+<span class="px-2 py-1 bg-surface-container-highest text-tertiary text-[10px] font-bold rounded uppercase tracking-tighter border border-tertiary/20">FLAC</span>
+</div>
+<div class="flex items-center justify-end gap-stack-md">
+<button class="text-outline hover:text-secondary transition-colors" title="Download">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Style Info Grid -->
+<section class="mt-section-gap grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="md:col-span-2 glass-panel rounded-xl p-stack-lg flex flex-col justify-between overflow-hidden relative">
+<div class="relative z-10">
+<h3 class="font-headline-lg text-headline-lg mb-stack-md">Session Notes</h3>
+<p class="text-on-surface-variant font-body-md">Ensayo enfocado en la transición entre 'Neon Horizon' y 'Digital Ghost'. Se probaron nuevos osciladores en el Prophet-6. Los niveles de batería están un poco altos en la entrada de consola, corregir para la próxima sesión.</p>
+</div>
+<div class="mt-stack-lg flex gap-stack-md relative z-10">
+<span class="px-3 py-1 bg-surface-container rounded-full text-label-sm text-secondary border border-secondary/20">#Prophet6</span>
+<span class="px-3 py-1 bg-surface-container rounded-full text-label-sm text-secondary border border-secondary/20">#StudioJam</span>
+<span class="px-3 py-1 bg-surface-container rounded-full text-label-sm text-secondary border border-secondary/20">#RawAudio</span>
+</div>
+<div class="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+</div>
+<div class="glass-panel rounded-xl p-stack-lg border-l-4 border-l-secondary">
+<h3 class="font-headline-lg text-headline-lg mb-stack-md">Metadata</h3>
+<ul class="space-y-stack-sm text-label-md">
+<li class="flex justify-between border-b border-glass-stroke pb-2">
+<span class="text-outline">Date</span>
+<span class="text-on-surface">Oct 24, 2024</span>
+</li>
+<li class="flex justify-between border-b border-glass-stroke pb-2">
+<span class="text-outline">Total Time</span>
+<span class="text-on-surface">16:29</span>
+</li>
+<li class="flex justify-between border-b border-glass-stroke pb-2">
+<span class="text-outline">Engineer</span>
+<span class="text-on-surface">M. Korg</span>
+</li>
+<li class="flex justify-between">
+<span class="text-outline">Bit Depth</span>
+<span class="text-secondary">24-bit / 48kHz</span>
+</li>
+</ul>
+</div>
+</section>
+</main>
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-glass-stroke w-full py-stack-lg px-margin-mobile flex flex-col items-center gap-stack-md mt-section-gap">
+<span class="font-display-lg-mobile text-display-lg-mobile font-black text-primary tracking-tighter">VOLTAGE</span>
+<div class="flex gap-gutter font-label-sm text-label-sm">
+<a class="text-outline hover:text-secondary transition-colors" href="#">Privacy</a>
+<a class="text-outline hover:text-secondary transition-colors" href="#">Terms</a>
+<a class="text-outline hover:text-secondary transition-colors" href="#">Support</a>
+</div>
+<p class="font-label-sm text-label-sm text-outline opacity-60">© 2024 VOLTAGE SYNTH RECORDS</p>
+</footer>
+<!-- Mobile Mini Player (Floating) -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-md glass-panel rounded-full p-2 flex items-center gap-stack-md shadow-2xl z-50 md:hidden">
+<div class="w-12 h-12 rounded-full overflow-hidden">
+<img alt="Current track thumbnail" class="w-full h-full object-cover" data-alt="Close-up of a high-fidelity speaker cone vibrating in a dark, neon-lit environment with cyan and magenta accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqBeyYVjFFpJYxDTlER6i15is12y-hcGYhi6l87UytQw2REJvVQJNnimQOnr2-pLalq2q5tLOX5sDzKLagU-K_58SOtw8ICx9L8xO_FhXYNm6osC_bb2gQk3riozjmITdRP-OrCejW3LnkxgnqcZT-4f3HQHYgraqU6kIgjBUiXyh6Milq9pl50Jdqk-9TsCxP1_E3l05mxiq4y7sf-sQyfP6WFxRN41kQrDU-J87XZ1oDByl66XXthwuY0O0BJa5K-G7FV0wREU77"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-label-md font-bold truncate">Neon Horizon - Intro Jam</p>
+<p class="text-[10px] text-secondary uppercase tracking-widest">Ensayo jueves</p>
+</div>
+<div class="flex items-center gap-2 pr-2">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined" data-icon="skip_previous" data-weight="fill">skip_previous</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center bg-primary rounded-full text-on-primary">
+<span class="material-symbols-outlined" data-icon="pause" data-weight="fill">pause</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined" data-icon="skip_next" data-weight="fill">skip_next</span>
+</button>
+</div>
+</div>
+<script>
+        // Simple drag interaction visual feedback
+        const handles = document.querySelectorAll('.drag-handle');
+        handles.forEach(handle => {
+            handle.addEventListener('mousedown', () => {
+                handle.closest('.grid').style.backgroundColor = 'rgba(221, 183, 255, 0.05)';
+                handle.closest('.grid').style.transform = 'scale(0.99)';
+            });
+            window.addEventListener('mouseup', () => {
+                handle.closest('.grid').style.backgroundColor = '';
+                handle.closest('.grid').style.transform = '';
+            });
+        });
+    </script>
+</body></html>

@@ -50,6 +50,12 @@ const BAND_DOCUMENT_SHAPE = {
   gallerySection: {
     items: [],
   },
+  presentation: {
+    sectionOrder: [],
+  },
+  internalKit: {
+    keyLinks: [],
+  },
   seo: {},
 } as const
 

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VOLTAGE | Audio Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #050505;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(18, 18, 20, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-glow-primary:hover {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+        .neon-glow-secondary:hover {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+        }
+        .waveform-bar {
+            transition: height 0.2s ease;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-speed {
+            color: #5de6ff;
+            text-shadow: 0 0 8px rgba(93, 230, 255, 0.6);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#5de6ff",
+                      "surface-tint": "#ddb7ff",
+                      "on-tertiary-container": "#3a2600",
+                      "secondary-fixed-dim": "#2fd9f4",
+                      "secondary-fixed": "#a2eeff",
+                      "on-secondary-fixed": "#001f25",
+                      "on-tertiary": "#432c00",
+                      "inverse-primary": "#842bd2",
+                      "surface-container": "#201f1f",
+                      "on-surface": "#e5e2e1",
+                      "surface-container-lowest": "#0e0e0e",
+                      "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                      "on-tertiary-fixed-variant": "#604100",
+                      "surface-elevated": "#1E1E22",
+                      "surface-charcoal": "#121214",
+                      "primary-fixed-dim": "#ddb7ff",
+                      "on-surface-variant": "#cfc2d6",
+                      "on-background": "#e5e2e1",
+                      "on-tertiary-fixed": "#281900",
+                      "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                      "on-secondary": "#00363e",
+                      "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                      "tertiary-container": "#bd871a",
+                      "inverse-surface": "#e5e2e1",
+                      "surface-container-low": "#1c1b1b",
+                      "on-secondary-container": "#00515d",
+                      "secondary-container": "#00cbe6",
+                      "inverse-on-surface": "#313030",
+                      "tertiary-fixed": "#ffdead",
+                      "surface": "#131313",
+                      "surface-container-highest": "#353534",
+                      "on-error": "#690005",
+                      "outline": "#988d9f",
+                      "surface-variant": "#353534",
+                      "on-error-container": "#ffdad6",
+                      "on-primary-fixed-variant": "#6900b3",
+                      "on-primary-container": "#400071",
+                      "error-container": "#93000a",
+                      "primary-fixed": "#f0dbff",
+                      "tertiary": "#fabc4e",
+                      "surface-container-high": "#2a2a2a",
+                      "primary-container": "#b76dff",
+                      "on-primary-fixed": "#2c0051",
+                      "error": "#ffb4ab",
+                      "background": "#131313",
+                      "primary": "#ddb7ff",
+                      "tertiary-fixed-dim": "#fabc4e",
+                      "surface-dim": "#131313",
+                      "outline-variant": "#4d4354",
+                      "on-secondary-fixed-variant": "#004e5a",
+                      "on-primary": "#490080",
+                      "surface-bright": "#3a3939"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "container-max": "1280px",
+                      "stack-sm": "8px",
+                      "stack-lg": "32px",
+                      "section-gap": "80px",
+                      "margin-mobile": "16px",
+                      "stack-md": "16px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-xl": ["Montserrat"],
+                      "display-lg": ["Montserrat"],
+                      "label-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-lg": ["Montserrat"],
+                      "display-lg-mobile": ["Montserrat"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                      "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                      "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                      "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                      "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background overflow-x-hidden">
+<!-- Header / TopAppBar -->
+<header class="fixed top-0 w-full bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-glass-stroke flex justify-between items-center px-margin-mobile h-16 z-50">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 duration-200 transition-transform">
+<span class="material-symbols-outlined text-primary">menu</span>
+</button>
+<span class="font-display-lg-mobile text-display-lg-mobile font-black tracking-tighter text-primary dark:text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">VOLTAGE</span>
+</div>
+<button class="bg-primary px-6 py-2 rounded-full text-on-primary font-label-md text-label-md hover:scale-105 transition-transform active:scale-95">JOIN</button>
+</header>
+<main class="pt-24 pb-32 px-margin-mobile md:px-gutter max-w-container-max mx-auto">
+<!-- Hero Section: Audio Detail -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-stack-lg">
+<!-- Player Area (Left/Main) -->
+<div class="lg:col-span-8 flex flex-col gap-stack-lg">
+<div class="glass-panel p-stack-lg rounded-xl flex flex-col gap-8 relative overflow-hidden group">
+<!-- Background Accent -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-[100px]"></div>
+<div class="flex flex-col gap-4">
+<div class="flex flex-wrap items-center gap-4">
+<span class="bg-tertiary/20 text-tertiary border border-tertiary/30 px-3 py-1 rounded-full text-label-sm font-label-sm uppercase tracking-widest">Demo - En revisión</span>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface leading-none">Sobre Ruinas - Demo v3</h1>
+</div>
+<!-- Waveform Section -->
+<div class="w-full h-32 flex items-end gap-[2px] cursor-pointer" id="waveform-container">
+<!-- Waveform bars generated by JS for better visual -->
+</div>
+<!-- Progress Bar & Time -->
+<div class="flex flex-col gap-2">
+<div class="h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-1/3 shadow-[0_0_8px_#5de6ff]"></div>
+</div>
+<div class="flex justify-between font-label-sm text-label-sm text-outline">
+<span>1:24</span>
+<span>4:12</span>
+</div>
+</div>
+<!-- Controls -->
+<div class="flex flex-wrap items-center justify-between gap-stack-md">
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-secondary transition-colors active:scale-90" title="-10s">
+<span class="material-symbols-outlined text-4xl">replay_10</span>
+</button>
+<button class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-on-primary shadow-lg hover:scale-110 active:scale-95 transition-all neon-glow-primary" id="main-play-btn">
+<span class="material-symbols-outlined text-5xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<button class="text-on-surface-variant hover:text-secondary transition-colors active:scale-90" title="+10s">
+<span class="material-symbols-outlined text-4xl">forward_10</span>
+</button>
+</div>
+<!-- Speed Selector -->
+<div class="flex items-center bg-surface-charcoal/60 rounded-full p-1 border border-glass-stroke">
+<button class="px-4 py-2 text-label-sm font-label-md text-on-surface-variant hover:text-secondary transition-all">0.75x</button>
+<button class="px-4 py-2 text-label-sm font-label-md active-speed transition-all">1x</button>
+<button class="px-4 py-2 text-label-sm font-label-md text-on-surface-variant hover:text-secondary transition-all">1.25x</button>
+<button class="px-4 py-2 text-label-sm font-label-md text-on-surface-variant hover:text-secondary transition-all">1.5x</button>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-3">
+<button class="p-3 rounded-full glass-panel hover:bg-secondary/10 hover:text-secondary transition-all active:scale-95" title="Add to Playlist">
+<span class="material-symbols-outlined">playlist_add</span>
+</button>
+<button class="flex items-center gap-2 px-6 py-3 rounded-full border border-secondary text-secondary font-label-md text-label-md hover:bg-secondary/10 transition-all active:scale-95">
+<span class="material-symbols-outlined">download</span>
+<span>Download</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Notes Section -->
+<div class="glass-panel p-stack-lg rounded-xl flex flex-col gap-stack-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">sticky_note_2</span>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Notes</h3>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-primary">
+<p class="font-body-md text-body-md text-on-surface-variant italic">"Revisar corte antes del estribillo. Ajustar el gain de los sintetizadores lead en el segundo verso. El bajo parece saturar un poco en el minuto 2:15."</p>
+</div>
+</div>
+</div>
+<!-- Meta Information Area (Right Sidebar) -->
+<div class="lg:col-span-4 flex flex-col gap-stack-lg">
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A high-contrast cinematic photograph of a modular synthesizer in a dark studio. The patch cables are illuminated by cool cyan and warm purple neon lights, casting deep shadows on the intricate knobs and sliders. The mood is professional, technical, and moody, perfectly capturing the electronic rock aesthetic with sharp focus and shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8gWMPTmVKLcOEgVW576j1WCHblYYN6T8sc2mZJXEnDJxNPEtZJwnlbUoQPUpj-QqLVneygPmFkiwCvpQYVCLTJRD0rkZ0PMmVrtPS1Dh3BCRQmnOTD4JKRtA7pmoUpxJHCYi_BO48FRluBUHt5Yvr4HiMNqCvaZoaDX0QqYWPtbjQ-OBuv7ZV4FIbhV1cthsLEvtNcElOxmJ54O6PZzjKVs6zyaqgjMTFHWn5LPzqzm6FANB-_evBEwvKOZy2CDCS--6UJk7eQhTj"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-charcoal to-transparent"></div>
+</div>
+<div class="p-stack-lg flex flex-col gap-6">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between border-b border-glass-stroke pb-3">
+<span class="text-outline font-label-md text-label-md uppercase tracking-wider">Subido por</span>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-on-primary font-bold">J</div>
+<span class="text-secondary font-label-md text-label-md">Jax</span>
+</div>
+</div>
+<div class="flex items-center justify-between border-b border-glass-stroke pb-3">
+<span class="text-outline font-label-md text-label-md uppercase tracking-wider">Fecha</span>
+<span class="text-on-surface font-label-md text-label-md">12 Oct 2024</span>
+</div>
+<div class="flex items-center justify-between border-b border-glass-stroke pb-3">
+<span class="text-outline font-label-md text-label-md uppercase tracking-wider">Tipo</span>
+<span class="bg-primary/10 text-primary px-3 py-1 rounded text-[11px] font-bold">DEMO</span>
+</div>
+</div>
+<!-- Mini Bento Stats -->
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-surface-container-low p-3 rounded-lg flex flex-col items-center">
+<span class="text-secondary font-headline-lg text-headline-lg">48k</span>
+<span class="text-[10px] uppercase text-outline">Sample Rate</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg flex flex-col items-center">
+<span class="text-secondary font-headline-lg text-headline-lg">24b</span>
+<span class="text-[10px] uppercase text-outline">Bit Depth</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Related/Upcoming -->
+<div class="glass-panel p-stack-lg rounded-xl flex flex-col gap-4">
+<h4 class="font-label-md text-label-md text-on-surface uppercase tracking-widest border-l-2 border-secondary pl-3">Timeline</h4>
+<div class="flex flex-col gap-4">
+<div class="flex gap-4 items-center group cursor-pointer">
+<div class="w-12 h-12 bg-surface-charcoal rounded-lg flex items-center justify-center border border-glass-stroke group-hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">music_note</span>
+</div>
+<div>
+<p class="text-on-surface font-label-md text-label-md group-hover:text-primary transition-colors">Sobre Ruinas - V2</p>
+<p class="text-outline text-label-sm">Subido 05/10/24</p>
+</div>
+</div>
+<div class="flex gap-4 items-center group cursor-pointer">
+<div class="w-12 h-12 bg-surface-charcoal rounded-lg flex items-center justify-center border border-glass-stroke group-hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">music_note</span>
+</div>
+<div>
+<p class="text-on-surface font-label-md text-label-md group-hover:text-primary transition-colors">Sobre Ruinas - V1</p>
+<p class="text-outline text-label-sm">Subido 28/09/24</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Component -->
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-glass-stroke flex flex-col items-center gap-stack-md px-margin-mobile py-stack-lg w-full">
+<span class="font-display-lg-mobile text-display-lg-mobile font-black text-primary tracking-tighter opacity-20">VOLTAGE</span>
+<div class="flex gap-stack-lg">
+<a class="text-outline font-label-sm text-label-sm hover:text-secondary transition-colors" href="#">Privacy</a>
+<a class="text-outline font-label-sm text-label-sm hover:text-secondary transition-colors" href="#">Terms</a>
+<a class="text-outline font-label-sm text-label-sm hover:text-secondary transition-colors" href="#">Support</a>
+</div>
+<p class="text-outline font-label-sm text-label-sm opacity-50">© 2024 VOLTAGE SYNTH RECORDS</p>
+</footer>
+<script>
+        // Generate random waveform for aesthetic
+        const container = document.getElementById('waveform-container');
+        const barCount = 60;
+        
+        for (let i = 0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'waveform-bar w-full bg-outline/20 rounded-full';
+            
+            // Highlight first 30% as "played"
+            if (i < barCount * 0.33) {
+                bar.classList.replace('bg-outline/20', 'bg-secondary');
+            }
+            
+            // Random heights
+            const height = Math.floor(Math.random() * 80) + 10;
+            bar.style.height = `${height}%`;
+            
+            container.appendChild(bar);
+        }
+
+        // Play button interaction
+        const playBtn = document.getElementById('main-play-btn');
+        let isPlaying = false;
+        playBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            const icon = playBtn.querySelector('.material-symbols-outlined');
+            icon.textContent = isPlaying ? 'pause' : 'play_arrow';
+            
+            if (isPlaying) {
+                playBtn.classList.add('scale-105');
+                playBtn.style.boxShadow = '0 0 25px rgba(93, 230, 255, 0.6)';
+            } else {
+                playBtn.classList.remove('scale-105');
+                playBtn.style.boxShadow = '';
+            }
+        });
+
+        // Micro-interaction for speed buttons
+        const speedButtons = document.querySelectorAll('.active-speed, .text-on-surface-variant');
+        speedButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                speedButtons.forEach(b => {
+                    b.classList.remove('active-speed');
+                    b.classList.add('text-on-surface-variant');
+                });
+                btn.classList.add('active-speed');
+                btn.classList.remove('text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

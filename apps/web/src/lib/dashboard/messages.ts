@@ -54,7 +54,7 @@ const DASHBOARD_MESSAGES: Record<string, DashboardFlash> = {
   },
   'invite-sent-email-failed': {
     tone: 'warning',
-    message: 'La invitacion fue creada, pero no se pudo enviar el email.',
+    message: 'La invitacion fue creada, pero no se pudo enviar el email. Usa el enlace manual para compartirla.',
   },
   'invite-updated': {
     tone: 'success',
@@ -62,7 +62,7 @@ const DASHBOARD_MESSAGES: Record<string, DashboardFlash> = {
   },
   'invite-updated-email-failed': {
     tone: 'warning',
-    message: 'La invitacion fue actualizada, pero no se pudo enviar el email.',
+    message: 'La invitacion fue actualizada, pero no se pudo enviar el email. Usa el enlace manual para compartirla.',
   },
   'invite-revoked': {
     tone: 'success',

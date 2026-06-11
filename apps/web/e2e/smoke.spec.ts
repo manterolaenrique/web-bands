@@ -1,4 +1,8 @@
-import {expect, test} from '@playwright/test'
+import {expect, test, type Page} from '@playwright/test'
+
+function getVisibleLoginSurface(page: Page) {
+  return page.locator('.mobile-auth-screen:visible, .auth-card:visible').first()
+}
 
 test('home shows the public bands directory', async ({page}) => {
   await page.goto('/')
@@ -12,8 +16,9 @@ test('dashboard redirects guests to login', async ({page}) => {
   await page.goto('/dashboard')
 
   await expect(page).toHaveURL(/\/login$/)
-  await expect(page.getByRole('heading', {name: 'Entrar al dashboard'})).toBeVisible()
-  await expect(page.getByRole('button', {name: 'Continuar con Google'})).toBeVisible()
+  const loginSurface = getVisibleLoginSurface(page)
+  await expect(loginSurface.getByRole('heading', {name: 'Entrar al dashboard'})).toBeVisible()
+  await expect(loginSurface.getByRole('button', {name: 'Continuar con Google'})).toBeVisible()
 })
 
 test('unknown band slugs render the custom not found state', async ({page}) => {
@@ -26,8 +31,9 @@ test('unknown band slugs render the custom not found state', async ({page}) => {
 test('login shows a readable auth message from the query string', async ({page}) => {
   await page.goto('/login?message=email-not-confirmed')
 
-  await expect(page.getByRole('heading', {name: 'Entrar al dashboard'})).toBeVisible()
-  await expect(page.getByText('Confirma tu email antes de iniciar sesion.')).toBeVisible()
+  const loginSurface = getVisibleLoginSurface(page)
+  await expect(loginSurface.getByRole('heading', {name: 'Entrar al dashboard'})).toBeVisible()
+  await expect(loginSurface.getByText('Confirma tu email antes de iniciar sesion.')).toBeVisible()
 })
 
 test('login rate limit eventually shows a temporary block message', async ({page}) => {
@@ -36,18 +42,35 @@ test('login rate limit eventually shows a temporary block message', async ({page
 
   for (let attempt = 1; attempt <= 6; attempt += 1) {
     await page.goto('/login')
-    await page.getByLabel('Email').fill(email)
-    await page.getByLabel('Password').fill(password)
-    await page.getByRole('button', {name: 'Entrar'}).click()
+    const loginSurface = getVisibleLoginSurface(page)
+    await loginSurface.getByLabel('Email').fill(email)
+    await loginSurface.getByLabel('Password').fill(password)
+    await loginSurface.getByRole('button', {name: 'Entrar'}).click()
 
     if (attempt < 6) {
-      await expect(
-        page.getByText('El email o el password no coinciden con una cuenta valida.')
-      ).toBeVisible()
+      await expect(loginSurface.getByText('El email o el password no coinciden con una cuenta valida.')).toBeVisible()
     }
   }
 
-  await expect(
-    page.getByText('Demasiados intentos por ahora. Espera unos minutos antes de volver a intentar.')
-  ).toBeVisible()
+  await expect(getVisibleLoginSurface(page).getByText('Demasiados intentos por ahora. Espera unos minutos antes de volver a intentar.')).toBeVisible()
+})
+
+test.describe('mobile public surfaces', () => {
+  test.use({viewport: {width: 390, height: 844}})
+
+  test('home renders the mobile directory shell', async ({page}) => {
+    await page.goto('/')
+
+    await expect(page.locator('.public-mobile-topbar')).toBeVisible()
+    await expect(page.locator('.mobile-band-card').first()).toBeVisible()
+  })
+
+  test('public band pages use the mobile shell', async ({page}) => {
+    await page.goto('/')
+    await page.locator('.mobile-band-card a[href^="/bandas/"]').first().click()
+
+    await expect(page.locator('.public-mobile-topbar')).toBeVisible()
+    await expect(page.locator('.public-band-body')).toBeVisible()
+    await expect(page.locator('.public-mobile-footer')).toBeVisible()
+  })
 })

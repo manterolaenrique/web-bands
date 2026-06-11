@@ -130,6 +130,9 @@ function createBand(overrides: Partial<PublicBand> = {}): PublicBand {
       secundario_claro: '#7bd389',
       acento: '#2a9d44',
     },
+    presentation: {
+      sectionOrder: ['featured', 'listen', 'about', 'members', 'timeline', 'shows', 'gallery', 'contact'],
+    },
     ...overrides,
   } as PublicBand
 }
@@ -240,5 +243,20 @@ describe('PublicBandView', () => {
     expect(html).toContain('No se pudo embeber este perfil')
     expect(html).toContain('No se pudo embeber esta playlist')
     expect(html).toContain('Abrir en Spotify')
+  })
+
+  it('renders public sections following the configured section order', () => {
+    const html = renderToStaticMarkup(
+      createElement(PublicBandView, {
+        band: createBand({
+          presentation: {
+            sectionOrder: ['members', 'about', 'featured', 'listen', 'shows', 'timeline', 'gallery', 'contact'],
+          },
+        }),
+      })
+    )
+
+    expect(html.indexOf('La formacion actual')).toBeLessThan(html.indexOf('id="historia"'))
+    expect(html.indexOf('id="historia"')).toBeLessThan(html.indexOf('id="musica-featured"'))
   })
 })

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VOLTAGE | Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                        "on-secondary-fixed": "#001f25",
+                        "primary-container": "#b76dff",
+                        "inverse-surface": "#e5e2e1",
+                        "surface": "#131313",
+                        "surface-tint": "#ddb7ff",
+                        "tertiary-fixed-dim": "#fabc4e",
+                        "surface-container-lowest": "#0e0e0e",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#353534",
+                        "surface-bright": "#3a3939",
+                        "surface-container-highest": "#353534",
+                        "error-container": "#93000a",
+                        "surface-elevated": "#1E1E22",
+                        "secondary-fixed": "#a2eeff",
+                        "on-tertiary-fixed-variant": "#604100",
+                        "primary": "#ddb7ff",
+                        "surface-charcoal": "#121214",
+                        "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                        "on-tertiary-container": "#3a2600",
+                        "outline": "#988d9f",
+                        "tertiary-fixed": "#ffdead",
+                        "outline-variant": "#4d4354",
+                        "on-tertiary": "#432c00",
+                        "on-primary-container": "#400071",
+                        "primary-fixed-dim": "#ddb7ff",
+                        "on-primary": "#490080",
+                        "on-primary-fixed-variant": "#6900b3",
+                        "tertiary": "#fabc4e",
+                        "background": "#131313",
+                        "on-secondary-container": "#00515d",
+                        "on-background": "#e5e2e1",
+                        "on-primary-fixed": "#2c0051",
+                        "inverse-on-surface": "#313030",
+                        "surface-dim": "#131313",
+                        "surface-container": "#201f1f",
+                        "on-surface-variant": "#cfc2d6",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "inverse-primary": "#842bd2",
+                        "on-surface": "#e5e2e1",
+                        "tertiary-container": "#bd871a",
+                        "primary-fixed": "#f0dbff",
+                        "surface-container-low": "#1c1b1b",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed": "#281900",
+                        "on-secondary": "#00363e",
+                        "secondary-container": "#00cbe6",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary": "#5de6ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Montserrat"],
+                        "headline-lg": ["Montserrat"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                        "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #050505;
+            overflow-x: hidden;
+        }
+        .neon-glow-primary {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+        .neon-glow-secondary {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+        }
+        .glass-panel {
+            background: rgba(18, 18, 20, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .input-focus-glow:focus {
+            outline: none;
+            border-color: #5de6ff;
+            box-shadow: 0 0 10px rgba(93, 230, 255, 0.3);
+        }
+        .bg-gradient-mesh {
+            background: radial-gradient(circle at 0% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 100% 100%, rgba(34, 211, 238, 0.1) 0%, transparent 50%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface bg-background min-h-screen flex flex-col justify-center items-center px-margin-mobile relative overflow-hidden">
+<!-- Atmospheric Background Layers -->
+<div class="fixed inset-0 bg-gradient-mesh pointer-events-none"></div>
+<div class="fixed -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-secondary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<!-- Top App Bar (Logo only for Login) -->
+<header class="fixed top-0 w-full flex justify-center items-center h-16 z-50">
+<h1 class="font-display-lg-mobile text-display-lg-mobile font-black tracking-tighter text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">
+            VOLTAGE
+        </h1>
+</header>
+<!-- Main Login Card -->
+<main class="w-full max-w-[400px] z-10 py-stack-lg mt-12">
+<div class="glass-panel p-gutter rounded-xl flex flex-col gap-stack-lg transition-all duration-300">
+<!-- Welcome Header -->
+<div class="text-center">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-base">Welcome Back</h2>
+<p class="font-body-md text-on-surface-variant">Log in to your rhythm.</p>
+</div>
+<!-- Form -->
+<form class="flex flex-col gap-stack-md" onsubmit="event.preventDefault()">
+<!-- Email Field -->
+<div class="flex flex-col gap-base">
+<label class="font-label-sm text-outline px-base uppercase tracking-widest" for="email">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">alternate_email</span>
+<input class="w-full bg-surface-container-lowest border border-glass-stroke rounded-lg py-4 pl-12 pr-4 text-on-surface font-body-md input-focus-glow transition-all duration-200" id="email" placeholder="name@webbands.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-base">
+<div class="flex justify-between items-center px-base">
+<label class="font-label-sm text-outline uppercase tracking-widest" for="password">Password</label>
+<a class="font-label-sm text-secondary hover:underline" href="#">Forgot?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">lock</span>
+<input class="w-full bg-surface-container-lowest border border-glass-stroke rounded-lg py-4 pl-12 pr-12 text-on-surface font-body-md input-focus-glow transition-all duration-200" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline active:text-secondary" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full bg-gradient-to-r from-primary-container to-secondary-container text-on-primary-container font-headline-lg-mobile text-lg py-4 rounded-lg mt-stack-md neon-glow-primary active:scale-95 transition-all duration-200 uppercase tracking-tighter" type="submit">
+                    Entrar
+                </button>
+</form>
+<!-- Divider -->
+<div class="flex items-center gap-stack-md">
+<div class="h-[1px] flex-grow bg-glass-stroke"></div>
+<span class="font-label-sm text-outline uppercase">Or connect with</span>
+<div class="h-[1px] flex-grow bg-glass-stroke"></div>
+</div>
+<!-- Social Logins -->
+<div class="grid grid-cols-2 gap-stack-md">
+<button class="flex items-center justify-center gap-stack-sm bg-surface-variant hover:bg-surface-bright text-on-surface py-4 rounded-lg border border-glass-stroke transition-colors active:scale-95 duration-200">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12.48 10.92v3.28h7.84c-.24 1.84-.908 3.152-1.928 4.176-1.224 1.224-3.136 2.536-7.072 2.536-5.832 0-10.392-4.72-10.392-10.528s4.56-10.528 10.392-10.528c3.136 0 5.4 1.232 7.112 2.872l2.304-2.304C18.152 1.48 15.656 0 12.16 0 5.568 0 0 5.376 0 12s5.568 12 12.16 12c3.552 0 6.224-1.168 8.352-3.4 2.184-2.184 2.872-5.264 2.872-7.72 0-.744-.064-1.32-.192-1.96h-10.712z"></path>
+</svg>
+<span class="font-label-md">Google</span>
+</button>
+<button class="flex items-center justify-center gap-stack-sm bg-surface-variant hover:bg-surface-bright text-on-surface py-4 rounded-lg border border-glass-stroke transition-colors active:scale-95 duration-200">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
+</svg>
+<span class="font-label-md">Github</span>
+</button>
+</div>
+<!-- Sign Up Link -->
+<p class="text-center font-body-md text-on-surface-variant mt-stack-sm">
+                Don't have an account? 
+                <a class="text-primary font-bold hover:underline transition-all" href="#">Sign Up</a>
+</p>
+</div>
+</main>
+<!-- Simple Mobile Footer (Semantic Suppression of Full Footer) -->
+<footer class="mt-auto mb-stack-md z-10 flex flex-col items-center gap-stack-sm opacity-60">
+<div class="flex gap-stack-md">
+<a class="font-label-sm text-outline hover:text-secondary" href="#">Privacy</a>
+<a class="font-label-sm text-outline hover:text-secondary" href="#">Terms</a>
+<a class="font-label-sm text-outline hover:text-secondary" href="#">Support</a>
+</div>
+<p class="font-label-sm text-outline">© 2024 VOLTAGE SYNTH RECORDS</p>
+</footer>
+<!-- Atmosphere/Micro-interactions Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const card = document.querySelector('.glass-panel');
+            
+            // Subtle tilt effect on touch/mouse
+            document.addEventListener('mousemove', (e) => {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+                card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            });
+
+            // Focus interactions
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    card.classList.add('neon-glow-secondary');
+                });
+                input.addEventListener('blur', () => {
+                    card.classList.remove('neon-glow-secondary');
+                });
+            });
+
+            // Show/Hide password toggle
+            const passToggle = document.querySelector('button[type="button"]');
+            const passInput = document.querySelector('#password');
+            passToggle.addEventListener('click', () => {
+                const isPass = passInput.type === 'password';
+                passInput.type = isPass ? 'text' : 'password';
+                passToggle.children[0].textContent = isPass ? 'visibility_off' : 'visibility';
+            });
+        });
+    </script>
+</body></html>

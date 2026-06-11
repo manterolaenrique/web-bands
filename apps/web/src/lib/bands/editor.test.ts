@@ -129,6 +129,24 @@ function createValues(): BandEditorValues {
         },
       ],
     },
+    presentation: {
+      sectionOrder: ['featured', 'listen', 'about', 'members', 'timeline', 'shows', 'gallery', 'contact'],
+    },
+    internalKit: {
+      shortPitch: 'Resumen interno',
+      contactName: 'Booking QA',
+      contactEmail: 'booking@example.com',
+      contactPhone: '+54 11 4444 4444',
+      bookingNotes: 'Notas privadas.',
+      keyLinks: [
+        {
+          _key: 'kit-1',
+          label: 'Drive press',
+          url: 'https://example.com/drive',
+          kind: 'drive',
+        },
+      ],
+    },
     seo: {
       title: 'SEO title',
       description: 'SEO description',

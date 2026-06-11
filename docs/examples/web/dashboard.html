@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Web Bands - Admin Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Montserrat:wght@700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#ddb7ff",
+                    "secondary": "#5de6ff",
+                    "surface-container-low": "#1c1b1b",
+                    "surface-tint": "#ddb7ff",
+                    "surface-container-high": "#2a2a2a",
+                    "primary-container": "#b76dff",
+                    "on-secondary-container": "#00515d",
+                    "outline-variant": "#4d4354",
+                    "on-tertiary-container": "#3a2600",
+                    "on-primary-container": "#400071",
+                    "on-secondary-fixed-variant": "#004e5a",
+                    "inverse-surface": "#e5e2e1",
+                    "tertiary": "#fabc4e",
+                    "surface-bright": "#3a3939",
+                    "surface-variant": "#353534",
+                    "surface-container-highest": "#353534",
+                    "primary-fixed": "#f0dbff",
+                    "on-primary-fixed-variant": "#6900b3",
+                    "surface-dim": "#131313",
+                    "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                    "primary-fixed-dim": "#ddb7ff",
+                    "inverse-on-surface": "#313030",
+                    "on-tertiary-fixed-variant": "#604100",
+                    "secondary-fixed-dim": "#2fd9f4",
+                    "on-primary-fixed": "#2c0051",
+                    "tertiary-container": "#bd871a",
+                    "outline": "#988d9f",
+                    "on-surface": "#e5e2e1",
+                    "surface": "#131313",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-secondary": "#00363e",
+                    "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                    "background": "#131313",
+                    "tertiary-fixed-dim": "#fabc4e",
+                    "secondary-fixed": "#a2eeff",
+                    "on-background": "#e5e2e1",
+                    "surface-container": "#201f1f",
+                    "surface-charcoal": "#121214",
+                    "on-tertiary": "#432c00",
+                    "error-container": "#93000a",
+                    "surface-elevated": "#1E1E22",
+                    "on-secondary-fixed": "#001f25",
+                    "on-primary": "#490080",
+                    "tertiary-fixed": "#ffdead",
+                    "error": "#ffb4ab",
+                    "secondary-container": "#00cbe6",
+                    "inverse-primary": "#842bd2",
+                    "on-error": "#690005",
+                    "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#281900",
+                    "on-surface-variant": "#cfc2d6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-md": "16px",
+                    "section-gap": "80px",
+                    "gutter": "24px",
+                    "stack-lg": "32px",
+                    "margin-mobile": "16px",
+                    "base": "4px",
+                    "stack-sm": "8px",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "display-lg-mobile": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "headline-xl": ["Montserrat"],
+                    "display-lg": ["Montserrat"],
+                    "headline-lg": ["Montserrat"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                    "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glow-secondary:hover {
+            box-shadow: 0 0 15px 2px rgba(93, 230, 255, 0.4);
+        }
+        .glass-panel {
+            background: #121214;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+        }
+        .neon-border-hover:hover {
+            border-color: #5de6ff;
+            box-shadow: 0 0 10px rgba(93, 230, 255, 0.2);
+        }
+        .transition-standard {
+            transition: all 300s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            background-color: #050505;
+        }
+    </style>
+</head>
+<body class="text-on-surface selection:bg-secondary/30">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-glass-stroke">
+<div class="flex justify-between items-center h-20 px-gutter max-w-container-max mx-auto">
+<div class="font-headline-lg text-headline-lg text-primary tracking-tighter">Web Bands</div>
+<div class="hidden md:flex gap-stack-lg items-center">
+<a class="font-body-md text-body-md text-on-surface hover:text-secondary transition-colors" href="#">Bandas</a>
+<a class="font-body-md text-body-md text-secondary border-b-2 border-secondary pb-1" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface hover:text-secondary transition-colors" href="#">Login</a>
+<button class="bg-gradient-to-r from-primary-container to-secondary-container px-stack-lg py-base font-label-md text-label-md text-on-primary-container active:scale-95 transition-transform hover:glow-secondary">
+                    Add Band
+                </button>
+</div>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</nav>
+<main class="pt-32 pb-section-gap px-gutter max-w-container-max mx-auto">
+<!-- Welcome Section -->
+<header class="mb-section-gap flex flex-col md:flex-row justify-between items-start md:items-end gap-stack-md">
+<div class="space-y-base">
+<h1 class="font-headline-xl text-headline-xl text-on-surface">Welcome back, Admin</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Manage your roster, track performance metrics, and orchestrate the digital music ecosystem from your command center.</p>
+</div>
+<button class="group relative bg-transparent border border-secondary px-stack-lg py-stack-md font-label-md text-label-md text-secondary hover:bg-secondary/10 transition-all duration-300 flex items-center gap-stack-sm active:scale-95">
+<span class="material-symbols-outlined">add</span>
+                Add New Band
+                <div class="absolute inset-0 border border-secondary/0 group-hover:border-secondary/100 blur-[4px] transition-all"></div>
+</button>
+</header>
+<!-- Stats Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-stack-md mb-stack-lg">
+<div class="glass-panel p-stack-lg flex flex-col gap-base hover:scale-[1.02] transition-transform duration-300">
+<span class="text-secondary material-symbols-outlined">visibility</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Total Views</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">128.4K</span>
+</div>
+<div class="glass-panel p-stack-lg flex flex-col gap-base hover:scale-[1.02] transition-transform duration-300">
+<span class="text-primary material-symbols-outlined">groups</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Active Bands</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">12</span>
+</div>
+<div class="glass-panel p-stack-lg flex flex-col gap-base hover:scale-[1.02] transition-transform duration-300">
+<span class="text-tertiary material-symbols-outlined">event</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Live Events</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">45</span>
+</div>
+<div class="glass-panel p-stack-lg flex flex-col gap-base hover:scale-[1.02] transition-transform duration-300">
+<span class="text-secondary material-symbols-outlined">trending_up</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Growth</span>
+<span class="font-headline-lg text-headline-lg text-secondary">+12.4%</span>
+</div>
+</section>
+<!-- Management Section -->
+<section class="glass-panel overflow-hidden">
+<div class="px-stack-lg py-stack-lg border-b border-glass-stroke flex justify-between items-center bg-surface-container-low">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Band Management</h2>
+<div class="relative">
+<input class="bg-surface-dim border border-glass-stroke px-stack-lg py-stack-sm rounded-full text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all w-64" placeholder="Search roster..." type="text"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-high/50 border-b border-glass-stroke">
+<tr>
+<th class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface-variant">Band Name</th>
+<th class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface-variant">Genre</th>
+<th class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface-variant">Status</th>
+<th class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface-variant">Last Active</th>
+<th class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-glass-stroke">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-variant/30 transition-colors group">
+<td class="px-stack-lg py-stack-lg">
+<div class="flex items-center gap-stack-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest overflow-hidden border border-glass-stroke">
+<img alt="Band Portrait" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A moody, high-contrast portrait of an indie rock band posing in a dimly lit industrial warehouse. The lighting is low-key with dramatic cyan and purple neon highlights catching the edges of their silhouettes. The visual style is grainy and cinematic, consistent with a premium electronic rock aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4uMwHZ6eDCrNiPqbmZRYHFIMdaHu6t98A6CXDyzWgkiVxKEkhahZGCUsI3SFhWI3HFEBLkN4iMiUNr8WX2E1BSNnZKXvPxVK-qvYhOPyHGfxOniTXxWoN9NmItXiQIJZDz4ZLY6Wa9j6k7v9nFcKvydzNOFY8A9QeO5R47B165rvQNIV4wsR5pKhRTNRWRNQw7cmH21xp6ocYT35ymQnFQvbljSFikQjj7npkmqnumsC1a1R9glGHaecgu7kKA4Z5Q8GtDtilJ4Sw"/>
+</div>
+<span class="font-body-md text-body-md text-on-surface">Neon Circuitry</span>
+</div>
+</td>
+<td class="px-stack-lg py-stack-lg">
+<span class="bg-surface-dim border border-secondary/30 text-secondary px-stack-sm py-base rounded-full font-label-sm text-label-sm">Electronic Rock</span>
+</td>
+<td class="px-stack-lg py-stack-lg">
+<div class="flex items-center gap-base">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-md text-label-md text-on-surface">Active</span>
+</div>
+</td>
+<td class="px-stack-lg py-stack-lg font-body-md text-body-md text-on-surface-variant">2 hours ago</td>
+<td class="px-stack-lg py-stack-lg text-right">
+<div class="flex justify-end gap-stack-sm">
+<button class="p-2 hover:text-secondary transition-colors" title="Ver">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+<button class="p-2 hover:text-primary transition-colors" title="Editar">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 hover:text-error transition-colors" title="Eliminar">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-variant/30 transition-colors group">
+<td class="px-stack-lg py-stack-lg">
+<div class="flex items-center gap-stack-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest overflow-hidden border border-glass-stroke">
+<img alt="Band Portrait" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Close-up shot of a vintage electric guitar leaning against a stacks of amplifiers in a dark recording studio. Soft purple stage lights create a moody, atmospheric glow on the hardware. The aesthetic is clean, sophisticated, and focused on technical precision of musical equipment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpHwqSuCrp2YNlzl91wNYTiSBGibj6eQcipN0NOzZnt18TccGJEZ-q58QZwXRPJiZ2kLHDjbQ9j8Asg_CRtWNX0UCaWTSmKPk0KnKg-55qUSwqdNQ1pUUD5798eMJ3aA9MyRW2Q1wPeZ48Vb4NZD-sqNYAFOFPSvPZ3lQ_Shh7Kg0X6oPf-UiagyUmQtjaV4iakTCdZPkAsUEy26yh6Ko9DZrejDB98QgOjSEyB96fxA9umwdc-Mgj8Qw2XNDi_4cxwOrg1lX78_Y-"/>
+</div>
+<span class="font-body-md text-body-md text-on-surface">Midnight Voltage</span>
+</div>
+</td>
+<td class="px-stack-lg py-stack-lg">
+<span class="bg-surface-dim border border-primary/30 text-primary px-stack-sm py-base rounded-full font-label-sm text-label-sm">Synthwave</span>
+</td>
+<td class="px-stack-lg py-stack-lg">
+<div class="flex items-center gap-base">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md text-on-surface">Active</span>
+</div>
+</td>
+<td class="px-stack-lg py-stack-lg font-body-md text-body-md text-on-surface-variant">1 day ago</td>
+<td class="px-stack-lg py-stack-lg text-right">
+<div class="flex justify-end gap-stack-sm">
+<button class="p-2 hover:text-secondary transition-colors" title="Ver">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+<button class="p-2 hover:text-primary transition-colors" title="Editar">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 hover:text-error transition-colors" title="Eliminar">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-variant/30 transition-colors group">
+<td class="px-stack-lg py-stack-lg">
+<div class="flex items-center gap-stack-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest overflow-hidden border border-glass-stroke">
+<img alt="Band Portrait" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A silhouette of a drummer performing during a high-energy live concert. Intense beams of cyan laser light pierce through the dark, smoky atmosphere. The composition is dynamic and captures the raw, kinetic energy of electronic music performance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgr1hRaChdrFOTaNN1-Ig0ARK18LmQwLIM14J9BIWrOQAmx5LngSPgt6lMn8La5KVjDnAeggQXsl9T5MhBXIGAIUriU1uHnpC_b74pnjX-uGhYZnhmDiEeqjeVeYghUBecsNycDYYD9gGUwPcCRga8emtNzLnfqwDwK3S8ZVaGI-dDq8rXRNuxVd4u6I727sSM2uDaMg54uLuGdU3ATlVHZLz1OI2n1GJiQAOzbqno2rdXL0nBYMjdfKD9tc0NMLqsWUCS2Xb5OL89"/>
+</div>
+<span class="font-body-md text-body-md text-on-surface">Static Void</span>
+</div>
+</td>
+<td class="px-stack-lg py-stack-lg">
+<span class="bg-surface-dim border border-tertiary/30 text-tertiary px-stack-sm py-base rounded-full font-label-sm text-label-sm">Industrial Rock</span>
+</td>
+<td class="px-stack-lg py-stack-lg">
+<div class="flex items-center gap-base">
+<span class="w-2 h-2 rounded-full bg-on-surface-variant"></span>
+<span class="font-label-md text-label-md text-on-surface-variant">Inactive</span>
+</div>
+</td>
+<td class="px-stack-lg py-stack-lg font-body-md text-body-md text-on-surface-variant">5 days ago</td>
+<td class="px-stack-lg py-stack-lg text-right">
+<div class="flex justify-end gap-stack-sm">
+<button class="p-2 hover:text-secondary transition-colors" title="Ver">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+<button class="p-2 hover:text-primary transition-colors" title="Editar">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 hover:text-error transition-colors" title="Eliminar">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-stack-lg py-stack-lg border-t border-glass-stroke bg-surface-container-low flex justify-between items-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 3 of 12 bands</span>
+<div class="flex gap-stack-sm">
+<button class="px-stack-md py-base border border-glass-stroke hover:border-secondary transition-colors font-label-md text-label-md">Previous</button>
+<button class="px-stack-md py-base border border-secondary text-secondary font-label-md text-label-md">1</button>
+<button class="px-stack-md py-base border border-glass-stroke hover:border-secondary transition-colors font-label-md text-label-md">2</button>
+<button class="px-stack-md py-base border border-glass-stroke hover:border-secondary transition-colors font-label-md text-label-md">Next</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest w-full py-stack-lg border-t border-glass-stroke">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md px-gutter max-w-container-max mx-auto">
+<div class="flex flex-col gap-stack-sm">
+<div class="font-headline-xl text-headline-xl text-primary">Web Bands</div>
+<p class="font-label-md text-label-md text-on-surface-variant opacity-80 hover:opacity-100 transition-opacity">
+                    © 2024 Web Bands Platform. All rights reserved.
+                </p>
+</div>
+<div class="flex flex-wrap gap-stack-lg md:justify-end items-center">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions for table rows
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.querySelector('img').style.transform = 'scale(1.1)';
+            });
+            row.addEventListener('mouseleave', () => {
+                row.querySelector('img').style.transform = 'scale(1)';
+            });
+        });
+
+        // Search highlight interaction
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('glow-secondary');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('glow-secondary');
+        });
+    </script>
+</body></html>

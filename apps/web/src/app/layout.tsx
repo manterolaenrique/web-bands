@@ -1,9 +1,10 @@
-import type {Metadata} from 'next'
+import type {Metadata, Viewport} from 'next'
 import Link from 'next/link'
 import {Inter, Montserrat} from 'next/font/google'
 import type {ReactNode} from 'react'
 
 import {SiteHeader} from '@/components/layout/SiteHeader'
+import {AppRuntimeBridge} from '@/components/pwa/AppRuntimeBridge'
 import {siteUrl} from '@/lib/env'
 import './globals.css'
 
@@ -25,12 +26,32 @@ export const metadata: Metadata = {
     template: '%s | Web Bands',
   },
   description: 'Plataforma profesional para bandas de musica.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Web Bands',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    apple: '/icons/apple-touch-icon.png',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#050505',
 }
 
 export default function RootLayout({children}: {children: ReactNode}) {
   return (
     <html lang="es" data-scroll-behavior="smooth" className={`${inter.variable} ${montserrat.variable}`}>
       <body>
+        <AppRuntimeBridge />
         <div className="app-shell">
           <SiteHeader />
           {children}

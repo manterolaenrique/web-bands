@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neon Circuitry | Web Bands</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0e0e0e;
+            color: #e5e2e1;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(18, 18, 20, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-glow-purple-text {
+            text-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+        }
+        .neon-glow-cyan-border:focus-within {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+            border-color: #5de6ff;
+        }
+        @keyframes pulse-voltage {
+            0%, 100% { opacity: 0.3; transform: scaleX(1); }
+            50% { opacity: 0.8; transform: scaleX(1.05); }
+        }
+        .voltage-line {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #ddb7ff, #5de6ff, transparent);
+            animation: pulse-voltage 4s infinite ease-in-out;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#281900",
+                      "glass-stroke": "rgba(255, 255, 255, 0.08)",
+                      "on-secondary": "#00363e",
+                      "tertiary-container": "#bd871a",
+                      "surface-container-low": "#1c1b1b",
+                      "surface-bright": "#3a3939",
+                      "surface": "#131313",
+                      "on-primary-fixed": "#2c0051",
+                      "secondary-fixed": "#a2eeff",
+                      "error-container": "#93000a",
+                      "tertiary-fixed-dim": "#fabc4e",
+                      "surface-container": "#201f1f",
+                      "secondary-container": "#00cbe6",
+                      "on-tertiary-container": "#3a2600",
+                      "surface-variant": "#353534",
+                      "on-primary": "#490080",
+                      "surface-container-highest": "#353534",
+                      "neon-glow-purple": "rgba(168, 85, 247, 0.4)",
+                      "tertiary": "#fabc4e",
+                      "surface-charcoal": "#121214",
+                      "surface-container-lowest": "#0e0e0e",
+                      "primary-container": "#b76dff",
+                      "surface-tint": "#ddb7ff",
+                      "outline-variant": "#4d4354",
+                      "neon-glow-cyan": "rgba(34, 211, 238, 0.4)",
+                      "on-primary-container": "#400071",
+                      "outline": "#988d9f",
+                      "on-error": "#690005",
+                      "surface-dim": "#131313",
+                      "background": "#131313",
+                      "tertiary-fixed": "#ffdead",
+                      "secondary-fixed-dim": "#2fd9f4",
+                      "on-surface": "#e5e2e1",
+                      "surface-elevated": "#1E1E22",
+                      "surface-container-high": "#2a2a2a",
+                      "on-error-container": "#ffdad6",
+                      "inverse-on-surface": "#313030",
+                      "primary-fixed-dim": "#ddb7ff",
+                      "inverse-surface": "#e5e2e1",
+                      "on-tertiary": "#432c00",
+                      "primary-fixed": "#f0dbff",
+                      "secondary": "#5de6ff",
+                      "on-secondary-fixed-variant": "#004e5a",
+                      "inverse-primary": "#842bd2",
+                      "on-secondary-container": "#00515d",
+                      "on-secondary-fixed": "#001f25",
+                      "on-primary-fixed-variant": "#6900b3",
+                      "on-tertiary-fixed-variant": "#604100",
+                      "error": "#ffb4ab",
+                      "on-background": "#e5e2e1",
+                      "on-surface-variant": "#cfc2d6",
+                      "primary": "#ddb7ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "container-max": "1280px",
+                      "section-gap": "80px",
+                      "gutter": "24px",
+                      "base": "4px",
+                      "stack-sm": "8px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter"],
+                      "display-lg": ["Montserrat"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-xl": ["Montserrat"],
+                      "display-lg-mobile": ["Montserrat"],
+                      "headline-lg": ["Montserrat"],
+                      "label-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "900"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-xl": ["36px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                      "display-lg-mobile": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                      "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="font-body-md text-body-md selection:bg-secondary selection:text-on-secondary">
+<!-- Top Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-glass-stroke shadow-[0_0_20px_rgba(168,85,247,0.15)] transition-all duration-300 ease-in-out">
+<div class="flex justify-between items-center px-gutter py-4 max-w-container-max mx-auto">
+<div class="font-headline-xl text-headline-xl font-black text-primary tracking-tighter">VOLTAGE SYNTH</div>
+<div class="hidden md:flex gap-stack-lg items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Discover</a>
+<a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1" href="#">Artists</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Tours</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Studio</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Community</a>
+</div>
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-secondary" data-icon="notifications">notifications</span>
+<button class="bg-primary text-on-primary-container px-6 py-2 font-label-md text-label-md font-bold rounded-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all">Sign In</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative h-screen w-full flex items-end overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img alt="Neon Circuitry Hero" class="w-full h-full object-cover" data-alt="A high-energy electronic rock concert stage at night. Intense beams of neon purple and cyan lasers cut through a thick haze of smoke. A silhouetted band performs dynamically in front of a massive LED screen displaying abstract voltage patterns. The atmosphere is electric, dark, and immersive, with a cinematic deep space quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfn8f2stRWL7u3P0y0tr8KpY4Q1IRG3wTKja9GBhm_hYCGv3tCa19v8ft2PyufS1wrMqzQuhowm5p5OfxNYxFpZsaxlZvwFxTrlVEZ3EtjHqLvMik6rNQiHVpTWfZM2skkAdDgoK_EAUhkXDMjDXOn5t_5Iw1ebT-OHYO9ngP5DGq6P8T8yCQUy5KCB_lhSeeqHLZyAgF-_txdiYxWPkBdmQY2r3qo8M-QYeTyaktK5Qagatv0qQhO_rei4mV1O97EPyasLirVNLnW"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-[#0e0e0e]/40 to-transparent"></div>
+</div>
+<div class="relative z-10 w-full max-w-container-max mx-auto px-gutter pb-section-gap">
+<div class="flex flex-wrap gap-stack-sm mb-stack-md">
+<span class="px-3 py-1 bg-surface-charcoal border border-secondary text-secondary font-label-sm text-label-sm rounded-full tracking-wider uppercase">Electronic Rock</span>
+<span class="px-3 py-1 bg-surface-charcoal border border-primary text-primary font-label-sm text-label-sm rounded-full tracking-wider uppercase">Synthwave</span>
+</div>
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-sm neon-glow-purple-text">NEON CIRCUITRY</h1>
+<div class="voltage-line w-48 mb-stack-lg"></div>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Forging the future of sound through high-voltage synthesis and raw electric energy. Experience the pulse of the machine.</p>
+</div>
+</header>
+<main class="relative z-10 bg-[#0e0e0e]">
+<!-- Media & Player Section -->
+<section class="max-w-container-max mx-auto px-gutter py-section-gap">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-stack-lg items-center">
+<div class="lg:col-span-7 glass-card p-stack-lg rounded-xl flex flex-col md:flex-row gap-stack-lg items-center group transition-all duration-300 hover:border-secondary">
+<div class="relative w-48 h-48 flex-shrink-0 overflow-hidden rounded-lg">
+<img alt="Featured Track Art" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" data-alt="Modern album art featuring a stylized human heart constructed from glowing fiber optic cables and neon circuits. The background is a deep matte black, and the heart emits a radiant cyan and purple light. The aesthetic is clean, technological, and evocative of high-end audio hardware interface design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_32nysIekDIMcf9_MquchiImSKOggGQ-nebUk_CeCsZYqpQP-7BLA903Yw9zB5QDPtRN66bbjFwc4YgMq84lqyRfAbrC8fakShUESOJiUKGLtisd8K_wFTtjkf0SMGcXXa5gu-Hy2dky5z4qC2k_g2K3-gut1jeBn7Y2bMDIVgZYBqkwUPoNk78_3KlB4kjkjZLbLsWCV___6CbHnlWf8QIeGUF7qBLk_KSLunSlpquroMYF4x3OD-fUj-mMdr0afVEzLCH91Q9UB"/>
+</div>
+<div class="flex-grow">
+<span class="text-secondary font-label-sm text-label-sm uppercase tracking-widest">Latest Release</span>
+<h3 class="font-headline-xl text-headline-xl text-on-surface mt-2">CYBERNETIC PULSE</h3>
+<div class="flex items-center gap-stack-md mt-stack-md">
+<button class="w-12 h-12 rounded-full bg-secondary text-on-secondary flex items-center justify-center hover:scale-110 transition-transform shadow-[0_0_15px_rgba(34,211,238,0.5)]">
+<span class="material-symbols-outlined" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div class="flex-grow h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-1/3 bg-gradient-to-r from-primary to-secondary"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">01:24 / 03:55</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-5 flex flex-col gap-stack-md">
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Listen Anywhere</h4>
+<div class="grid grid-cols-2 gap-stack-md">
+<a class="flex items-center justify-center gap-stack-sm py-4 bg-surface-charcoal border border-glass-stroke rounded-lg hover:border-primary hover:text-primary transition-all group" href="#">
+<span class="material-symbols-outlined" data-icon="podcasts">podcasts</span>
+<span class="font-label-md text-label-md">Spotify</span>
+</a>
+<a class="flex items-center justify-center gap-stack-sm py-4 bg-surface-charcoal border border-glass-stroke rounded-lg hover:border-secondary hover:text-secondary transition-all group" href="#">
+<span class="material-symbols-outlined" data-icon="music_note">music_note</span>
+<span class="font-label-md text-label-md">Apple Music</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Biography Section -->
+<section class="max-w-container-max mx-auto px-gutter py-section-gap border-t border-glass-stroke">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg items-center">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-primary mb-stack-md">HISTORY</h2>
+<p class="font-body-lg text-body-lg text-on-surface mb-stack-md">Neon Circuitry emerged from the underground neon-lit clubs of 2021, bridging the gap between hardware synthesis and heavy rock instrumentation. Founded by multi-instrumentalists Jax and Thorne, the project quickly gained a cult following for their sensory-overload live performances.</p>
+<p class="font-body-md text-body-md text-on-surface-variant italic border-l-4 border-secondary pl-stack-md">"We wanted to build something that felt like a localized power surge—something both beautiful and dangerous."</p>
+</div>
+<div class="relative h-96 rounded-xl overflow-hidden shadow-2xl">
+<img alt="Band History" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" data-alt="A moody, atmospheric photo of two musicians in a dark studio filled with vintage modular synthesizers and blinking LEDs. The scene is lit by a single spotlight from the side, creating long shadows and high-contrast highlights. The aesthetic is gritty yet technically precise, reflecting a dark minimalist and neon futurist fusion." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAuI2ad_OftNSdp_GI-dlyVqtuyetLcTD4UnslOKmSEfZR3JnuOGSE9eCfnecAQ0fFpbjt-toxvLbS1nNWrb_rpFFIccUkg7lUcKk8Vj26_83LWL1Xo9Zg36QyhkMrNatGjBn_KPTycqVTWwXOt-wBhKpRpNJale3efhgz5GtxpHpgZp9prCuf9_BotG1UiZVZcz0wuyAZqRTzjXLkqMdRjqNvfMQOvm2B6EqEg1e4KUgDsT_qnglbW4YL7yaTKNvvySJ-FwxICzyv"/>
+<div class="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-xl"></div>
+</div>
+</div>
+</section>
+<!-- Tour Dates Section -->
+<section class="max-w-container-max mx-auto px-gutter py-section-gap">
+<h2 class="font-headline-xl text-headline-xl text-secondary mb-stack-lg text-center md:text-left">UPCOMING VOLTAGE DROPS</h2>
+<div class="space-y-stack-md">
+<!-- Tour Item -->
+<div class="glass-card p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-stack-md hover:bg-surface-elevated transition-colors border-l-4 border-primary group">
+<div class="text-center md:text-left">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-tighter">OCT 14, 2024</span>
+<h4 class="font-headline-lg text-headline-lg text-on-surface group-hover:text-secondary transition-colors">THE VOID THEATER</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Los Angeles, CA</p>
+</div>
+<button class="w-full md:w-auto px-8 py-3 bg-transparent border-2 border-secondary text-secondary font-bold rounded-lg hover:bg-secondary hover:text-on-secondary transition-all shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+                        BUY TICKETS
+                    </button>
+</div>
+<!-- Tour Item -->
+<div class="glass-card p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-stack-md hover:bg-surface-elevated transition-colors border-l-4 border-secondary group">
+<div class="text-center md:text-left">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-tighter">OCT 22, 2024</span>
+<h4 class="font-headline-lg text-headline-lg text-on-surface group-hover:text-primary transition-colors">NEON UNDERGROUND</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Berlin, Germany</p>
+</div>
+<button class="w-full md:w-auto px-8 py-3 bg-transparent border-2 border-primary text-primary font-bold rounded-lg hover:bg-primary hover:text-on-primary transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                        BUY TICKETS
+                    </button>
+</div>
+<!-- Tour Item -->
+<div class="glass-card p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-stack-md hover:bg-surface-elevated transition-colors border-l-4 border-primary group">
+<div class="text-center md:text-left">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-tighter">NOV 05, 2024</span>
+<h4 class="font-headline-lg text-headline-lg text-on-surface group-hover:text-secondary transition-colors">ELECTRIC FIELDS FEST</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">London, UK</p>
+</div>
+<button class="w-full md:w-auto px-8 py-3 bg-transparent border-2 border-secondary text-secondary font-bold rounded-lg hover:bg-secondary hover:text-on-secondary transition-all">
+                        BUY TICKETS
+                    </button>
+</div>
+</div>
+</section>
+<!-- Gallery Section -->
+<section class="max-w-container-max mx-auto px-gutter py-section-gap border-t border-glass-stroke">
+<div class="flex justify-between items-end mb-stack-lg">
+<h2 class="font-headline-xl text-headline-xl text-on-surface">GALLERY</h2>
+<a class="text-primary hover:text-secondary transition-colors font-label-md text-label-md" href="#">VIEW ALL ARCHIVES</a>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer">
+<img alt="Gallery Image 1" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A close-up action shot of a guitar player's hands on a translucent acrylic guitar, illuminated by vibrant cyan LED lights from within. The strings are vibrating intensely, caught in a high-speed exposure. The background is a blur of deep purples and blacks." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKMB2vQ6adIWlCXA9jkiC30iuAjekZqvDFa5U7KLMAGDrbHKWi9OLi1l_KmW7V7v5tqINDR17grk5_NMWdDqpBQJVWiuaWisi-YYbfTZy_ZI8F8kA8tssVrIQjMneG-piMeOKn2hgXMBwBXyZnxqOZSbo1dpYrFNNlpZmDq5Fla8aX9aE8QcRlVTC1JQXyAplR6afs4lFSS2QcCmFyuLGA52gsmecyHW3n3rWo61wQe9q439egq8Q6b9s4dHnbNq2_gZHH_Ad6K57y"/>
+<div class="absolute inset-0 bg-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer md:mt-8">
+<img alt="Gallery Image 2" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A vintage analog synthesizer covered in dust, with its knobs and faders glowing in a soft, eerie purple light. The focus is shallow, highlighting the tactile texture of the instrument. The lighting creates a late-night, creative solitude atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuArlprZ89Z6Ot1mCuH1F9GsAbK6uUN78AXynWqt47-aqcynjap32N1rzRDdQMZogYv6SE9os4-T3MA9fFzszr6vZbqVSMK0qlc6HlCJsX4Tbx6OVyNHg6lXNw1Uub3Gx10Cch4ORtlIbXGMlo80MYdFMNPHdb2rkp4cZKlWgiEeYVeHXp5EpHoap-IEjQisUOrSdQ8WBvuHgM0ijpGcLZCkHj1iEw2WQs7lphHS4Bj6mPG1IyvPvsBpJxHktC9aQWG_ZmYSF6a7uEWg"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer">
+<img alt="Gallery Image 3" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A wide-angle silhouette of a large crowd at a music festival, arms raised towards a stage emitting blinding white and cyan strobe lights. The energy is palpable, captured in a high-contrast black and neon aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ8P49P88Q6swrMrcW9tWg_HDq0vGruA1A9v63oh4BMenqWk8OdNrP6JS6-uNlQjREuNRA2depnXao38QNm49LIWL99K4DwYmO8gys5jGmqZLd8SX7y1v4CiHQtvoRkEIfCA3sDkAoT6Hs7dhtWiv-b5cD5fAWlutdTG2BxfClAXRVQnQZBRqoVoFzqGb8Y_imypN4kN9ZFFzqeTAHWBXaIFRwJAc1uQS9t5kXaoHaIJAJ49HJSKaXxQTsRsyTQH7DtddzdHheB3lI"/>
+<div class="absolute inset-0 bg-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer md:mt-8">
+<img alt="Gallery Image 4" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Abstract macro shot of audio cables and patch cords on a modular synth rack. The cables are a mix of bright colors, crossing each other in a complex, high-tech weave. Subtle lens flares and bokeh from the synth lights add a dreamlike quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxgJPP9FSwV2L9hxHY4epAwZBY-nBeRYG2O5U3_knkTirP0EVWC7QWiRt3_o2iXdi4X6820e--yJ2eRYYp8G_cLzpHm8D3Ryft49aSO4-I9i6ozktvJ0E8V8MSxaSvd9wgwkv50G9SQ9x_7XiBYWrBgIq6EsFkRTHRnDbEQ2mxI3cZp1sgMb1MEVZoPV4YZ4jP8X9RJydip9GVfimK_Cu73G1xcaGiJGyWxvNoWy-BNYeVGPaTyixlK-uQq5NTzwayJ6rNcVkqJqmG"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap bg-surface-container-lowest border-t border-glass-stroke">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-stack-lg px-gutter max-w-container-max mx-auto text-center md:text-left">
+<div class="md:col-span-1">
+<div class="font-headline-lg text-headline-lg font-black text-on-surface mb-stack-md">VOLTAGE SYNTH</div>
+<p class="font-label-sm text-label-sm text-outline">Pushing the boundaries of electronic music and digital performance.</p>
+</div>
+<div class="flex flex-col gap-base">
+<h5 class="text-tertiary font-label-md mb-stack-sm">EXPLORE</h5>
+<a class="text-outline hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Artists</a>
+<a class="text-outline hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Tours</a>
+<a class="text-outline hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Studio</a>
+</div>
+<div class="flex flex-col gap-base">
+<h5 class="text-tertiary font-label-md mb-stack-sm">SUPPORT</h5>
+<a class="text-outline hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Artist Portal</a>
+<a class="text-outline hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Contact</a>
+<a class="text-outline hover:text-primary transition-colors font-label-sm text-label-sm" href="#">FAQ</a>
+</div>
+<div class="flex flex-col gap-base">
+<h5 class="text-tertiary font-label-md mb-stack-sm">LEGAL</h5>
+<a class="text-outline hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Privacy Policy</a>
+<a class="text-outline hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Terms of Service</a>
+</div>
+</div>
+<div class="mt-stack-lg text-center font-label-sm text-label-sm text-outline/50 uppercase tracking-widest px-gutter">
+            © 2024 VOLTAGE SYNTH. ALL RIGHTS RESERVED. POWERED BY NEON ENERGY.
+        </div>
+</footer>
+<!-- Background Decoration -->
+<div class="fixed inset-0 pointer-events-none z-[-1] opacity-20">
+<div class="absolute top-1/4 left-0 w-96 h-96 bg-primary rounded-full blur-[150px]"></div>
+<div class="absolute bottom-1/4 right-0 w-96 h-96 bg-secondary rounded-full blur-[150px]"></div>
+</div>
+<script>
+        // Simple Micro-interactions
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.style.transform = 'scale(0.95)';
+            });
+            el.addEventListener('mouseup', () => {
+                el.style.transform = 'scale(1)';
+            });
+            el.addEventListener('mouseleave', () => {
+                el.style.transform = 'scale(1)';
+            });
+        });
+
+        // Sticky Nav Effect
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('py-2');
+                nav.classList.remove('py-4');
+            } else {
+                nav.classList.add('py-4');
+                nav.classList.remove('py-2');
+            }
+        });
+    </script>
+</body></html>
