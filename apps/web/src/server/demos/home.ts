@@ -3,9 +3,12 @@ import type {BandDemosHomePayload} from '@web-bands/bands-domain'
 import {createClient} from '@/lib/supabase/server'
 
 import {
+  ensureGeneralPlaylist,
+  loadBandPlaylistRows,
   normalizeDemoQuery,
   requireDemosAccess,
   resolvePlaylistCoverUrlMap,
+  sortPlaylistsForDisplay,
   toPlaylistSummary,
   toTrackSummary,
 } from './shared'
@@ -20,6 +23,7 @@ export async function getBandDemosHome(
   query?: string | null
 ): Promise<BandDemosHomePayload | null> {
   const access = requireDemosAccess(await getBandDemosAccess(userId, bandId))
+  await ensureGeneralPlaylist(bandId, userId)
   const supabase = await createClient()
   const normalizedQuery = normalizeDemoQuery(query)
   const likePattern = `%${normalizedQuery}%`
@@ -33,26 +37,16 @@ export async function getBandDemosHome(
     .order('created_at', {ascending: false})
     .limit(8)
 
-  let playlistQuery = supabase
-    .from('band_audio_playlists')
-    .select(
-      'id, band_id, title, description, cover_storage_bucket, cover_storage_path, cover_original_file_name, created_by, created_at, updated_at'
-    )
-    .eq('band_id', bandId)
-    .order('updated_at', {ascending: false})
-    .limit(6)
-
   if (normalizedQuery) {
     trackQuery = trackQuery.or(
       `title.ilike.${likePattern},description.ilike.${likePattern},related_song_title.ilike.${likePattern}`
     )
-    playlistQuery = playlistQuery.or(`title.ilike.${likePattern},description.ilike.${likePattern}`)
   }
 
-  const [{data: trackRows}, {data: playlistRows}, {count: totalTracks}, {count: totalPlaylists}] =
+  const [{data: trackRows}, playlistRows, {count: totalTracks}, {count: totalPlaylists}] =
     await Promise.all([
       trackQuery,
-      playlistQuery,
+      loadBandPlaylistRows(supabase, bandId, {query: normalizedQuery, limit: 6}),
       supabase
         .from('band_audio_tracks')
         .select('id', {head: true, count: 'exact'})
@@ -63,7 +57,7 @@ export async function getBandDemosHome(
         .eq('band_id', bandId),
     ])
 
-  const typedPlaylists = (playlistRows || []) as PlaylistRow[]
+  const typedPlaylists = playlistRows as PlaylistRow[]
   const coverUrlMap = await resolvePlaylistCoverUrlMap(typedPlaylists)
   const playlistIds = typedPlaylists.map((playlist) => playlist.id)
   const {data: playlistTrackRows} =
@@ -79,6 +73,12 @@ export async function getBandDemosHome(
     return result
   }, new Map())
 
+  const playlists = sortPlaylistsForDisplay(
+    typedPlaylists.map((playlist) =>
+      toPlaylistSummary(playlist, trackCountMap.get(playlist.id) || 0, coverUrlMap.get(playlist.id))
+    )
+  )
+
   return {
     band: access.band,
     role: access.role,
@@ -86,9 +86,7 @@ export async function getBandDemosHome(
     query: normalizedQuery,
     featuredTrack: trackRows?.[0] ? toTrackSummary(trackRows[0] as TrackRow) : null,
     recentTracks: ((trackRows || []) as TrackRow[]).map((row) => toTrackSummary(row)),
-    playlists: typedPlaylists.map((playlist) =>
-      toPlaylistSummary(playlist, trackCountMap.get(playlist.id) || 0, coverUrlMap.get(playlist.id))
-    ),
+    playlists,
     totalTracks: totalTracks || 0,
     totalPlaylists: totalPlaylists || 0,
   }

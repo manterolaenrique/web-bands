@@ -145,6 +145,7 @@ test.describe('demos module', () => {
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos$`))
       await expect(page.locator('.demos-page-header').getByRole('heading', {name: 'Demos', exact: true})).toBeVisible()
       await expect(page.getByText(new RegExp(`Audios privados de ${fixture.band.name}`))).toBeVisible()
+      await expect(page.locator('.demos-section__header h2')).toHaveText(['Playlists', 'Ultimos audios'])
 
       await page.locator('.demos-page-header').getByRole('button', {name: 'Nueva playlist'}).click()
       const playlistSheet = page.locator('.demos-sheet[aria-label="Nueva playlist"]')
@@ -290,10 +291,15 @@ test.describe('demos module', () => {
       await page.locator(`a[href="/dashboard/bands/${fixture.band.id}/demos/playlists"]`).click()
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos/playlists$`))
       await expect(page.locator('.demos-page-header').getByRole('heading', {name: 'Playlists', exact: true})).toBeVisible()
+      await expect(page.locator('.demos-playlist-card').first()).toContainText('General')
 
       const playlistCard = page.locator('.demos-playlist-card').filter({hasText: playlistTitle}).first()
       await expect(playlistCard).toBeVisible()
       await expect(playlistCard.locator('img')).toBeVisible()
+      await playlistCard.getByRole('button', {name: new RegExp(`Reproducir playlist ${playlistTitle}`)}).click()
+      const miniPlayer = page.locator('[data-testid="demos-mini-player"]')
+      await expect(miniPlayer).toBeVisible()
+      await expect(miniPlayer.locator('.demos-mini-player__title')).toHaveText(trackTitle)
       await playlistCard.getByRole('link', {name: 'Abrir'}).click()
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos/playlists/${createdPlaylistId}$`))
       await expect(page.locator('.demos-page-header').getByRole('heading', {name: playlistTitle, exact: true})).toBeVisible()
@@ -301,7 +307,6 @@ test.describe('demos module', () => {
       await expect(page.locator('.demos-featured-card__cover img')).toBeVisible()
 
       await page.locator('.demos-playlist-track-row').first().locator('.demos-playlist-track-row__play').click()
-      const miniPlayer = page.locator('[data-testid="demos-mini-player"]')
       await expect(miniPlayer).toBeVisible()
       await expect(miniPlayer.locator('.demos-mini-player__title')).toHaveText(trackTitle)
       await expect
@@ -309,6 +314,16 @@ test.describe('demos module', () => {
           timeout: 10000,
         })
         .toContain(trackTitleTwo)
+
+      await page.locator(`a[href="/dashboard/bands/${fixture.band.id}/demos/playlists"]`).click()
+      await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos/playlists$`))
+      const generalCard = page.locator('.demos-playlist-card').first()
+      await generalCard.getByRole('link', {name: 'Abrir'}).click()
+      await expect(page.locator('.demos-page-header').getByRole('heading', {name: 'General', exact: true})).toBeVisible()
+      await expect(page.getByRole('button', {name: 'Editar playlist'})).toHaveCount(0)
+      await expect(page.getByRole('button', {name: 'Subir'})).toHaveCount(0)
+      await expect(page.getByRole('button', {name: 'Bajar'})).toHaveCount(0)
+      await expect(page.getByRole('button', {name: 'Quitar'})).toHaveCount(0)
 
       await page.getByRole('link', {name: 'Bandas'}).click()
       await expect(page).toHaveURL(/\/dashboard$/)

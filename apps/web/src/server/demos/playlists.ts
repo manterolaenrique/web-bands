@@ -15,14 +15,20 @@ import {createClient} from '@/lib/supabase/server'
 import {BandServiceError} from '@/server/bands/service-error'
 
 import {
+  type DemosPlaylistRow,
   buildPlaylistCoverStoragePath,
   DEMOS_ALLOWED_COVER_MIME_TYPES,
   DEMOS_MAX_COVER_FILE_SIZE_BYTES,
+  ensureGeneralPlaylist,
   getBandDemosAccess,
+  isLockedPlaylistSystemKey,
+  loadBandPlaylistRowById,
+  loadBandPlaylistRows,
   requireDemosAccess,
   requireDemosAdminClient,
   requireDemosEditor,
   resolvePlaylistCoverUrlMap,
+  sortPlaylistsForDisplay,
   toPlaylistSummary,
   toTrackSummary,
 } from './shared'
@@ -33,7 +39,7 @@ type RequestContext = {
   userAgent: string | null
 }
 
-type PlaylistRow = Parameters<typeof toPlaylistSummary>[0]
+type PlaylistRow = DemosPlaylistRow
 type TrackRow = Parameters<typeof toTrackSummary>[0]
 
 type PlaylistTrackRow = {
@@ -118,6 +124,12 @@ function getValidationIssues(error: ZodError) {
   }))
 }
 
+function assertPlaylistIsEditable(playlist: {system_key: string | null | undefined}) {
+  if (isLockedPlaylistSystemKey(playlist.system_key)) {
+    throw new BandServiceError('La playlist General se administra automaticamente.', 403)
+  }
+}
+
 async function loadPlaylistTrackCountMap(playlistIds: string[]) {
   if (playlistIds.length === 0) {
     return new Map<string, number>()
@@ -190,40 +202,31 @@ async function loadPlaylistTracks(playlistId: string, bandId: string) {
 
 export async function getBandPlaylists(userId: string, bandId: string, query?: string | null) {
   const access = requireDemosAccess(await getBandDemosAccess(userId, bandId))
+  await ensureGeneralPlaylist(bandId, userId)
   const supabase = await createClient()
   const normalizedQuery = (query || '').trim()
-  const likePattern = `%${normalizedQuery}%`
+  let typedPlaylists: PlaylistRow[]
 
-  let playlistQuery = supabase
-    .from('band_audio_playlists')
-    .select(
-      'id, band_id, title, description, cover_storage_bucket, cover_storage_path, cover_original_file_name, created_by, created_at, updated_at'
-    )
-    .eq('band_id', bandId)
-    .order('updated_at', {ascending: false})
-
-  if (normalizedQuery) {
-    playlistQuery = playlistQuery.or(`title.ilike.${likePattern},description.ilike.${likePattern}`)
-  }
-
-  const {data: playlistRows, error} = await playlistQuery
-
-  if (error) {
+  try {
+    typedPlaylists = await loadBandPlaylistRows(supabase, bandId, {query: normalizedQuery})
+  } catch {
     throw new BandServiceError('Playlists could not be loaded.', 500)
   }
 
-  const typedPlaylists = (playlistRows || []) as PlaylistRow[]
   const coverUrlMap = await resolvePlaylistCoverUrlMap(typedPlaylists)
   const countMap = await loadPlaylistTrackCountMap(typedPlaylists.map((playlist) => playlist.id))
+  const playlists = sortPlaylistsForDisplay(
+    typedPlaylists.map((playlist) =>
+      toPlaylistSummary(playlist, countMap.get(playlist.id) || 0, coverUrlMap.get(playlist.id))
+    )
+  )
 
   return {
     band: access.band,
     role: access.role,
     canEdit: access.canEdit,
     query: normalizedQuery,
-    playlists: typedPlaylists.map((playlist) =>
-      toPlaylistSummary(playlist, countMap.get(playlist.id) || 0, coverUrlMap.get(playlist.id))
-    ),
+    playlists,
   }
 }
 
@@ -237,24 +240,23 @@ export async function getBandPlaylist(
     return null
   }
 
+  await ensureGeneralPlaylist(bandId, userId)
   const supabase = await createClient()
-  const {data: playlistRow, error} = await supabase
-    .from('band_audio_playlists')
-    .select(
-      'id, band_id, title, description, cover_storage_bucket, cover_storage_path, cover_original_file_name, created_by, created_at, updated_at'
-    )
-    .eq('band_id', bandId)
-    .eq('id', playlistId)
-    .maybeSingle()
+  let playlistRow: PlaylistRow | null
+  try {
+    playlistRow = await loadBandPlaylistRowById(supabase, bandId, playlistId)
+  } catch {
+    return null
+  }
 
-  if (error || !playlistRow) {
+  if (!playlistRow) {
     return null
   }
 
   const tracks = await loadPlaylistTracks(playlistId, bandId)
   const coverUrlMap = await resolvePlaylistCoverUrlMap([playlistRow as PlaylistRow])
   return {
-    ...toPlaylistSummary(playlistRow as PlaylistRow, tracks.length, coverUrlMap.get(playlistId)),
+    ...toPlaylistSummary(playlistRow, tracks.length, coverUrlMap.get(playlistId)),
     band: access.band,
     role: access.role,
     canEdit: access.canEdit,
@@ -312,29 +314,29 @@ export async function createBandPlaylist(
     uploadedCover = await uploadPlaylistCover(bandId, playlistId, coverFile)
   }
 
-  const {data: playlistRow, error} = await supabase
-    .from('band_audio_playlists')
-    .insert({
-      id: playlistId,
-      band_id: bandId,
-      title: parsed.title,
-      description: parsed.description || null,
-      cover_storage_bucket: uploadedCover?.bucket || null,
-      cover_storage_path: uploadedCover?.path || null,
-      cover_original_file_name: uploadedCover?.originalFileName || null,
-      created_by: userId,
-    })
-    .select(
-      'id, band_id, title, description, cover_storage_bucket, cover_storage_path, cover_original_file_name, created_by, created_at, updated_at'
-    )
-    .single()
+  const {error} = await supabase.from('band_audio_playlists').insert({
+    id: playlistId,
+    band_id: bandId,
+    title: parsed.title,
+    description: parsed.description || null,
+    cover_storage_bucket: uploadedCover?.bucket || null,
+    cover_storage_path: uploadedCover?.path || null,
+    cover_original_file_name: uploadedCover?.originalFileName || null,
+    created_by: userId,
+  })
 
-  if (error || !playlistRow) {
+  if (error) {
     await removePlaylistCoverStorageObject(uploadedCover?.bucket || null, uploadedCover?.path || null)
     throw new BandServiceError('Playlist could not be created.', 500)
   }
 
-  const coverUrlMap = await resolvePlaylistCoverUrlMap([playlistRow as PlaylistRow])
+  const playlistRow = await loadBandPlaylistRowById(supabase, bandId, playlistId)
+  if (!playlistRow) {
+    await removePlaylistCoverStorageObject(uploadedCover?.bucket || null, uploadedCover?.path || null)
+    throw new BandServiceError('Playlist could not be created.', 500)
+  }
+
+  const coverUrlMap = await resolvePlaylistCoverUrlMap([playlistRow])
 
   revalidatePath(`/dashboard/bands/${bandId}/demos`)
   revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
@@ -348,14 +350,14 @@ export async function createBandPlaylist(
       requestId: requestContext.requestId,
       title: parsed.title,
     },
-    targetId: playlistRow.id,
+    targetId: playlistId,
     targetType: 'band_audio_playlist',
     userAgent: requestContext.userAgent,
   })
 
   return {
     ok: true,
-    playlist: toPlaylistSummary(playlistRow as PlaylistRow, 0, coverUrlMap.get(playlistId)),
+    playlist: toPlaylistSummary(playlistRow, 0, coverUrlMap.get(playlistId)),
   }
 }
 
@@ -388,22 +390,18 @@ export async function updateBandPlaylist(
   }
 
   const supabase = await createClient()
-  const {data: existingPlaylist, error: existingPlaylistError} = await supabase
-    .from('band_audio_playlists')
-    .select(
-      'id, band_id, title, description, cover_storage_bucket, cover_storage_path, cover_original_file_name, created_by, created_at, updated_at'
-    )
-    .eq('band_id', bandId)
-    .eq('id', playlistId)
-    .maybeSingle()
-
-  if (existingPlaylistError) {
+  let existingPlaylist: PlaylistRow | null
+  try {
+    existingPlaylist = await loadBandPlaylistRowById(supabase, bandId, playlistId)
+  } catch {
     throw new BandServiceError('Playlist could not be loaded.', 500)
   }
 
   if (!existingPlaylist) {
     throw new BandServiceError('Playlist not found.', 404)
   }
+
+  assertPlaylistIsEditable(existingPlaylist)
 
   let uploadedCover:
     | {
@@ -418,7 +416,7 @@ export async function updateBandPlaylist(
   }
 
   const removeCurrentCover = !uploadedCover && parsed.coverAction === 'remove'
-  const {data: playlistRow, error} = await supabase
+  const {error} = await supabase
     .from('band_audio_playlists')
     .update({
       title: parsed.title,
@@ -441,16 +439,13 @@ export async function updateBandPlaylist(
     })
     .eq('band_id', bandId)
     .eq('id', playlistId)
-    .select(
-      'id, band_id, title, description, cover_storage_bucket, cover_storage_path, cover_original_file_name, created_by, created_at, updated_at'
-    )
-    .maybeSingle()
 
   if (error) {
     await removePlaylistCoverStorageObject(uploadedCover?.bucket || null, uploadedCover?.path || null)
     throw new BandServiceError('Playlist could not be updated.', 500)
   }
 
+  const playlistRow = await loadBandPlaylistRowById(supabase, bandId, playlistId)
   if (!playlistRow) {
     await removePlaylistCoverStorageObject(uploadedCover?.bucket || null, uploadedCover?.path || null)
     throw new BandServiceError('Playlist not found.', 404)
@@ -469,7 +464,7 @@ export async function updateBandPlaylist(
     )
   }
 
-  const coverUrlMap = await resolvePlaylistCoverUrlMap([playlistRow as PlaylistRow])
+  const coverUrlMap = await resolvePlaylistCoverUrlMap([playlistRow])
 
   revalidatePath(`/dashboard/bands/${bandId}/demos`)
   revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
@@ -491,7 +486,7 @@ export async function updateBandPlaylist(
 
   return {
     ok: true,
-    playlist: toPlaylistSummary(playlistRow as PlaylistRow, trackCount, coverUrlMap.get(playlistId)),
+    playlist: toPlaylistSummary(playlistRow, trackCount, coverUrlMap.get(playlistId)),
   }
 }
 
@@ -503,25 +498,30 @@ export async function deleteBandPlaylist(
 ) {
   requireDemosEditor(await getBandDemosAccess(userId, bandId))
   const supabase = await createClient()
-  const {data: playlistRow, error} = await supabase
+  let existingPlaylist: PlaylistRow | null
+  try {
+    existingPlaylist = await loadBandPlaylistRowById(supabase, bandId, playlistId)
+  } catch {
+    throw new BandServiceError('Playlist could not be loaded.', 500)
+  }
+
+  if (!existingPlaylist) {
+    throw new BandServiceError('Playlist not found.', 404)
+  }
+
+  assertPlaylistIsEditable(existingPlaylist)
+
+  const {error} = await supabase
     .from('band_audio_playlists')
     .delete()
     .eq('band_id', bandId)
     .eq('id', playlistId)
-    .select(
-      'id, band_id, title, description, cover_storage_bucket, cover_storage_path, cover_original_file_name, created_by, created_at, updated_at'
-    )
-    .maybeSingle()
 
   if (error) {
     throw new BandServiceError('Playlist could not be deleted.', 500)
   }
 
-  if (!playlistRow) {
-    throw new BandServiceError('Playlist not found.', 404)
-  }
-
-  await removePlaylistCoverStorageObject(playlistRow.cover_storage_bucket, playlistRow.cover_storage_path)
+  await removePlaylistCoverStorageObject(existingPlaylist.cover_storage_bucket, existingPlaylist.cover_storage_path)
 
   revalidatePath(`/dashboard/bands/${bandId}/demos`)
   revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
@@ -533,7 +533,7 @@ export async function deleteBandPlaylist(
     ip: requestContext.ip,
     metadata: {
       requestId: requestContext.requestId,
-      title: playlistRow.title,
+      title: existingPlaylist.title,
     },
     targetId: playlistId,
     targetType: 'band_audio_playlist',
@@ -552,14 +552,16 @@ export async function addTrackToPlaylist(
 ) {
   requireDemosEditor(await getBandDemosAccess(userId, bandId))
   const supabase = await createClient()
-  const [{data: playlistRow}, {data: trackRow}] = await Promise.all([
-    supabase.from('band_audio_playlists').select('id').eq('band_id', bandId).eq('id', playlistId).maybeSingle(),
+  const [playlistRow, {data: trackRow}] = await Promise.all([
+    loadBandPlaylistRowById(supabase, bandId, playlistId),
     supabase.from('band_audio_tracks').select('id').eq('band_id', bandId).eq('id', trackId).maybeSingle(),
   ])
 
   if (!playlistRow) {
     throw new BandServiceError('Playlist not found.', 404)
   }
+
+  assertPlaylistIsEditable({system_key: playlistRow.system_key})
 
   if (!trackRow) {
     throw new BandServiceError('Track not found.', 404)
@@ -614,6 +616,19 @@ export async function removeTrackFromPlaylist(
 ) {
   requireDemosEditor(await getBandDemosAccess(userId, bandId))
   const supabase = await createClient()
+  let playlistRow: PlaylistRow | null
+  try {
+    playlistRow = await loadBandPlaylistRowById(supabase, bandId, playlistId)
+  } catch {
+    throw new BandServiceError('Playlist could not be loaded.', 500)
+  }
+
+  if (!playlistRow) {
+    throw new BandServiceError('Playlist not found.', 404)
+  }
+
+  assertPlaylistIsEditable({system_key: playlistRow.system_key})
+
   const {error} = await supabase
     .from('band_audio_playlist_tracks')
     .delete()
@@ -669,6 +684,19 @@ export async function reorderPlaylistTracks(
   }
 
   const supabase = await createClient()
+  let playlistRow: PlaylistRow | null
+  try {
+    playlistRow = await loadBandPlaylistRowById(supabase, bandId, playlistId)
+  } catch {
+    throw new BandServiceError('Playlist could not be loaded.', 500)
+  }
+
+  if (!playlistRow) {
+    throw new BandServiceError('Playlist not found.', 404)
+  }
+
+  assertPlaylistIsEditable({system_key: playlistRow.system_key})
+
   const {data: currentRows, error} = await supabase
     .from('band_audio_playlist_tracks')
     .select('track_id')

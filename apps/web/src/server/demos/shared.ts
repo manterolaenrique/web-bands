@@ -1,5 +1,6 @@
 import type {
   BandAudioPlaylistSummary,
+  BandAudioPlaylistSystemKey,
   BandAudioTrackSummary,
   BandMemberRole,
   BandWorkspaceSummary,
@@ -30,6 +31,8 @@ export const DEMOS_ALLOWED_COVER_MIME_TYPES = new Set([
   'image/avif',
 ])
 export const DEMOS_MAX_COVER_FILE_SIZE_BYTES = 5 * 1024 * 1024
+export const GENERAL_PLAYLIST_SYSTEM_KEY: BandAudioPlaylistSystemKey = 'general'
+export const GENERAL_PLAYLIST_TITLE = 'General'
 
 type TrackRow = {
   id: string
@@ -62,9 +65,11 @@ type PlaylistRow = {
   created_by: string
   created_at: string
   updated_at: string
+  system_key: BandAudioPlaylistSystemKey | null
 }
 
 export type DemosPlaylistRow = PlaylistRow
+type PlaylistRowInput = Omit<PlaylistRow, 'system_key'> & {system_key?: string | null}
 
 export type DemosAccess = {
   role: BandMemberRole
@@ -105,6 +110,29 @@ export async function getBandDemosAccess(userId: string, bandId: string): Promis
     canEdit: canEditBand(role),
     canManage: canManageBand(role),
   }
+}
+
+function normalizePlaylistSystemKey(value: string | null): BandAudioPlaylistSystemKey | null {
+  return value === GENERAL_PLAYLIST_SYSTEM_KEY ? GENERAL_PLAYLIST_SYSTEM_KEY : null
+}
+
+function inferLegacyPlaylistSystemKey(title: string) {
+  return title === GENERAL_PLAYLIST_TITLE ? GENERAL_PLAYLIST_SYSTEM_KEY : null
+}
+
+export function isLockedPlaylistSystemKey(value: string | null | undefined) {
+  return normalizePlaylistSystemKey(value || null) !== null
+}
+
+export function isMissingSystemKeyColumnError(error: unknown) {
+  if (!error || typeof error !== 'object') {
+    return false
+  }
+
+  const candidate = error as {code?: string; details?: string; message?: string}
+  const haystack = `${candidate.message || ''} ${candidate.details || ''}`.toLowerCase()
+
+  return candidate.code === '42703' || haystack.includes('system_key')
 }
 
 export function requireDemosAccess(access: DemosAccess | null) {
@@ -208,10 +236,14 @@ export function toTrackSummary(row: TrackRow): BandAudioTrackSummary {
 }
 
 export function toPlaylistSummary(
-  row: PlaylistRow,
+  row: PlaylistRowInput,
   trackCount: number,
   coverSignedUrl?: string | null
 ): BandAudioPlaylistSummary {
+  const systemKey =
+    normalizePlaylistSystemKey(typeof row.system_key === 'string' ? row.system_key : null) ||
+    inferLegacyPlaylistSystemKey(row.title)
+
   return {
     id: row.id,
     bandId: row.band_id,
@@ -223,10 +255,28 @@ export function toPlaylistSummary(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     trackCount,
+    systemKey,
+    isLocked: systemKey !== null,
   }
 }
 
-export async function resolvePlaylistCoverUrlMap(playlists: PlaylistRow[]) {
+export function sortPlaylistsForDisplay<T extends {systemKey: BandAudioPlaylistSystemKey | null; updatedAt: string}>(
+  playlists: T[]
+) {
+  return [...playlists].sort((left, right) => {
+    if (left.systemKey === GENERAL_PLAYLIST_SYSTEM_KEY && right.systemKey !== GENERAL_PLAYLIST_SYSTEM_KEY) {
+      return -1
+    }
+
+    if (right.systemKey === GENERAL_PLAYLIST_SYSTEM_KEY && left.systemKey !== GENERAL_PLAYLIST_SYSTEM_KEY) {
+      return 1
+    }
+
+    return Date.parse(right.updatedAt) - Date.parse(left.updatedAt)
+  })
+}
+
+export async function resolvePlaylistCoverUrlMap(playlists: PlaylistRowInput[]) {
   const rowsWithCover = playlists.filter((playlist) => playlist.cover_storage_bucket && playlist.cover_storage_path)
   if (rowsWithCover.length === 0) {
     return new Map<string, string>()
@@ -258,4 +308,225 @@ export async function resolvePlaylistCoverUrlMap(playlists: PlaylistRow[]) {
   } catch {
     return new Map<string, string>()
   }
+}
+
+export const PLAYLIST_SELECT_FIELDS_BASE =
+  'id, band_id, title, description, cover_storage_bucket, cover_storage_path, cover_original_file_name, created_by, created_at, updated_at' as const
+
+export const PLAYLIST_SELECT_FIELDS =
+  `${PLAYLIST_SELECT_FIELDS_BASE}, system_key` as const
+
+function normalizePlaylistRow(row: PlaylistRowInput): PlaylistRow {
+  return {
+    ...row,
+    system_key:
+      normalizePlaylistSystemKey(typeof row.system_key === 'string' ? row.system_key : null) ||
+      inferLegacyPlaylistSystemKey(row.title),
+  }
+}
+
+export async function loadBandPlaylistRows(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  bandId: string,
+  options?: {
+    query?: string | null
+    limit?: number
+  }
+) {
+  const normalizedQuery = (options?.query || '').trim()
+  const likePattern = `%${normalizedQuery}%`
+
+  const run = (fields: string) => {
+    let query = supabase.from('band_audio_playlists').select(fields).eq('band_id', bandId).order('updated_at', {ascending: false})
+
+    if (normalizedQuery) {
+      query = query.or(`title.ilike.${likePattern},description.ilike.${likePattern}`)
+    }
+
+    if (options?.limit) {
+      query = query.limit(options.limit)
+    }
+
+    return query
+  }
+
+  const primary = await run(PLAYLIST_SELECT_FIELDS)
+  if (!primary.error) {
+    return ((primary.data as unknown as PlaylistRowInput[]) || []).map((row) => normalizePlaylistRow(row))
+  }
+
+  if (!isMissingSystemKeyColumnError(primary.error)) {
+    throw primary.error
+  }
+
+  const fallback = await run(PLAYLIST_SELECT_FIELDS_BASE)
+  if (fallback.error) {
+    throw fallback.error
+  }
+
+  return ((fallback.data as unknown as PlaylistRowInput[]) || []).map((row) => normalizePlaylistRow(row))
+}
+
+export async function loadBandPlaylistRowById(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  bandId: string,
+  playlistId: string
+) {
+  const run = (fields: string) =>
+    supabase.from('band_audio_playlists').select(fields).eq('band_id', bandId).eq('id', playlistId).maybeSingle()
+
+  const primary = await run(PLAYLIST_SELECT_FIELDS)
+  if (!primary.error) {
+    return primary.data ? normalizePlaylistRow(primary.data as unknown as PlaylistRowInput) : null
+  }
+
+  if (!isMissingSystemKeyColumnError(primary.error)) {
+    throw primary.error
+  }
+
+  const fallback = await run(PLAYLIST_SELECT_FIELDS_BASE)
+  if (fallback.error) {
+    throw fallback.error
+  }
+
+  return fallback.data ? normalizePlaylistRow(fallback.data as unknown as PlaylistRowInput) : null
+}
+
+export async function ensureGeneralPlaylist(bandId: string, currentUserId: string) {
+  const supabase = await createClient()
+  let existingPlaylist: PlaylistRow | null = null
+  let legacyMode = false
+
+  const primaryLookup = await supabase
+    .from('band_audio_playlists')
+    .select(PLAYLIST_SELECT_FIELDS)
+    .eq('band_id', bandId)
+    .eq('system_key', GENERAL_PLAYLIST_SYSTEM_KEY)
+    .maybeSingle()
+
+  if (!primaryLookup.error) {
+    existingPlaylist = primaryLookup.data ? normalizePlaylistRow(primaryLookup.data as unknown as PlaylistRowInput) : null
+    if (!existingPlaylist) {
+      const titleFallback = await supabase
+        .from('band_audio_playlists')
+        .select(PLAYLIST_SELECT_FIELDS)
+        .eq('band_id', bandId)
+        .eq('title', GENERAL_PLAYLIST_TITLE)
+        .maybeSingle()
+
+      if (!titleFallback.error && titleFallback.data) {
+        existingPlaylist = normalizePlaylistRow(titleFallback.data as unknown as PlaylistRowInput)
+
+        if (!existingPlaylist.system_key) {
+          await supabase
+            .from('band_audio_playlists')
+            .update({system_key: GENERAL_PLAYLIST_SYSTEM_KEY})
+            .eq('band_id', bandId)
+            .eq('id', existingPlaylist.id)
+        }
+      }
+    }
+  } else if (isMissingSystemKeyColumnError(primaryLookup.error)) {
+    legacyMode = true
+    const fallbackLookup = await supabase
+      .from('band_audio_playlists')
+      .select(PLAYLIST_SELECT_FIELDS_BASE)
+      .eq('band_id', bandId)
+      .eq('title', GENERAL_PLAYLIST_TITLE)
+      .maybeSingle()
+
+    if (fallbackLookup.error) {
+      throw new BandServiceError('General playlist could not be loaded.', 500)
+    }
+
+    existingPlaylist = fallbackLookup.data ? normalizePlaylistRow(fallbackLookup.data as unknown as PlaylistRowInput) : null
+  } else {
+    throw new BandServiceError('General playlist could not be loaded.', 500)
+  }
+
+  if (existingPlaylist) {
+    return existingPlaylist
+  }
+
+  const {data: bandRow, error: bandError} = await supabase
+    .from('bands')
+    .select('created_by')
+    .eq('id', bandId)
+    .maybeSingle()
+
+  if (bandError || !bandRow) {
+    throw new BandServiceError('Band not found.', 404)
+  }
+
+  const writeClient = isSupabaseAdminConfigured() ? createAdminClient() : supabase
+  const creatorId = bandRow.created_by || currentUserId
+  const {data: insertedPlaylist, error: insertPlaylistError} = await writeClient
+    .from('band_audio_playlists')
+    .insert({
+      band_id: bandId,
+      title: GENERAL_PLAYLIST_TITLE,
+      description: null,
+      created_by: creatorId,
+      ...(legacyMode ? {} : {system_key: GENERAL_PLAYLIST_SYSTEM_KEY}),
+    })
+    .select(legacyMode ? PLAYLIST_SELECT_FIELDS_BASE : PLAYLIST_SELECT_FIELDS)
+    .maybeSingle()
+
+  if (insertPlaylistError) {
+    const concurrentPlaylist = legacyMode
+      ? await supabase
+          .from('band_audio_playlists')
+          .select(PLAYLIST_SELECT_FIELDS_BASE)
+          .eq('band_id', bandId)
+          .eq('title', GENERAL_PLAYLIST_TITLE)
+          .maybeSingle()
+      : await supabase
+          .from('band_audio_playlists')
+          .select(PLAYLIST_SELECT_FIELDS)
+          .eq('band_id', bandId)
+          .eq('system_key', GENERAL_PLAYLIST_SYSTEM_KEY)
+          .maybeSingle()
+
+    if (concurrentPlaylist.data) {
+      return normalizePlaylistRow(concurrentPlaylist.data as unknown as PlaylistRowInput)
+    }
+
+    throw new BandServiceError('General playlist could not be created.', 500)
+  }
+
+  if (!insertedPlaylist) {
+    throw new BandServiceError('General playlist could not be created.', 500)
+  }
+
+  const insertedPlaylistRow = insertedPlaylist as unknown as PlaylistRowInput & {id: string}
+
+  const {data: trackRows, error: tracksError} = await supabase
+    .from('band_audio_tracks')
+    .select('id, created_at')
+    .eq('band_id', bandId)
+    .order('created_at', {ascending: true})
+
+  if (tracksError) {
+    throw new BandServiceError('General playlist tracks could not be loaded.', 500)
+  }
+
+  if ((trackRows || []).length > 0) {
+    const {error: playlistTracksError} = await writeClient.from('band_audio_playlist_tracks').upsert(
+      (trackRows || []).map((track, index) => ({
+        playlist_id: insertedPlaylistRow.id,
+        track_id: track.id,
+        sort_order: index + 1,
+      })),
+      {
+        onConflict: 'playlist_id,track_id',
+        ignoreDuplicates: true,
+      }
+    )
+
+    if (playlistTracksError) {
+      throw new BandServiceError('General playlist tracks could not be created.', 500)
+    }
+  }
+
+  return normalizePlaylistRow(insertedPlaylistRow)
 }

@@ -113,27 +113,6 @@ export default async function BandDemosPage({params, searchParams}: PageProps) {
           <section className="demos-section">
             <div className="demos-section__header">
               <div>
-                <h2>Ultimos audios</h2>
-                <p>{payload.totalTracks} audios privados en esta banda</p>
-              </div>
-            </div>
-            <div className="demos-track-list">
-              {payload.recentTracks.map((track) => (
-                <TrackCard
-                  key={track.id}
-                  bandId={bandId}
-                  track={track}
-                  playlists={payload.playlists}
-                  canEdit={payload.canEdit}
-                  queueTracks={payload.recentTracks}
-                />
-              ))}
-            </div>
-          </section>
-
-          <section className="demos-section">
-            <div className="demos-section__header">
-              <div>
                 <h2>Playlists</h2>
                 <p>{payload.totalPlaylists} colecciones privadas</p>
               </div>
@@ -155,6 +134,27 @@ export default async function BandDemosPage({params, searchParams}: PageProps) {
                 ctaHref={payload.canEdit ? `/dashboard/bands/${bandId}/demos/playlists` : `/dashboard/bands/${bandId}/demos`}
               />
             )}
+          </section>
+
+          <section className="demos-section">
+            <div className="demos-section__header">
+              <div>
+                <h2>Ultimos audios</h2>
+                <p>{payload.totalTracks} audios privados en esta banda</p>
+              </div>
+            </div>
+            <div className="demos-track-list">
+              {payload.recentTracks.map((track) => (
+                <TrackCard
+                  key={track.id}
+                  bandId={bandId}
+                  track={track}
+                  playlists={payload.playlists}
+                  canEdit={payload.canEdit}
+                  queueTracks={payload.recentTracks}
+                />
+              ))}
+            </div>
           </section>
         </>
       )}

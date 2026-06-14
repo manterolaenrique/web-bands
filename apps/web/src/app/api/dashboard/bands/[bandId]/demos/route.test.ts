@@ -79,9 +79,16 @@ describe('GET /api/dashboard/bands/[bandId]/demos', () => {
       query: '',
       featuredTrack: null,
       recentTracks: [],
-      playlists: [],
+      playlists: [
+        {
+          id: 'playlist-general',
+          title: 'General',
+          systemKey: 'general',
+          isLocked: true,
+        },
+      ],
       totalTracks: 0,
-      totalPlaylists: 0,
+      totalPlaylists: 1,
     })
 
     const response = await GET(new NextRequest('http://localhost/api/dashboard/bands/band-1/demos'), {
@@ -97,9 +104,16 @@ describe('GET /api/dashboard/bands/[bandId]/demos', () => {
       query: '',
       featuredTrack: null,
       recentTracks: [],
-      playlists: [],
+      playlists: [
+        {
+          id: 'playlist-general',
+          title: 'General',
+          systemKey: 'general',
+          isLocked: true,
+        },
+      ],
       totalTracks: 0,
-      totalPlaylists: 0,
+      totalPlaylists: 1,
     })
   })
 })

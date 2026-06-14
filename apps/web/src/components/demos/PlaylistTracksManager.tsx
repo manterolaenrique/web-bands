@@ -17,11 +17,13 @@ export function PlaylistTracksManager({
   playlistId,
   tracks,
   canEdit,
+  isLocked,
 }: {
   bandId: string
   playlistId: string
   tracks: BandAudioPlaylistTrack[]
   canEdit: boolean
+  isLocked: boolean
 }) {
   const router = useRouter()
   const [orderedTracks, setOrderedTracks] = useState(tracks)
@@ -79,7 +81,7 @@ export function PlaylistTracksManager({
             >
               <ChevronRightIcon />
             </Link>
-            {canEdit ? (
+            {canEdit && !isLocked ? (
               <>
                 <button
                   className="button"

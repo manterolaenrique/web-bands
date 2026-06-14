@@ -22,6 +22,7 @@ export function AddToPlaylistSheet({
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const availablePlaylists = playlists.filter((playlist) => !playlist.isLocked)
 
   function openSheet() {
     setError(null)
@@ -62,11 +63,11 @@ export function AddToPlaylistSheet({
               </div>
             </div>
 
-            {playlists.length === 0 ? (
-              <div className="status status--warning">Todavia no hay playlists creadas.</div>
+            {availablePlaylists.length === 0 ? (
+              <div className="status status--warning">No hay playlists adicionales disponibles.</div>
             ) : (
               <div className="demos-sheet__list">
-                {playlists.map((playlist) => (
+                {availablePlaylists.map((playlist) => (
                   <button
                     key={playlist.id}
                     className="demos-sheet__list-item"

@@ -946,6 +946,61 @@ h4 {
   width: 100%;
 }
 
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field__input {
+  padding-right: 5.8rem;
+}
+
+.password-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  transform: translateY(-50%);
+  min-height: 2.2rem;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.invite-onboarding-card {
+  display: grid;
+  gap: 0.95rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(180deg, rgba(18, 18, 20, 0.94), rgba(12, 12, 14, 0.92)),
+    radial-gradient(circle at top right, rgba(93, 230, 255, 0.1), transparent 38%);
+}
+
+.invite-onboarding-card__header h2 {
+  margin: 0.1rem 0 0.45rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: -0.04em;
+}
+
+.invite-onboarding-card__steps {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-soft);
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
 .auth-divider {
   position: relative;
   margin: 1.4rem 0;
@@ -4353,7 +4408,7 @@ h4 {
 
 .dashboard-account-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
 }
@@ -4460,6 +4515,16 @@ h4 {
 .dashboard-account-card__actions form,
 .dashboard-account-card__actions .button {
   width: 100%;
+}
+
+.dashboard-account-card__install {
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-account-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .editor-mobile-route-overview {
@@ -5193,6 +5258,13 @@ h4 {
   font-size: 0.98rem;
 }
 
+.demos-playlist-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
 .demos-playlist-card__body p,
 .demos-playlist-card__footer span {
   margin: 0.25rem 0 0;
@@ -5206,6 +5278,33 @@ h4 {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.demos-playlist-card__footer-actions,
+.demos-featured-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.demos-playlist-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.4rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(93, 230, 255, 0.22);
+  background: rgba(93, 230, 255, 0.08);
+  color: var(--secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.demos-inline-note {
+  margin-top: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
 }
 
 .demos-empty-state {
@@ -5857,6 +5956,18 @@ h4 {
   .demos-form-sheet__actions,
   .demos-player-card__actions,
   .demos-playlist-track-row__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .demos-playlist-card__footer {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .demos-playlist-card__footer-actions,
+  .demos-featured-card__actions {
+    width: 100%;
     display: grid;
     grid-template-columns: 1fr;
   }

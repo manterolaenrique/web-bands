@@ -1,6 +1,7 @@
 import {notFound} from 'next/navigation'
 
 import {BandWorkspaceNav} from '@/components/demos/BandWorkspaceNav'
+import {PlayPlaylistButton} from '@/components/demos/PlayPlaylistButton'
 import {PlaylistFormSheet} from '@/components/demos/PlaylistFormSheet'
 import {PlaylistTracksManager} from '@/components/demos/PlaylistTracksManager'
 import {requireUser} from '@/lib/auth/session'
@@ -30,7 +31,7 @@ export default async function BandPlaylistDetailPage({params}: PageProps) {
           <h1 className="dashboard-title">{payload.title}</h1>
           <p className="muted">{payload.description || 'Coleccion privada para organizar audios y sesiones internas.'}</p>
         </div>
-        {payload.canEdit ? (
+        {payload.canEdit && !payload.isLocked ? (
           <PlaylistFormSheet
             bandId={bandId}
             playlistId={playlistId}
@@ -53,8 +54,24 @@ export default async function BandPlaylistDetailPage({params}: PageProps) {
         ) : null}
         <div className="demos-featured-card__copy">
           <p className="eyebrow">Coleccion actual</p>
-          <h2>{payload.title}</h2>
+          <div className="demos-playlist-card__title-row">
+            <h2>{payload.title}</h2>
+            {payload.isLocked ? <span className="demos-playlist-badge">Automatica</span> : null}
+          </div>
           <p>{payload.tracks.length} audios privados</p>
+          {payload.isLocked ? (
+            <p className="demos-inline-note">Se completa automaticamente con cada audio nuevo de la banda.</p>
+          ) : null}
+        </div>
+        <div className="demos-featured-card__actions">
+          <PlayPlaylistButton
+            bandId={bandId}
+            playlistId={playlistId}
+            className="button button--primary"
+            disabled={payload.tracks.length === 0}
+          >
+            Reproducir playlist
+          </PlayPlaylistButton>
         </div>
       </section>
 
@@ -63,6 +80,7 @@ export default async function BandPlaylistDetailPage({params}: PageProps) {
         playlistId={playlistId}
         tracks={payload.tracks}
         canEdit={payload.canEdit}
+        isLocked={payload.isLocked}
       />
     </div>
   )

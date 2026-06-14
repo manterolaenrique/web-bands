@@ -70,6 +70,10 @@ export type BandAudioTrackDetail = BandAudioTrackSummary & {
   canDownload: boolean
 }
 
+export const BAND_AUDIO_PLAYLIST_SYSTEM_KEYS = ['general'] as const
+
+export type BandAudioPlaylistSystemKey = (typeof BAND_AUDIO_PLAYLIST_SYSTEM_KEYS)[number]
+
 export type BandAudioPlaylistSummary = {
   id: string
   bandId: string
@@ -81,6 +85,8 @@ export type BandAudioPlaylistSummary = {
   createdAt: string
   updatedAt: string
   trackCount: number
+  systemKey: BandAudioPlaylistSystemKey | null
+  isLocked: boolean
 }
 
 export type BandAudioPlaylistTrack = {
@@ -136,7 +142,7 @@ export type BandTrackAccessPayload = {
   mode: BandAudioAccessMode
 }
 
-export const trackUploadSchema = z.object({
+const trackMetadataSchema = z.object({
   title: requiredTrimmedString(2, 160),
   description: optionalTrimmedString(2000),
   relatedSongTitle: optionalTrimmedString(120),
@@ -146,7 +152,17 @@ export const trackUploadSchema = z.object({
   durationSeconds: z.number().int().positive().max(14400).nullable().optional(),
 })
 
-export const trackUpdateSchema = trackUploadSchema.extend({
+const optionalPlaylistId = z
+  .string()
+  .trim()
+  .transform((value) => (value.length === 0 ? undefined : value))
+  .pipe(z.string().uuid().optional())
+
+export const trackUploadSchema = trackMetadataSchema.extend({
+  playlistId: optionalPlaylistId,
+})
+
+export const trackUpdateSchema = trackMetadataSchema.extend({
   durationSeconds: z.number().int().positive().max(14400).nullable().optional(),
 })
 

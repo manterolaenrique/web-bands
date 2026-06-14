@@ -21,7 +21,9 @@ import {
   DEMOS_ALLOWED_MIME_TYPES,
   DEMOS_MAX_FILE_SIZE_BYTES,
   DEMOS_SIGNED_URL_TTL_SECONDS,
+  ensureGeneralPlaylist,
   getBandDemosAccess,
+  loadBandPlaylistRowById,
   requireDemosAccess,
   requireDemosAdminClient,
   requireDemosEditor,
@@ -76,6 +78,7 @@ function buildTrackInputFromFormData(formData: FormData): TrackUploadInput {
     trackStatus: readOptionalString(formData, 'trackStatus'),
     isDownloadable: readBoolean(formData, 'isDownloadable'),
     durationSeconds: readNullableInteger(formData, 'durationSeconds'),
+    playlistId: readOptionalString(formData, 'playlistId'),
   })
 }
 
@@ -101,6 +104,50 @@ async function removeTrackStorageObject(storageBucket: string, storagePath: stri
     await admin.storage.from(storageBucket).remove([storagePath])
   } catch {
     // Best-effort cleanup.
+  }
+}
+
+async function removeTrackRecord(bandId: string, trackId: string) {
+  try {
+    const supabase = await createClient()
+    await supabase.from('band_audio_tracks').delete().eq('band_id', bandId).eq('id', trackId)
+  } catch {
+    // Best-effort cleanup.
+  }
+}
+
+async function linkTrackToPlaylist(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  playlistId: string,
+  trackId: string
+) {
+  const {data: currentRows, error: playlistRowsError} = await supabase
+    .from('band_audio_playlist_tracks')
+    .select('sort_order')
+    .eq('playlist_id', playlistId)
+    .order('sort_order', {ascending: false})
+    .limit(1)
+
+  if (playlistRowsError) {
+    throw new BandServiceError('Track could not be linked to the playlist.', 500)
+  }
+
+  const nextSortOrder = (currentRows?.[0]?.sort_order || 0) + 1
+  const {error: playlistInsertError} = await supabase.from('band_audio_playlist_tracks').insert({
+    playlist_id: playlistId,
+    track_id: trackId,
+    sort_order: nextSortOrder,
+  })
+
+  if (playlistInsertError) {
+    throw new BandServiceError('Track could not be linked to the playlist.', 400, {
+      errors: [
+        {
+          path: 'playlistId',
+          message: 'No pudimos sumar este audio a la playlist seleccionada.',
+        },
+      ],
+    })
   }
 }
 
@@ -206,6 +253,30 @@ export async function uploadBandTrack(
   const storagePath = buildTrackStoragePath(bandId, trackId, file.name)
   const admin = requireDemosAdminClient()
   const supabase = await createClient()
+  const generalPlaylist = await ensureGeneralPlaylist(bandId, userId)
+  let selectedPlaylistId: string | null = null
+
+  if (input.playlistId) {
+    let playlistRow
+    try {
+      playlistRow = await loadBandPlaylistRowById(supabase, bandId, input.playlistId)
+    } catch {
+      throw new BandServiceError('Playlist could not be validated.', 500)
+    }
+
+    if (!playlistRow) {
+      throw new BandServiceError('Playlist not found.', 404, {
+        errors: [
+          {
+            path: 'playlistId',
+            message: 'La playlist seleccionada no existe para esta banda.',
+          },
+        ],
+      })
+    }
+
+    selectedPlaylistId = playlistRow.id
+  }
 
   const uploadBuffer = Buffer.from(await file.arrayBuffer())
   const {error: storageError} = await admin.storage.from('band-demos').upload(storagePath, uploadBuffer, {
@@ -246,8 +317,26 @@ export async function uploadBandTrack(
     throw new BandServiceError('Track metadata could not be saved.', 500)
   }
 
+  try {
+    await linkTrackToPlaylist(supabase, generalPlaylist.id, trackId)
+
+    if (selectedPlaylistId && selectedPlaylistId !== generalPlaylist.id) {
+      await linkTrackToPlaylist(supabase, selectedPlaylistId, trackId)
+    }
+  } catch (error) {
+    await Promise.all([
+      removeTrackRecord(bandId, trackId),
+      removeTrackStorageObject('band-demos', storagePath),
+    ])
+    throw error
+  }
+
   revalidatePath(`/dashboard/bands/${bandId}/demos`)
   revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
+  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${generalPlaylist.id}`)
+  if (selectedPlaylistId && selectedPlaylistId !== generalPlaylist.id) {
+    revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${selectedPlaylistId}`)
+  }
 
   await writeAuditLog({
     action: 'band.demo_uploaded',
@@ -261,6 +350,8 @@ export async function uploadBandTrack(
       size: file.size,
       title: input.title,
       trackType: input.trackType,
+      playlistId: selectedPlaylistId,
+      generalPlaylistId: generalPlaylist.id,
     },
     targetId: trackId,
     targetType: 'band_audio_track',

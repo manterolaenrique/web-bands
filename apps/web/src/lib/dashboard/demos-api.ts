@@ -1,3 +1,5 @@
+import type {BandAudioPlaylistDetail} from '@web-bands/bands-domain'
+
 export type DemosApiEnvelope<T> = {
   ok: boolean
   status: number
@@ -21,6 +23,10 @@ export type PlaylistMutationResponse = {
   playlist?: unknown
   message?: string
   errors?: DemoApiValidationIssue[]
+}
+
+export type PlaylistDetailResponse = BandAudioPlaylistDetail & {
+  message?: string
 }
 
 export type TrackAccessResponse = {
@@ -157,6 +163,16 @@ export async function updatePlaylistRequest(
     status: response.status,
     body: await parseJson<PlaylistMutationResponse>(response),
   } satisfies DemosApiEnvelope<PlaylistMutationResponse>
+}
+
+export async function getPlaylistDetailRequest(bandId: string, playlistId: string) {
+  const response = await fetch(`/api/dashboard/bands/${bandId}/demos/playlists/${playlistId}`)
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    body: await parseJson<PlaylistDetailResponse>(response),
+  } satisfies DemosApiEnvelope<PlaylistDetailResponse>
 }
 
 export async function deletePlaylistRequest(bandId: string, playlistId: string) {

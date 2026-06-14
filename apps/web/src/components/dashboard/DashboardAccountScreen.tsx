@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import {signOut} from '@/app/login/actions'
 import type {CurrentUserSummary} from '@/lib/auth/user-summary'
+import {PwaInstallPrompt} from '@/components/pwa/PwaInstallPrompt'
 
 import {getUserInitials} from './user-initials'
 
@@ -77,6 +78,18 @@ export function DashboardAccountScreen({
               </form>
             </div>
           </article>
+
+          <article className="dashboard-card dashboard-account-card">
+            <div>
+              <p className="eyebrow">App mobile</p>
+              <h2>Llevar Web Bands al inicio</h2>
+              <p className="muted">
+                Instala la app despues de entrar para abrir dashboard, demos y editor con una experiencia mas directa.
+              </p>
+            </div>
+
+            <PwaInstallPrompt variant="card" className="dashboard-account-card__install" />
+          </article>
         </section>
       </div>
 
@@ -126,6 +139,18 @@ export function DashboardAccountScreen({
               </button>
             </form>
           </div>
+        </article>
+
+        <article className="dashboard-account-card dashboard-account-card--mobile">
+          <div>
+            <p className="eyebrow">Instalar app</p>
+            <h2>Abrela como una app desde tu celular</h2>
+            <p className="muted">
+              Una vez dentro del panel, puedes guardarla en el inicio para entrar directo a bandas y demos.
+            </p>
+          </div>
+
+          <PwaInstallPrompt variant="card" className="dashboard-account-card__install" />
         </article>
       </div>
     </>

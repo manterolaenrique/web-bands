@@ -3,6 +3,7 @@ import {notFound} from 'next/navigation'
 import {BandWorkspaceNav} from '@/components/demos/BandWorkspaceNav'
 import {DemoUploadForm} from '@/components/demos/DemoUploadForm'
 import {requireUser} from '@/lib/auth/session'
+import {getBandPlaylists} from '@/server/demos/playlists'
 import {getBandDemosAccess} from '@/server/demos/shared'
 
 type PageProps = {
@@ -20,6 +21,8 @@ export default async function UploadBandDemoPage({params}: PageProps) {
     notFound()
   }
 
+  const playlistsData = await getBandPlaylists(user.id, bandId)
+
   return (
     <div className="demos-screen">
       <header className="dashboard-header editor-page-header demos-page-header">
@@ -33,7 +36,7 @@ export default async function UploadBandDemoPage({params}: PageProps) {
       <BandWorkspaceNav bandId={bandId} active="upload" />
 
       <section className="demos-form-card">
-        <DemoUploadForm bandId={bandId} />
+        <DemoUploadForm bandId={bandId} playlists={playlistsData.playlists} />
       </section>
     </div>
   )

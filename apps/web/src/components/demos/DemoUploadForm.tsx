@@ -3,7 +3,11 @@
 import {useRouter} from 'next/navigation'
 import {useMemo, useState, useTransition, type ChangeEvent, type FormEvent} from 'react'
 
-import {BAND_AUDIO_TRACK_STATUSES, BAND_AUDIO_TRACK_TYPES} from '@web-bands/bands-domain'
+import {
+  BAND_AUDIO_TRACK_STATUSES,
+  BAND_AUDIO_TRACK_TYPES,
+  type BandAudioPlaylistSummary,
+} from '@web-bands/bands-domain'
 
 import {uploadDemoTrackRequest, type DemoApiValidationIssue} from '@/lib/dashboard/demos-api'
 import {getTrackStatusLabel, getTrackTypeLabel, formatFileSize} from '@/lib/demos/format'
@@ -32,18 +36,31 @@ async function resolveDurationSeconds(file: File) {
   }
 }
 
-export function DemoUploadForm({bandId}: {bandId: string}) {
+function getFileNameWithoutExtension(fileName: string) {
+  return fileName.replace(/\.[^.]+$/, '').trim()
+}
+
+export function DemoUploadForm({
+  bandId,
+  playlists = [],
+}: {
+  bandId: string
+  playlists?: BandAudioPlaylistSummary[]
+}) {
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
+  const [lastAutoTitle, setLastAutoTitle] = useState('')
   const [description, setDescription] = useState('')
   const [relatedSongTitle, setRelatedSongTitle] = useState('')
   const [trackType, setTrackType] = useState<(typeof BAND_AUDIO_TRACK_TYPES)[number]>('demo')
   const [trackStatus, setTrackStatus] = useState<(typeof BAND_AUDIO_TRACK_STATUSES)[number]>('nuevo')
+  const [playlistId, setPlaylistId] = useState('')
   const [isDownloadable, setIsDownloadable] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [issues, setIssues] = useState<DemoApiValidationIssue[]>([])
   const [isPending, startTransition] = useTransition()
+  const availablePlaylists = playlists.filter((playlist) => !playlist.isLocked)
 
   const filePreview = useMemo(() => {
     if (!file) {
@@ -60,6 +77,23 @@ export function DemoUploadForm({bandId}: {bandId: string}) {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextFile = event.currentTarget.files?.[0] || null
     setFile(nextFile)
+
+    if (!nextFile) {
+      setLastAutoTitle('')
+      return
+    }
+
+    const nextAutoTitle = getFileNameWithoutExtension(nextFile.name)
+    if (!nextAutoTitle) {
+      setLastAutoTitle('')
+      return
+    }
+
+    if (!title.trim() || title === lastAutoTitle) {
+      setTitle(nextAutoTitle)
+    }
+
+    setLastAutoTitle(nextAutoTitle)
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -82,6 +116,9 @@ export function DemoUploadForm({bandId}: {bandId: string}) {
       formData.set('trackType', trackType)
       formData.set('trackStatus', trackStatus)
       formData.set('isDownloadable', String(isDownloadable))
+      if (playlistId) {
+        formData.set('playlistId', playlistId)
+      }
       if (durationSeconds) {
         formData.set('durationSeconds', String(durationSeconds))
       }
@@ -193,6 +230,22 @@ export function DemoUploadForm({bandId}: {bandId: string}) {
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="form-field">
+          <span className="form-label">Playlist adicional (opcional)</span>
+          <select className="form-select" value={playlistId} onChange={(event) => setPlaylistId(event.currentTarget.value)}>
+            <option value="">Sin playlist por ahora</option>
+            {availablePlaylists.map((playlist) => (
+              <option key={playlist.id} value={playlist.id}>
+                {playlist.title}
+              </option>
+            ))}
+          </select>
+          <span className="form-helper">Este audio siempre entra en General. Aqui puedes sumarlo tambien a otra playlist.</span>
+          {getFieldError(issues, 'playlistId') ? (
+            <span className="field-error">{getFieldError(issues, 'playlistId')}</span>
+          ) : null}
         </label>
 
         <label className="demos-upload-form__toggle">

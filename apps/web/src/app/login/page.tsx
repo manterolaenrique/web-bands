@@ -1,11 +1,14 @@
 import {redirect} from 'next/navigation'
 
-import {signIn, signInWithGoogle, signUp} from '@/app/login/actions'
-import {PwaInstallPrompt} from '@/components/pwa/PwaInstallPrompt'
+import {signInWithGoogle} from '@/app/login/actions'
+import {AuthEmailPasswordForm} from '@/components/auth/AuthEmailPasswordForm'
+import {InviteOnboardingCard} from '@/components/auth/InviteOnboardingCard'
 import {resolveAuthMessage} from '@/lib/auth/messages'
+import {extractInviteTokenFromReturnTo} from '@/lib/auth/invite-login'
 import {resolveSafeReturnTo} from '@/lib/auth/return-to'
 import {isSupabaseConfigured} from '@/lib/env'
 import {getCurrentUser} from '@/lib/auth/session'
+import {getBandInviteByToken} from '@/lib/invites/service'
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -20,6 +23,14 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
   const returnTo = resolveSafeReturnTo(next || rawReturnTo)
   const authMessage = resolveAuthMessage(message)
   const user = await getCurrentUser()
+  const inviteToken = extractInviteTokenFromReturnTo(returnTo)
+  const invite =
+    inviteToken
+      ? await getBandInviteByToken(inviteToken).catch(() => null)
+      : null
+  const emailHelper = invite
+    ? 'Usa exactamente este email para aceptar la invitacion.'
+    : undefined
 
   if (user) {
     redirect(returnTo)
@@ -37,7 +48,6 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
               <p className="eyebrow">Web Bands App</p>
               <p className="auth-card__microcopy">Version mobile privada para gestion de bandas</p>
             </div>
-            <PwaInstallPrompt variant="chip" className="auth-card__install-chip" />
           </div>
           <p className="eyebrow">Acceso privado</p>
           <h1>Entrar al dashboard</h1>
@@ -46,8 +56,6 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
             y una superficie pensada para editar sin friccion.
           </p>
         </div>
-
-        <PwaInstallPrompt variant="card" className="auth-card__install-card" />
 
         {!isSupabaseConfigured() ? (
           <div className="status status--warning">
@@ -60,6 +68,8 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
           <div className={`status status--${authMessage.tone}`}>{authMessage.message}</div>
         ) : null}
 
+        {invite ? <InviteOnboardingCard invite={invite} /> : null}
+
         <form action={signInWithGoogle} className="auth-oauth-form">
           <input type="hidden" name="returnTo" value={returnTo} />
           <button className="button button--ghost auth-oauth-button" type="submit">
@@ -71,46 +81,16 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
           <span>o usa email y password</span>
         </div>
 
-        <form action={signIn} className="form-grid">
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <label className="form-field form-field--full">
-            <span className="form-label">Email</span>
-            <input
-              className="form-input"
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-              placeholder="nombre@ejemplo.com"
-            />
-          </label>
-          <label className="form-field form-field--full">
-            <span className="form-label">Password</span>
-            <input
-              className="form-input"
-              type="password"
-              name="password"
-              minLength={8}
-              required
-              autoComplete="current-password"
-              placeholder="********"
-            />
-          </label>
-          <div className="row-actions row-actions--stack-mobile form-field--full">
-            <button className="button button--primary" type="submit">
-              Entrar
-            </button>
-            <button className="button" formAction={signUp} type="submit">
-              Crear cuenta
-            </button>
-          </div>
-        </form>
+        <AuthEmailPasswordForm
+          returnTo={returnTo}
+          defaultEmail={invite?.email || ''}
+          emailHelper={emailHelper}
+        />
       </section>
 
       <section className="mobile-surface mobile-auth-screen">
         <div className="mobile-auth-screen__header">
           <span className="mobile-auth-screen__brand">Web Bands</span>
-          <PwaInstallPrompt variant="chip" className="mobile-auth-screen__install" />
         </div>
 
         <div className="mobile-auth-card">
@@ -119,8 +99,6 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
             <h1>Entrar al dashboard</h1>
             <p className="muted">Gestiona bandas, roles y contenido publico desde una sola app.</p>
           </div>
-
-          <PwaInstallPrompt variant="card" className="auth-card__install-card" />
 
           {!isSupabaseConfigured() ? (
             <div className="status status--warning">
@@ -133,6 +111,8 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
             <div className={`status status--${authMessage.tone}`}>{authMessage.message}</div>
           ) : null}
 
+          {invite ? <InviteOnboardingCard invite={invite} mode="mobile" /> : null}
+
           <form action={signInWithGoogle} className="auth-oauth-form">
             <input type="hidden" name="returnTo" value={returnTo} />
             <button className="button button--ghost auth-oauth-button mobile-auth-card__oauth" type="submit">
@@ -144,40 +124,12 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
             <span>o usa email y password</span>
           </div>
 
-          <form action={signIn} className="form-grid">
-            <input type="hidden" name="returnTo" value={returnTo} />
-            <label className="form-field form-field--full">
-              <span className="form-label">Email</span>
-              <input
-                className="form-input"
-                type="email"
-                name="email"
-                required
-                autoComplete="email"
-                placeholder="nombre@ejemplo.com"
-              />
-            </label>
-            <label className="form-field form-field--full">
-              <span className="form-label">Password</span>
-              <input
-                className="form-input"
-                type="password"
-                name="password"
-                minLength={8}
-                required
-                autoComplete="current-password"
-                placeholder="********"
-              />
-            </label>
-            <div className="row-actions row-actions--stack-mobile form-field--full">
-              <button className="button button--primary mobile-auth-card__submit" type="submit">
-                Entrar
-              </button>
-              <button className="button" formAction={signUp} type="submit">
-                Crear cuenta
-              </button>
-            </div>
-          </form>
+          <AuthEmailPasswordForm
+            returnTo={returnTo}
+            defaultEmail={invite?.email || ''}
+            emailHelper={emailHelper}
+            submitClassName="mobile-auth-card__submit"
+          />
         </div>
 
         <footer className="mobile-auth-screen__footer">

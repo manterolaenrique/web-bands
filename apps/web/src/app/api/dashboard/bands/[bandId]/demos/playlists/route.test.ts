@@ -77,7 +77,14 @@ describe('GET /api/dashboard/bands/[bandId]/demos/playlists', () => {
       role: 'owner',
       canEdit: true,
       query: '',
-      playlists: [],
+      playlists: [
+        {
+          id: 'playlist-general',
+          title: 'General',
+          systemKey: 'general',
+          isLocked: true,
+        },
+      ],
     })
 
     const response = await GET(
@@ -94,7 +101,14 @@ describe('GET /api/dashboard/bands/[bandId]/demos/playlists', () => {
       role: 'owner',
       canEdit: true,
       query: '',
-      playlists: [],
+      playlists: [
+        {
+          id: 'playlist-general',
+          title: 'General',
+          systemKey: 'general',
+          isLocked: true,
+        },
+      ],
     })
   })
 })
