@@ -21,6 +21,7 @@
     "@dnd-kit/modifiers": "^6.0.1",
     "@dnd-kit/sortable": "^7.0.2",
     "@dnd-kit/utilities": "^3.2.2",
+    "@react-pdf/renderer": "^4.9.0",
     "@sanity/client": "^7.22.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
@@ -30,7 +31,6 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "resend": "^6.12.4",
-    "web-bands": "file:../..",
     "zod": "^4.4.3"
   },
   "devDependencies": {

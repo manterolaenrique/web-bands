@@ -38,12 +38,26 @@ export default async function BandSetlistPrintPage({params}: PageProps) {
             <a className="button" href={`/dashboard/bands/${bandId}/setlists/${setlistId}`}>
               Editar
             </a>
-            <SetlistPrintButton />
+            <a
+              className="button button--primary"
+              href={`/api/dashboard/bands/${bandId}/setlists/${setlistId}/pdf`}
+            >
+              Descargar PDF limpio
+            </a>
+            <SetlistPrintButton className="button" label="Imprimir desde navegador" />
           </>
         }
       />
 
       <SetlistPrintStyleControls bandId={bandId} setlist={payload.setlist} />
+
+      <aside className="setlist-print-help">
+        <strong>PDF sin encabezados:</strong>
+        <span>
+          Usa `Descargar PDF limpio`. Si eliges imprimir desde Chrome, desactiva `Encabezados y pies de pagina`
+          en Mas ajustes.
+        </span>
+      </aside>
 
       <div className={getSetlistPrintPaperClassName(payload.setlist.printFontPreset, payload.setlist.printAllCaps)}>
         <header className="setlist-print-paper__header">

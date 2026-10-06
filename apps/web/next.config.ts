@@ -39,6 +39,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   allowedDevOrigins,
   outputFileTracingRoot: repoRoot,
+  outputFileTracingIncludes: {
+    '/api/dashboard/bands/*/setlists/*/pdf': ['./public/fonts/setlists/**/*'],
+  },
   transpilePackages: ['@web-bands/bands-domain'],
   turbopack: {
     root: repoRoot,

@@ -32,7 +32,8 @@ import {
 import {CSS} from '@dnd-kit/utilities'
 
 import {useRouter} from 'next/navigation'
-import {useState, useTransition} from 'react'
+import {useEffect, useEffectEvent, useId, useRef, useState, useTransition, type ReactNode} from 'react'
+import {createPortal} from 'react-dom'
 
 import {BandWorkspaceHeader} from '@/components/dashboard/BandWorkspaceHeader'
 import {PendingLink} from '@/components/ui/PendingLink'
@@ -55,6 +56,8 @@ type BlockDraft = {
   blockLabel: string
   notesOverride: string
 }
+
+type BuilderMobileTab = 'library' | 'order'
 
 function buildItemDraft(item: BandSetlistItem): ItemDraft {
   return {
@@ -100,6 +103,92 @@ function buildItemMeta(item: BandSetlistItem) {
   return item.notesOverride ? 'Tema con nota' : 'Tema'
 }
 
+function getItemTitle(item: BandSetlistItem) {
+  return item.itemType === 'song' ? item.songTitleSnapshot || 'Tema' : item.blockLabel || 'Bloque'
+}
+
+function SetlistDialog({
+  title,
+  eyebrow,
+  onClose,
+  children,
+}: {
+  title: string
+  eyebrow: string
+  onClose: () => void
+  children: ReactNode
+}) {
+  const titleId = useId()
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const closeDialog = useEffectEvent(onClose)
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    const previousActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    document.body.style.overflow = 'hidden'
+
+    const focusableSelector =
+      'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+    const focusFirstControl = window.requestAnimationFrame(() => {
+      panelRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus()
+    })
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeDialog()
+        return
+      }
+
+      if (event.key !== 'Tab' || !panelRef.current) {
+        return
+      }
+
+      const focusableElements = Array.from(panelRef.current.querySelectorAll<HTMLElement>(focusableSelector))
+      const first = focusableElements[0]
+      const last = focusableElements.at(-1)
+      if (!first || !last) {
+        return
+      }
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.cancelAnimationFrame(focusFirstControl)
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+      previousActiveElement?.focus({preventScroll: true})
+    }
+  }, [])
+
+  return createPortal(
+    <div className="demos-sheet setlists-inline-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <button className="demos-sheet__backdrop" type="button" onClick={onClose} aria-label="Cerrar ventana" />
+      <div className="demos-sheet__panel demos-sheet__panel--dialog setlists-inline-sheet__panel" ref={panelRef}>
+        <div className="setlists-item-sheet__header">
+          <div>
+            <p className="eyebrow">{eyebrow}</p>
+            <h2 id={titleId}>{title}</h2>
+          </div>
+          <button className="setlists-dialog__close" type="button" onClick={onClose} aria-label="Cerrar ventana">
+            <span aria-hidden="true">X</span>
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 function LibrarySongRow({
   song,
   disabled,
@@ -141,22 +230,142 @@ function LibrarySongRow({
   )
 }
 
+function SetlistMoveMenu({
+  title,
+  index,
+  itemCount,
+  disabled,
+  onMove,
+}: {
+  title: string
+  index: number
+  itemCount: number
+  disabled: boolean
+  onMove: (direction: -1 | 1) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [position, setPosition] = useState({top: 0, left: 0})
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const close = () => setIsOpen(false)
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (!triggerRef.current?.contains(target) && !menuRef.current?.contains(target)) {
+        close()
+      }
+    }
+
+    window.addEventListener('pointerdown', handlePointerDown)
+    window.addEventListener('resize', close)
+    window.addEventListener('scroll', close, true)
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('resize', close)
+      window.removeEventListener('scroll', close, true)
+    }
+  }, [isOpen])
+
+  const toggleMenu = () => {
+    const trigger = triggerRef.current
+    if (!trigger || isOpen) {
+      setIsOpen(false)
+      return
+    }
+
+    const rect = trigger.getBoundingClientRect()
+    const menuWidth = 176
+    const menuHeight = 112
+    const hasRoomBelow = window.innerHeight - rect.bottom > menuHeight + 12
+    setPosition({
+      top: hasRoomBelow ? rect.bottom + 6 : Math.max(8, rect.top - menuHeight - 6),
+      left: Math.min(Math.max(8, rect.right - menuWidth), window.innerWidth - menuWidth - 8),
+    })
+    setIsOpen(true)
+  }
+
+  return (
+    <div className="setlists-order-menu">
+      <button
+        className="button"
+        type="button"
+        ref={triggerRef}
+        disabled={disabled}
+        data-setlist-move-trigger
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={toggleMenu}
+      >
+        Mover
+      </button>
+      {isOpen
+        ? createPortal(
+            <div
+              className="setlists-order-menu__content setlists-order-menu__content--portal"
+              ref={menuRef}
+              role="menu"
+              aria-label={`Mover ${title}`}
+              style={position}
+            >
+              <button
+                className="button"
+                type="button"
+                role="menuitem"
+                disabled={disabled || index === 0}
+                onClick={() => {
+                  setIsOpen(false)
+                  onMove(-1)
+                }}
+              >
+                Mover arriba
+              </button>
+              <button
+                className="button"
+                type="button"
+                role="menuitem"
+                disabled={disabled || index === itemCount - 1}
+                onClick={() => {
+                  setIsOpen(false)
+                  onMove(1)
+                }}
+              >
+                Mover abajo
+              </button>
+            </div>,
+            document.body
+          )
+        : null}
+    </div>
+  )
+}
+
 function SortableSetlistRow({
   item,
   index,
   itemCount,
   disabled,
   pending,
+  highlighted,
   onMove,
   onEdit,
+  onDelete,
+  registerRow,
 }: {
   item: BandSetlistItem
   index: number
   itemCount: number
   disabled: boolean
   pending: boolean
+  highlighted: boolean
   onMove: (direction: -1 | 1) => void
   onEdit: () => void
+  onDelete: () => void
+  registerRow: (itemId: string, node: HTMLElement | null) => void
 }) {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
     id: item.id,
@@ -166,9 +375,15 @@ function SortableSetlistRow({
 
   return (
     <article
-      className={`setlists-order-item${isDragging ? ' is-dragging' : ''}${pending ? ' is-pending' : ''}`}
-      ref={setNodeRef}
+      className={`setlists-order-item${isDragging ? ' is-dragging' : ''}${pending ? ' is-pending' : ''}${
+        highlighted ? ' is-highlighted' : ''
+      }`}
+      ref={(node) => {
+        setNodeRef(node)
+        registerRow(item.id, node)
+      }}
       style={{transform: CSS.Transform.toString(transform), transition}}
+      data-setlist-item-id={item.id}
     >
       <button
         className="setlists-drag-handle"
@@ -193,22 +408,23 @@ function SortableSetlistRow({
         <p>{pending ? 'Guardando...' : buildItemMeta(item)}</p>
       </div>
       <div className="setlists-order-item__actions">
-        <details className="setlists-order-menu">
-          <summary className="button">Mover</summary>
-          <div className="setlists-order-menu__content">
-            <button className="button" type="button" disabled={disabled || pending || index === 0} onClick={() => onMove(-1)}>
-              Mover arriba
-            </button>
-            <button
-              className="button"
-              type="button"
-              disabled={disabled || pending || index === itemCount - 1}
-              onClick={() => onMove(1)}
-            >
-              Mover abajo
-            </button>
-          </div>
-        </details>
+        <SetlistMoveMenu
+          title={getItemTitle(item)}
+          index={index}
+          itemCount={itemCount}
+          disabled={disabled || pending}
+          onMove={onMove}
+        />
+        <button
+          className="setlists-order-item__remove"
+          type="button"
+          disabled={disabled || pending}
+          onClick={onDelete}
+          aria-label={`Quitar ${getItemTitle(item)} de la setlist`}
+          title="Quitar de la setlist"
+        >
+          <span aria-hidden="true">X</span>
+        </button>
         <button className="button button--primary" type="button" disabled={pending} onClick={onEdit}>
           Editar
         </button>
@@ -245,12 +461,23 @@ export function BandSetlistEditorWorkspace({
   )
   const [workingItemId, setWorkingItemId] = useState<string | null>(null)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null)
   const [editingDraft, setEditingDraft] = useState<ItemDraft>({blockLabel: '', notesOverride: ''})
   const [isBlockComposerOpen, setIsBlockComposerOpen] = useState(false)
   const [blockDraft, setBlockDraft] = useState<BlockDraft>({blockLabel: '', notesOverride: ''})
   const [pendingItemIds, setPendingItemIds] = useState<Set<string>>(() => new Set())
   const [isOrderPending, setIsOrderPending] = useState(false)
   const [activeDragTitle, setActiveDragTitle] = useState<string | null>(null)
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
+  const [announcement, setAnnouncement] = useState('')
+  const [mobileTab, setMobileTab] = useState<BuilderMobileTab>(
+    isNewSession || payload.setlist.items.length === 0 ? 'library' : 'order'
+  )
+  const [showViewOrderPrompt, setShowViewOrderPrompt] = useState(false)
+  const orderListRef = useRef<HTMLDivElement | null>(null)
+  const rowRefs = useRef(new Map<string, HTMLElement>())
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const builderTabsRef = useRef<HTMLDivElement | null>(null)
   const {setNodeRef: setOrderDropRef, isOver: isOrderDropActive} = useDroppable({
     id: 'setlist-drop-zone',
     data: {type: 'setlist-drop-zone'},
@@ -271,6 +498,59 @@ export function BandSetlistEditorWorkspace({
   })
 
   const editingItem = editingItemId ? setlist.items.find((item) => item.id === editingItemId) || null : null
+  const deleteCandidate = deleteCandidateId
+    ? setlist.items.find((item) => item.id === deleteCandidateId) || null
+    : null
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) {
+        clearTimeout(highlightTimerRef.current)
+      }
+    }
+  }, [])
+
+  const registerRow = (itemId: string, node: HTMLElement | null) => {
+    if (node) {
+      rowRefs.current.set(itemId, node)
+    } else {
+      rowRefs.current.delete(itemId)
+    }
+  }
+
+  const revealMovedItem = (item: BandSetlistItem, targetIndex: number) => {
+    setHighlightedItemId(item.id)
+    setAnnouncement(`${getItemTitle(item)} movido al puesto ${targetIndex + 1}.`)
+
+    if (highlightTimerRef.current) {
+      clearTimeout(highlightTimerRef.current)
+    }
+    highlightTimerRef.current = setTimeout(() => setHighlightedItemId(null), 1800)
+
+    window.requestAnimationFrame(() => {
+      const list = orderListRef.current
+      const row = rowRefs.current.get(item.id)
+      if (!list || !row) {
+        return
+      }
+
+      const listRect = list.getBoundingClientRect()
+      const rowRect = row.getBoundingClientRect()
+      if (rowRect.top < listRect.top + 8) {
+        list.scrollBy({top: rowRect.top - listRect.top - 8, behavior: 'smooth'})
+      } else if (rowRect.bottom > listRect.bottom - 8) {
+        list.scrollBy({top: rowRect.bottom - listRect.bottom + 8, behavior: 'smooth'})
+      }
+
+      row.querySelector<HTMLElement>('[data-setlist-move-trigger]')?.focus({preventScroll: true})
+    })
+  }
+
+  const showMobileOrder = () => {
+    setMobileTab('order')
+    setShowViewOrderPrompt(false)
+    window.requestAnimationFrame(() => builderTabsRef.current?.scrollIntoView({block: 'start', behavior: 'smooth'}))
+  }
 
   const beginEditingItem = (item: BandSetlistItem) => {
     setEditingItemId(item.id)
@@ -357,6 +637,7 @@ export function BandSetlistEditorWorkspace({
     }
 
     setMessage(null)
+    setShowViewOrderPrompt(true)
     setPendingItemIds((current) => new Set(current).add(temporaryId))
     setSetlist((current) => {
       const nextItems = [...current.items]
@@ -446,9 +727,11 @@ export function BandSetlistEditorWorkspace({
     }
 
     const previousItems = setlist.items
+    const movedItem = previousItems[index]
     const nextItems = normalizeItems(arrayMove(previousItems, index, targetIndex))
     syncItems(nextItems)
     setMessage(null)
+    revealMovedItem(movedItem, targetIndex)
     void persistOrder(previousItems, nextItems)
   }
 
@@ -489,9 +772,11 @@ export function BandSetlistEditorWorkspace({
     }
 
     const previousItems = setlist.items
+    const movedItem = previousItems[oldIndex]
     const nextItems = normalizeItems(arrayMove(previousItems, oldIndex, overIndex))
     syncItems(nextItems)
     setMessage(null)
+    revealMovedItem(movedItem, overIndex)
     void persistOrder(previousItems, nextItems)
   }
 
@@ -520,21 +805,17 @@ export function BandSetlistEditorWorkspace({
     })
   }
 
-  const handleDeleteEditedItem = () => {
-    if (!editingItem) {
+  const handleConfirmDeleteItem = () => {
+    if (!deleteCandidate) {
       return
     }
 
-    if (!window.confirm('Quitar este item del setlist?')) {
-      return
-    }
-
-    const deletedItem = editingItem
+    const deletedItem = deleteCandidate
     const previousItems = setlist.items
     setWorkingItemId(deletedItem.id)
     setMessage(null)
     syncItems(normalizeItems(previousItems.filter((item) => item.id !== deletedItem.id)))
-    setEditingItemId(null)
+    setDeleteCandidateId(null)
 
     void (async () => {
       const response = await deleteSetlistItemRequest(bandId, setlist.id, deletedItem.id)
@@ -542,7 +823,6 @@ export function BandSetlistEditorWorkspace({
 
       if (!response.ok) {
         syncItems(previousItems)
-        beginEditingItem(deletedItem)
         setMessage(response.body?.message || 'No se pudo eliminar el item.')
         return
       }
@@ -764,11 +1044,47 @@ export function BandSetlistEditorWorkspace({
           <div>
             <p className="eyebrow">Armado del show</p>
             <h2>Temas a la izquierda, orden actual a la derecha</h2>
-            <p className="muted">El flujo principal queda siempre visible para sumar canciones, ordenar el show y editar detalles sin popups.</p>
+            <p className="muted">Suma canciones, revisa el orden sin perder tu posicion y abre solo el detalle que necesites editar.</p>
           </div>
         </div>
 
-        {message ? <p className="muted">{message}</p> : null}
+        {message ? (
+          <div className="setlists-builder-message">
+            <p className="muted">{message}</p>
+            {showViewOrderPrompt ? (
+              <button className="button setlists-mobile-view-order" type="button" onClick={showMobileOrder}>
+                Ver en orden
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        <p className="sr-only" aria-live="polite" aria-atomic="true">
+          {announcement}
+        </p>
+
+        <div className="setlists-builder-tabs" ref={builderTabsRef} role="tablist" aria-label="Constructor de setlist">
+          <button
+            className={mobileTab === 'library' ? 'is-active' : ''}
+            type="button"
+            role="tab"
+            aria-selected={mobileTab === 'library'}
+            onClick={() => setMobileTab('library')}
+          >
+            Agregar temas
+          </button>
+          <button
+            className={mobileTab === 'order' ? 'is-active' : ''}
+            type="button"
+            role="tab"
+            aria-selected={mobileTab === 'order'}
+            onClick={() => {
+              setMobileTab('order')
+              setShowViewOrderPrompt(false)
+            }}
+          >
+            Orden actual ({setlist.items.length})
+          </button>
+        </div>
 
         <DndContext
           sensors={sensors}
@@ -778,7 +1094,12 @@ export function BandSetlistEditorWorkspace({
           onDragEnd={handleDragEnd}
         >
           <div className="setlists-builder-layout">
-          <div className="setlists-builder-column">
+          <div
+            className={`setlists-builder-column setlists-builder-column--library${
+              mobileTab === 'library' ? '' : ' is-mobile-hidden'
+            }`}
+            role="tabpanel"
+          >
             <div className="setlists-editor-adder">
               <div className="setlists-builder-toolbar">
                 <div>
@@ -900,7 +1221,12 @@ export function BandSetlistEditorWorkspace({
             </div>
           </div>
 
-          <div className="setlists-builder-column">
+          <div
+            className={`setlists-builder-column setlists-builder-column--order${
+              mobileTab === 'order' ? '' : ' is-mobile-hidden'
+            }`}
+            role="tabpanel"
+          >
             <div className="setlists-editor-adder setlists-order-panel">
               <div className="setlists-builder-toolbar">
                 <div>
@@ -914,7 +1240,10 @@ export function BandSetlistEditorWorkspace({
 
               <div
                 className={`setlists-order-list${isOrderDropActive ? ' is-drop-active' : ''}`}
-                ref={setOrderDropRef}
+                ref={(node) => {
+                  orderListRef.current = node
+                  setOrderDropRef(node)
+                }}
               >
                 <SortableContext items={setlist.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
                   {setlist.items.length === 0 ? (
@@ -931,98 +1260,17 @@ export function BandSetlistEditorWorkspace({
                         itemCount={setlist.items.length}
                         disabled={isPending || isOrderPending || pendingItemIds.size > 0}
                         pending={pendingItemIds.has(item.id)}
+                        highlighted={highlightedItemId === item.id}
                         onMove={(direction) => moveItem(index, direction)}
                         onEdit={() => beginEditingItem(item)}
+                        onDelete={() => setDeleteCandidateId(item.id)}
+                        registerRow={registerRow}
                       />
                     ))
                   )}
                 </SortableContext>
               </div>
 
-              <div className="setlists-inline-panel">
-                {editingItem ? (
-                  <>
-                    <div className="setlists-builder-toolbar">
-                      <div>
-                        <p className="eyebrow">Inspector del item</p>
-                        <h3>{editingItem.itemType === 'song' ? editingItem.songTitleSnapshot : editingItem.blockLabel}</h3>
-                        <p className="muted">
-                          {editingItem.itemType === 'song'
-                            ? 'Ajusta la nota visible en la hoja o quita el item del orden.'
-                            : 'Edita el nombre del bloque y su nota sin salir del panel derecho.'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="setlists-item-sheet__form">
-                      {editingItem.itemType === 'block' ? (
-                        <label className="form-field">
-                          <span className="form-label">Nombre del bloque</span>
-                          <input
-                            className="form-input"
-                            value={editingDraft.blockLabel}
-                            onChange={(event) => {
-                              const value = event.currentTarget.value
-                              setEditingDraft((current) => ({...current, blockLabel: value}))
-                            }}
-                            placeholder="Intro, Bis, Final..."
-                          />
-                        </label>
-                      ) : (
-                        <div className="setlists-item-sheet__meta">
-                          <span className={`setlists-item-badge setlists-item-badge--${editingItem.itemType}`}>Tema</span>
-                          <strong>{editingItem.songTitleSnapshot}</strong>
-                        </div>
-                      )}
-
-                      <label className="form-field">
-                        <span className="form-label">Nota visible en la hoja</span>
-                        <textarea
-                          className="form-textarea"
-                          value={editingDraft.notesOverride}
-                          onChange={(event) => {
-                            const value = event.currentTarget.value
-                            setEditingDraft((current) => ({...current, notesOverride: value}))
-                          }}
-                          placeholder="Referencia, afinacion o recordatorio para esta fecha."
-                        />
-                      </label>
-                    </div>
-
-                    <div className="setlists-item-sheet__footer">
-                      <button
-                        className="button button--ghost"
-                        type="button"
-                        disabled={isPending && workingItemId === editingItem.id}
-                        onClick={handleDeleteEditedItem}
-                      >
-                        Quitar item
-                      </button>
-                      <button
-                        className="button"
-                        type="button"
-                        disabled={isPending && workingItemId === editingItem.id}
-                        onClick={() => setEditingItemId(null)}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        className="button button--primary"
-                        type="button"
-                        disabled={isPending && workingItemId === editingItem.id}
-                        onClick={handleSaveEditedItem}
-                      >
-                        {isPending && workingItemId === editingItem.id ? 'Guardando...' : 'Guardar cambios'}
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="setlists-empty">
-                    <h3>Selecciona un item para editar</h3>
-                    <p className="muted">Toca `Editar` en cualquier tema o bloque del orden actual y veras aca sus detalles.</p>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -1037,6 +1285,87 @@ export function BandSetlistEditorWorkspace({
           {isPending ? 'Guardando...' : 'Guardar y ver vista previa'}
         </button>
       </div>
+
+      {editingItem ? (
+        <SetlistDialog
+          eyebrow="Editar informacion"
+          title={getItemTitle(editingItem)}
+          onClose={() => setEditingItemId(null)}
+        >
+          <p className="muted">
+            {editingItem.itemType === 'song'
+              ? 'Ajusta solamente la nota que aparecera en la hoja.'
+              : 'Ajusta el nombre y la nota del bloque.'}
+          </p>
+          <div className="setlists-item-sheet__form">
+            {editingItem.itemType === 'block' ? (
+              <label className="form-field">
+                <span className="form-label">Nombre del bloque</span>
+                <input
+                  className="form-input"
+                  value={editingDraft.blockLabel}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value
+                    setEditingDraft((current) => ({...current, blockLabel: value}))
+                  }}
+                  placeholder="Intro, Bis, Final..."
+                />
+              </label>
+            ) : (
+              <div className="setlists-item-sheet__meta">
+                <span className="setlists-item-badge setlists-item-badge--song">Tema</span>
+                <strong>{editingItem.songTitleSnapshot}</strong>
+              </div>
+            )}
+
+            <label className="form-field">
+              <span className="form-label">Nota visible en la hoja</span>
+              <textarea
+                className="form-textarea"
+                value={editingDraft.notesOverride}
+                onChange={(event) => {
+                  const value = event.currentTarget.value
+                  setEditingDraft((current) => ({...current, notesOverride: value}))
+                }}
+                placeholder="Referencia, afinacion o recordatorio para esta fecha."
+              />
+            </label>
+          </div>
+          <div className="setlists-item-sheet__footer">
+            <button className="button" type="button" onClick={() => setEditingItemId(null)}>
+              Cancelar
+            </button>
+            <button
+              className="button button--primary"
+              type="button"
+              disabled={isPending && workingItemId === editingItem.id}
+              onClick={handleSaveEditedItem}
+            >
+              {isPending && workingItemId === editingItem.id ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
+        </SetlistDialog>
+      ) : null}
+
+      {deleteCandidate ? (
+        <SetlistDialog
+          eyebrow="Quitar del orden"
+          title={getItemTitle(deleteCandidate)}
+          onClose={() => setDeleteCandidateId(null)}
+        >
+          <p className="muted">
+            Se quitara el puesto {setlist.items.findIndex((item) => item.id === deleteCandidate.id) + 1} de esta setlist. El tema seguira disponible en la biblioteca.
+          </p>
+          <div className="setlists-item-sheet__footer">
+            <button className="button" type="button" onClick={() => setDeleteCandidateId(null)}>
+              Cancelar
+            </button>
+            <button className="button button--danger" type="button" onClick={handleConfirmDeleteItem}>
+              Quitar de la setlist
+            </button>
+          </div>
+        </SetlistDialog>
+      ) : null}
     </div>
   )
 }
