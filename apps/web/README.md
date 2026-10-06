@@ -60,7 +60,7 @@ Pero en browser headless puede terminar en `vercel.com/login`. Si pasa eso, usa 
 - The current Vite app remains in `frontend/`.
 - This app expects Supabase migrations from `supabase/migrations`.
 - Sanity writes require `SANITY_API_WRITE_TOKEN` server-side only.
-- Google login is configured in Supabase Auth providers and must allow `/auth/callback` for local and Vercel V2 URLs.
+- Google login is configured in Supabase Auth providers and must allow `/auth/callback` for local and `https://web-bands.vercel.app`.
 - Invite emails use Resend through `RESEND_API_KEY` and `EMAIL_FROM`.
 - Dashboard image uploads support logo, favicon, hero and about images through server-side Sanity asset uploads.
 - Si aparece un error de desarrollo con `React Client Manifest` en Next 16, usar `npm run dev` en lugar de `npm run dev:turbo`.

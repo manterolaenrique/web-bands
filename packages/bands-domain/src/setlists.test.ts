@@ -51,6 +51,26 @@ describe('bandSetlistItemCreateSchema', () => {
     expect(parsed.itemType).toBe('block')
     expect(parsed.notesOverride).toBeUndefined()
   })
+
+  it('accepts an exact zero-based insertion index', () => {
+    const parsed = bandSetlistItemCreateSchema.parse({
+      itemType: 'song',
+      songId: '00000000-0000-4000-8000-000000000001',
+      insertIndex: 3,
+    })
+
+    expect(parsed.insertIndex).toBe(3)
+  })
+
+  it('rejects negative insertion indexes', () => {
+    expect(() =>
+      bandSetlistItemCreateSchema.parse({
+        itemType: 'song',
+        songId: '00000000-0000-4000-8000-000000000001',
+        insertIndex: -1,
+      })
+    ).toThrow()
+  })
 })
 
 describe('bandSetlistItemOrderSchema', () => {

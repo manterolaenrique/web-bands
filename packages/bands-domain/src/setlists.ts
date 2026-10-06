@@ -137,11 +137,13 @@ export const bandSetlistItemCreateSchema = z.discriminatedUnion('itemType', [
     itemType: z.literal('song'),
     songId: z.string().uuid(),
     notesOverride: optionalTrimmedString(400),
+    insertIndex: z.number().int().nonnegative().optional(),
   }),
   z.object({
     itemType: z.literal('block'),
     blockLabel: requiredTrimmedString(2, 80),
     notesOverride: optionalTrimmedString(400),
+    insertIndex: z.number().int().nonnegative().optional(),
   }),
 ])
 

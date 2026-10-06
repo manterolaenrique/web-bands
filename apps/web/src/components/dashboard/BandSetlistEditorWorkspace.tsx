@@ -8,8 +8,31 @@ import type {
   BandSongLibraryItem,
 } from '@web-bands/bands-domain'
 
+import {
+  closestCenter,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import {CSS} from '@dnd-kit/utilities'
+
 import {useRouter} from 'next/navigation'
-import {useEffect, useState, useTransition} from 'react'
+import {useState, useTransition} from 'react'
 
 import {BandWorkspaceHeader} from '@/components/dashboard/BandWorkspaceHeader'
 import {PendingLink} from '@/components/ui/PendingLink'
@@ -20,7 +43,7 @@ import {
   updateSetlistItemRequest,
   updateSetlistRequest,
 } from '@/lib/dashboard/setlists-api'
-import {formatSetlistDate, formatSetlistDuration} from '@/lib/setlists/format'
+import {formatSetlistDate} from '@/lib/setlists/format'
 import {SETLIST_PRINT_FONT_LABELS} from '@/lib/setlists/print-style'
 
 type ItemDraft = {
@@ -69,21 +92,129 @@ function isMetaDirty(
   )
 }
 
-function buildSongMeta(song: BandSongLibraryItem) {
-  if (!song.defaultDurationSeconds) {
-    return song.defaultNotes || null
-  }
-
-  const duration = formatSetlistDuration(song.defaultDurationSeconds)
-  return song.defaultNotes ? `${duration} - ${song.defaultNotes}` : duration
-}
-
 function buildItemMeta(item: BandSetlistItem) {
   if (item.itemType === 'block') {
     return item.notesOverride ? 'Bloque con nota' : 'Bloque'
   }
 
   return item.notesOverride ? 'Tema con nota' : 'Tema'
+}
+
+function LibrarySongRow({
+  song,
+  disabled,
+  onAdd,
+}: {
+  song: BandSongLibraryItem
+  disabled: boolean
+  onAdd: () => void
+}) {
+  const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({
+    id: `library:${song.id}`,
+    data: {type: 'library-song', songId: song.id, title: song.title},
+    disabled,
+  })
+
+  return (
+    <article
+      className={`setlists-song-picker__item setlists-song-picker__item--draggable${isDragging ? ' is-dragging' : ''}`}
+      ref={setNodeRef}
+      style={{transform: CSS.Translate.toString(transform)}}
+    >
+      <button
+        className="setlists-drag-handle"
+        type="button"
+        aria-label={`Arrastrar ${song.title} al orden`}
+        disabled={disabled}
+        {...attributes}
+        {...listeners}
+      >
+        <span aria-hidden="true">::</span>
+      </button>
+      <div className="setlists-song-picker__copy">
+        <strong>{song.title}</strong>
+      </div>
+      <button className="button button--primary" type="button" disabled={disabled} onClick={onAdd}>
+        Agregar
+      </button>
+    </article>
+  )
+}
+
+function SortableSetlistRow({
+  item,
+  index,
+  itemCount,
+  disabled,
+  pending,
+  onMove,
+  onEdit,
+}: {
+  item: BandSetlistItem
+  index: number
+  itemCount: number
+  disabled: boolean
+  pending: boolean
+  onMove: (direction: -1 | 1) => void
+  onEdit: () => void
+}) {
+  const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
+    id: item.id,
+    data: {type: 'setlist-item', title: item.songTitleSnapshot || item.blockLabel || 'Item'},
+    disabled: disabled || pending,
+  })
+
+  return (
+    <article
+      className={`setlists-order-item${isDragging ? ' is-dragging' : ''}${pending ? ' is-pending' : ''}`}
+      ref={setNodeRef}
+      style={{transform: CSS.Transform.toString(transform), transition}}
+    >
+      <button
+        className="setlists-drag-handle"
+        type="button"
+        aria-label={`Mover ${item.songTitleSnapshot || item.blockLabel}`}
+        disabled={disabled || pending}
+        {...attributes}
+        {...listeners}
+      >
+        <span aria-hidden="true">::</span>
+      </button>
+      <div className="setlists-order-item__order">
+        <strong>{index + 1}</strong>
+      </div>
+      <div className="setlists-order-item__copy">
+        <div className="setlists-editor-item__header">
+          <span className={`setlists-item-badge setlists-item-badge--${item.itemType}`}>
+            {item.itemType === 'song' ? 'Tema' : 'Bloque'}
+          </span>
+          <h3>{item.itemType === 'song' ? item.songTitleSnapshot : item.blockLabel}</h3>
+        </div>
+        <p>{pending ? 'Guardando...' : buildItemMeta(item)}</p>
+      </div>
+      <div className="setlists-order-item__actions">
+        <details className="setlists-order-menu">
+          <summary className="button">Mover</summary>
+          <div className="setlists-order-menu__content">
+            <button className="button" type="button" disabled={disabled || pending || index === 0} onClick={() => onMove(-1)}>
+              Mover arriba
+            </button>
+            <button
+              className="button"
+              type="button"
+              disabled={disabled || pending || index === itemCount - 1}
+              onClick={() => onMove(1)}
+            >
+              Mover abajo
+            </button>
+          </div>
+        </details>
+        <button className="button button--primary" type="button" disabled={pending} onClick={onEdit}>
+          Editar
+        </button>
+      </div>
+    </article>
+  )
 }
 
 export function BandSetlistEditorWorkspace({
@@ -117,27 +248,18 @@ export function BandSetlistEditorWorkspace({
   const [editingDraft, setEditingDraft] = useState<ItemDraft>({blockLabel: '', notesOverride: ''})
   const [isBlockComposerOpen, setIsBlockComposerOpen] = useState(false)
   const [blockDraft, setBlockDraft] = useState<BlockDraft>({blockLabel: '', notesOverride: ''})
-
-  useEffect(() => {
-    setSetlist(payload.setlist)
-    setMetaValues({
-      title: payload.setlist.title || '',
-      showDate: payload.setlist.showDate,
-      venueName: payload.setlist.venueName,
-      location: payload.setlist.location || '',
-      pressLogoAssetId: payload.setlist.pressLogoAssetId || '',
-      printFontPreset: payload.setlist.printFontPreset,
-      printAllCaps: payload.setlist.printAllCaps,
-      linkedShowKey: payload.setlist.linkedShowKey || '',
-    })
-    setSongQuery('')
-    setWorkingItemId(null)
-    setEditingItemId(null)
-    setEditingDraft({blockLabel: '', notesOverride: ''})
-    setIsBlockComposerOpen(false)
-    setBlockDraft({blockLabel: '', notesOverride: ''})
-    setMessage(isNewSession ? 'Setlist creado. Busca un tema, agregalo y ve ordenando el show.' : null)
-  }, [isNewSession, payload])
+  const [pendingItemIds, setPendingItemIds] = useState<Set<string>>(() => new Set())
+  const [isOrderPending, setIsOrderPending] = useState(false)
+  const [activeDragTitle, setActiveDragTitle] = useState<string | null>(null)
+  const {setNodeRef: setOrderDropRef, isOver: isOrderDropActive} = useDroppable({
+    id: 'setlist-drop-zone',
+    data: {type: 'setlist-drop-zone'},
+  })
+  const sensors = useSensors(
+    useSensor(PointerSensor, {activationConstraint: {distance: 6}}),
+    useSensor(TouchSensor, {activationConstraint: {delay: 180, tolerance: 8}}),
+    useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates})
+  )
 
   const filteredSongs = payload.songs.filter((song) => {
     const query = songQuery.trim().toLowerCase()
@@ -150,14 +272,10 @@ export function BandSetlistEditorWorkspace({
 
   const editingItem = editingItemId ? setlist.items.find((item) => item.id === editingItemId) || null : null
 
-  useEffect(() => {
-    if (!editingItem) {
-      setEditingDraft({blockLabel: '', notesOverride: ''})
-      return
-    }
-
-    setEditingDraft(buildItemDraft(editingItem))
-  }, [editingItem])
+  const beginEditingItem = (item: BandSetlistItem) => {
+    setEditingItemId(item.id)
+    setEditingDraft(buildItemDraft(item))
+  }
 
   const syncSetlist = (nextSetlist: BandSetlistDetail) => {
     setSetlist(nextSetlist)
@@ -170,6 +288,9 @@ export function BandSetlistEditorWorkspace({
       itemCount: nextItems.length,
     }))
   }
+
+  const normalizeItems = (items: BandSetlistItem[]) =>
+    items.map((item, index) => ({...item, sortOrder: index + 1}))
 
   const applyShowPrefill = (showKey: string) => {
     if (!showKey) {
@@ -215,22 +336,63 @@ export function BandSetlistEditorWorkspace({
     })
   }
 
-  const handleAddSong = (songId: string) => {
+  const handleAddSong = async (songId: string, requestedIndex?: number) => {
+    const song = payload.songs.find((candidate) => candidate.id === songId)
+    if (!song) {
+      setMessage('No encontramos el tema en la biblioteca.')
+      return
+    }
+
+    const insertIndex = Math.min(Math.max(requestedIndex ?? setlist.items.length, 0), setlist.items.length)
+    const temporaryId = `pending:${crypto.randomUUID()}`
+    const temporaryItem: BandSetlistItem = {
+      id: temporaryId,
+      setlistId: setlist.id,
+      sortOrder: insertIndex + 1,
+      itemType: 'song',
+      songId: song.id,
+      songTitleSnapshot: song.title,
+      notesOverride: song.defaultNotes,
+      createdAt: new Date().toISOString(),
+    }
+
     setMessage(null)
-    startTransition(async () => {
-      const response = await createSetlistItemRequest(bandId, setlist.id, {
-        itemType: 'song',
-        songId,
-      })
-
-      if (!response.ok || !response.body?.item) {
-        setMessage(response.body?.message || 'No se pudo agregar el tema al setlist.')
-        return
-      }
-
-      syncItems([...setlist.items, response.body.item])
-      setMessage('Tema agregado al orden actual.')
+    setPendingItemIds((current) => new Set(current).add(temporaryId))
+    setSetlist((current) => {
+      const nextItems = [...current.items]
+      nextItems.splice(Math.min(insertIndex, nextItems.length), 0, temporaryItem)
+      const normalized = normalizeItems(nextItems)
+      return {...current, items: normalized, itemCount: normalized.length}
     })
+
+    const response = await createSetlistItemRequest(bandId, setlist.id, {
+      itemType: 'song',
+      songId,
+      insertIndex,
+    })
+
+    setPendingItemIds((current) => {
+      const next = new Set(current)
+      next.delete(temporaryId)
+      return next
+    })
+
+    if (!response.ok || !response.body?.item) {
+      setSetlist((current) => {
+        const nextItems = normalizeItems(current.items.filter((item) => item.id !== temporaryId))
+        return {...current, items: nextItems, itemCount: nextItems.length}
+      })
+      setMessage(response.body?.message || 'No se pudo agregar el tema al setlist.')
+      return
+    }
+
+    setSetlist((current) => {
+      const nextItems = normalizeItems(
+        current.items.map((item) => (item.id === temporaryId ? response.body!.item! : item))
+      )
+      return {...current, items: nextItems, itemCount: nextItems.length}
+    })
+    setMessage('Tema agregado al orden actual.')
   }
 
   const handleAddBlock = () => {
@@ -254,33 +416,83 @@ export function BandSetlistEditorWorkspace({
     })
   }
 
+  const persistOrder = async (previousItems: BandSetlistItem[], nextItems: BandSetlistItem[]) => {
+    setIsOrderPending(true)
+    const response = await reorderSetlistItemsRequest(
+      bandId,
+      setlist.id,
+      nextItems.map((item) => item.id)
+    )
+    setIsOrderPending(false)
+
+    if (!response.ok) {
+      syncItems(normalizeItems(previousItems))
+      setMessage(response.body?.message || 'No se pudo reordenar el setlist.')
+      return
+    }
+
+    setMessage('Orden actualizado.')
+  }
+
   const moveItem = (index: number, direction: -1 | 1) => {
     const targetIndex = index + direction
-    if (targetIndex < 0 || targetIndex >= setlist.items.length) {
+    if (
+      targetIndex < 0 ||
+      targetIndex >= setlist.items.length ||
+      pendingItemIds.size > 0 ||
+      isOrderPending
+    ) {
       return
     }
 
     const previousItems = setlist.items
-    const nextItems = [...previousItems]
-    ;[nextItems[index], nextItems[targetIndex]] = [nextItems[targetIndex], nextItems[index]]
-    syncItems(nextItems.map((item, itemIndex) => ({...item, sortOrder: itemIndex + 1})))
+    const nextItems = normalizeItems(arrayMove(previousItems, index, targetIndex))
+    syncItems(nextItems)
     setMessage(null)
+    void persistOrder(previousItems, nextItems)
+  }
 
-    startTransition(async () => {
-      const response = await reorderSetlistItemsRequest(
-        bandId,
-        setlist.id,
-        nextItems.map((item) => item.id)
-      )
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragTitle(String(event.active.data.current?.title || 'Item'))
+  }
 
-      if (!response.ok) {
-        syncItems(previousItems)
-        setMessage(response.body?.message || 'No se pudo reordenar el setlist.')
-        return
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragTitle(null)
+    const {active, over} = event
+    if (!over) {
+      return
+    }
+
+    if (active.data.current?.type === 'library-song') {
+      const overIndex = setlist.items.findIndex((item) => item.id === over.id)
+      let insertIndex = over.id === 'setlist-drop-zone' || overIndex < 0 ? setlist.items.length : overIndex
+      const translatedRect = active.rect.current.translated
+      if (overIndex >= 0 && translatedRect && translatedRect.top > over.rect.top + over.rect.height / 2) {
+        insertIndex += 1
       }
 
-      setMessage('Orden actualizado.')
-    })
+      void handleAddSong(String(active.data.current.songId), insertIndex)
+      return
+    }
+
+    if (pendingItemIds.size > 0 || isOrderPending) {
+      setMessage('Espera a que termine de guardarse el tema antes de cambiar el orden.')
+      return
+    }
+
+    const oldIndex = setlist.items.findIndex((item) => item.id === active.id)
+    const overIndex = over.id === 'setlist-drop-zone'
+      ? setlist.items.length - 1
+      : setlist.items.findIndex((item) => item.id === over.id)
+    if (oldIndex < 0 || overIndex < 0 || oldIndex === overIndex) {
+      return
+    }
+
+    const previousItems = setlist.items
+    const nextItems = normalizeItems(arrayMove(previousItems, oldIndex, overIndex))
+    syncItems(nextItems)
+    setMessage(null)
+    void persistOrder(previousItems, nextItems)
   }
 
   const handleSaveEditedItem = () => {
@@ -317,21 +529,26 @@ export function BandSetlistEditorWorkspace({
       return
     }
 
-    setWorkingItemId(editingItem.id)
+    const deletedItem = editingItem
+    const previousItems = setlist.items
+    setWorkingItemId(deletedItem.id)
     setMessage(null)
-    startTransition(async () => {
-      const response = await deleteSetlistItemRequest(bandId, setlist.id, editingItem.id)
+    syncItems(normalizeItems(previousItems.filter((item) => item.id !== deletedItem.id)))
+    setEditingItemId(null)
+
+    void (async () => {
+      const response = await deleteSetlistItemRequest(bandId, setlist.id, deletedItem.id)
       setWorkingItemId(null)
 
       if (!response.ok) {
+        syncItems(previousItems)
+        beginEditingItem(deletedItem)
         setMessage(response.body?.message || 'No se pudo eliminar el item.')
         return
       }
 
-      syncItems(setlist.items.filter((item) => item.id !== editingItem.id))
-      setEditingItemId(null)
       setMessage('Item eliminado.')
-    })
+    })()
   }
 
   const handleSaveAndPreview = () => {
@@ -553,14 +770,21 @@ export function BandSetlistEditorWorkspace({
 
         {message ? <p className="muted">{message}</p> : null}
 
-        <div className="setlists-builder-layout">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragCancel={() => setActiveDragTitle(null)}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="setlists-builder-layout">
           <div className="setlists-builder-column">
             <div className="setlists-editor-adder">
               <div className="setlists-builder-toolbar">
                 <div>
                   <p className="eyebrow">1. Biblioteca</p>
                   <h3>Buscar y agregar temas</h3>
-                  <p className="muted">Busca dentro de la biblioteca privada y toca `Agregar` para sumarlo al orden actual.</p>
+                  <p className="muted">Arrastra un tema a la posicion deseada o toca `Agregar` para sumarlo al final.</p>
                 </div>
                 <button
                   className="button button--ghost setlists-builder-toolbar__secondary"
@@ -596,15 +820,12 @@ export function BandSetlistEditorWorkspace({
                   </div>
                 ) : (
                   filteredSongs.map((song) => (
-                    <article className="setlists-song-picker__item" key={song.id}>
-                      <div className="setlists-song-picker__copy">
-                        <strong>{song.title}</strong>
-                        {buildSongMeta(song) ? <span>{buildSongMeta(song)}</span> : null}
-                      </div>
-                      <button className="button button--primary" type="button" disabled={isPending} onClick={() => handleAddSong(song.id)}>
-                        Agregar
-                      </button>
-                    </article>
+                    <LibrarySongRow
+                      key={song.id}
+                      song={song}
+                      disabled={isPending}
+                      onAdd={() => void handleAddSong(song.id)}
+                    />
                   ))
                 )}
               </div>
@@ -691,51 +912,31 @@ export function BandSetlistEditorWorkspace({
                 </div>
               </div>
 
-              <div className="setlists-order-list">
-                {setlist.items.length === 0 ? (
-                  <div className="setlists-empty">
-                    <h3>Sin items todavia</h3>
-                    <p className="muted">Agrega temas o bloques para empezar a ver el orden del show.</p>
-                  </div>
-                ) : (
-                  setlist.items.map((item, index) => (
-                    <article className="setlists-order-item" key={item.id}>
-                      <div className="setlists-order-item__order">
-                        <strong>{index + 1}</strong>
-                      </div>
-                      <div className="setlists-order-item__copy">
-                        <div className="setlists-editor-item__header">
-                          <span className={`setlists-item-badge setlists-item-badge--${item.itemType}`}>
-                            {item.itemType === 'song' ? 'Tema' : 'Bloque'}
-                          </span>
-                          <h3>{item.itemType === 'song' ? item.songTitleSnapshot : item.blockLabel}</h3>
-                        </div>
-                        <p>{buildItemMeta(item)}</p>
-                      </div>
-                      <div className="setlists-order-item__actions">
-                        <button className="button" type="button" disabled={isPending || index === 0} onClick={() => moveItem(index, -1)}>
-                          Subir
-                        </button>
-                        <button
-                          className="button"
-                          type="button"
-                          disabled={isPending || index === setlist.items.length - 1}
-                          onClick={() => moveItem(index, 1)}
-                        >
-                          Bajar
-                        </button>
-                        <button
-                          className="button button--primary"
-                          type="button"
-                          disabled={isPending}
-                          onClick={() => setEditingItemId(item.id)}
-                        >
-                          Editar
-                        </button>
-                      </div>
-                    </article>
-                  ))
-                )}
+              <div
+                className={`setlists-order-list${isOrderDropActive ? ' is-drop-active' : ''}`}
+                ref={setOrderDropRef}
+              >
+                <SortableContext items={setlist.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+                  {setlist.items.length === 0 ? (
+                    <div className="setlists-empty setlists-empty--drop-zone">
+                      <h3>Arrastra el primer tema aca</h3>
+                      <p className="muted">Tambien puedes usar el boton `Agregar` de la biblioteca.</p>
+                    </div>
+                  ) : (
+                    setlist.items.map((item, index) => (
+                      <SortableSetlistRow
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        itemCount={setlist.items.length}
+                        disabled={isPending || isOrderPending || pendingItemIds.size > 0}
+                        pending={pendingItemIds.has(item.id)}
+                        onMove={(direction) => moveItem(index, direction)}
+                        onEdit={() => beginEditingItem(item)}
+                      />
+                    ))
+                  )}
+                </SortableContext>
               </div>
 
               <div className="setlists-inline-panel">
@@ -825,6 +1026,10 @@ export function BandSetlistEditorWorkspace({
             </div>
           </div>
         </div>
+          <DragOverlay>
+            {activeDragTitle ? <div className="setlists-drag-overlay">{activeDragTitle}</div> : null}
+          </DragOverlay>
+        </DndContext>
       </section>
 
       <div className="setlists-builder-page__footer">

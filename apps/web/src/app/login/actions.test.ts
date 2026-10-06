@@ -24,7 +24,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/env', () => ({
   isSupabaseConfigured: mockIsSupabaseConfigured,
-  siteUrl: 'https://web-bands-v2.vercel.app',
+  siteUrl: 'https://web-bands.vercel.app',
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -177,7 +177,7 @@ describe('login actions', () => {
 
     expect(signInWithOAuth).toHaveBeenCalledWith({
       options: {
-        redirectTo: 'https://web-bands-v2.vercel.app/auth/callback?next=%2Finvite%2Fdemo-token',
+        redirectTo: 'https://web-bands.vercel.app/auth/callback?next=%2Finvite%2Fdemo-token',
       },
       provider: 'google',
     })
@@ -230,7 +230,7 @@ describe('login actions', () => {
       email: 'demo@example.com',
       password: 'password123',
       options: {
-        emailRedirectTo: 'https://web-bands-v2.vercel.app/auth/callback?next=%2Finvite%2Fdemo-token',
+        emailRedirectTo: 'https://web-bands.vercel.app/auth/callback?next=%2Finvite%2Fdemo-token',
       },
     })
   })

@@ -83,7 +83,7 @@ vi.mock('@/lib/supabase/admin', () => ({
 }))
 
 vi.mock('@/lib/env', () => ({
-  siteUrl: 'https://web-bands-v2.vercel.app',
+  siteUrl: 'https://web-bands.vercel.app',
 }))
 
 import {acceptBandInvite, createBandInvite} from './team-actions'
@@ -279,7 +279,7 @@ describe('team actions', () => {
     expect(mockSendBandInviteEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'invitee@example.com',
-        inviteUrl: 'https://web-bands-v2.vercel.app/invite/invite-token',
+        inviteUrl: 'https://web-bands.vercel.app/invite/invite-token',
       })
     )
     expect(mockWriteAuditLog).toHaveBeenCalledWith(

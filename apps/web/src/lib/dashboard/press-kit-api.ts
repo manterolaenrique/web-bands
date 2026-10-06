@@ -3,8 +3,13 @@
 import type {
   BandPressKitPayload,
   BandPrivateAsset,
+  BandPrivateAssetKind,
   BandPrivateAssetShareLinkResponse,
   PressKitSharePreset,
+} from '@web-bands/bands-domain'
+import {
+  PRESS_KIT_LOGO_MAX_FILE_SIZE_BYTES,
+  PRESS_KIT_RIDER_MAX_FILE_SIZE_BYTES,
 } from '@web-bands/bands-domain'
 
 import {createClient} from '@/lib/supabase/browser'
@@ -91,7 +96,7 @@ export async function updatePressKitRequest(
 async function createPressKitUploadRequest(
   bandId: string,
   input: {
-    kind: 'logo'
+    kind: BandPrivateAssetKind
     label: string
     fileName: string
     mimeType: string
@@ -116,6 +121,7 @@ async function createPressKitUploadRequest(
 export async function uploadPressKitAssetRequest(
   bandId: string,
   input: {
+    kind: BandPrivateAssetKind
     label: string
     file: File
   },
@@ -123,12 +129,37 @@ export async function uploadPressKitAssetRequest(
     onPhaseChange?: (phase: 'preparing' | 'uploading' | 'finalizing') => void
   }
 ) {
+  const mimeType = normalizePrivateAssetMimeType(input.file)
+  const maximumSize =
+    input.kind === 'logo'
+      ? PRESS_KIT_LOGO_MAX_FILE_SIZE_BYTES
+      : PRESS_KIT_RIDER_MAX_FILE_SIZE_BYTES
+  const expectedMimeType = input.kind === 'logo' ? 'image/png' : 'application/pdf'
+
+  if (input.label.trim().length < 2) {
+    return localUploadValidationError('label', 'El nombre debe tener al menos 2 caracteres.')
+  }
+
+  if (mimeType !== expectedMimeType) {
+    return localUploadValidationError(
+      'mimeType',
+      input.kind === 'logo' ? 'Selecciona un archivo PNG valido.' : 'Selecciona un archivo PDF valido.'
+    )
+  }
+
+  if (input.file.size > maximumSize) {
+    return localUploadValidationError(
+      'fileSizeBytes',
+      input.kind === 'logo' ? 'El logo PNG no puede superar 20 MB.' : 'El rider tecnico no puede superar 25 MB.'
+    )
+  }
+
   options?.onPhaseChange?.('preparing')
   const uploadStart = await createPressKitUploadRequest(bandId, {
-    kind: 'logo',
+    kind: input.kind,
     label: input.label,
     fileName: input.file.name,
-    mimeType: input.file.type,
+    mimeType,
     fileSizeBytes: input.file.size,
   })
 
@@ -137,7 +168,11 @@ export async function uploadPressKitAssetRequest(
       ok: false,
       status: uploadStart.status,
       body: {
-        message: uploadStart.body?.message || 'No se pudo preparar la subida del logo.',
+        message:
+          uploadStart.body?.message ||
+          (input.kind === 'logo'
+            ? 'No se pudo preparar la subida del logo.'
+            : 'No se pudo preparar la subida del rider tecnico.'),
         errors: uploadStart.body?.errors,
       },
     } satisfies PressKitApiEnvelope<PressKitAssetMutationResponse>
@@ -148,7 +183,7 @@ export async function uploadPressKitAssetRequest(
   const {error: uploadError} = await supabase.storage
     .from('band-press-assets')
     .uploadToSignedUrl(uploadStart.body.upload.storagePath, uploadStart.body.upload.token, input.file, {
-      contentType: input.file.type,
+      contentType: mimeType,
       upsert: false,
     })
 
@@ -157,7 +192,11 @@ export async function uploadPressKitAssetRequest(
       ok: false,
       status: 503,
       body: {
-        message: uploadError.message || 'No se pudo subir el logo a storage.',
+        message:
+          uploadError.message ||
+          (input.kind === 'logo'
+            ? 'No se pudo subir el logo a storage.'
+            : 'No se pudo subir el rider tecnico a storage.'),
       },
     } satisfies PressKitApiEnvelope<PressKitAssetMutationResponse>
   }
@@ -169,13 +208,13 @@ export async function uploadPressKitAssetRequest(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      kind: 'logo',
+      kind: input.kind,
       label: input.label,
       upload: {
         assetId: uploadStart.body.upload.assetId,
         storagePath: uploadStart.body.upload.storagePath,
         originalFileName: input.file.name,
-        mimeType: input.file.type,
+        mimeType,
         fileSizeBytes: input.file.size,
       },
     }),
@@ -185,6 +224,34 @@ export async function uploadPressKitAssetRequest(
     ok: response.ok,
     status: response.status,
     body: await parseJson<PressKitAssetMutationResponse>(response),
+  } satisfies PressKitApiEnvelope<PressKitAssetMutationResponse>
+}
+
+export function normalizePrivateAssetMimeType(file: Pick<File, 'name' | 'type'>) {
+  if (file.type) {
+    return file.type.toLowerCase()
+  }
+
+  const extension = file.name.split('.').pop()?.toLowerCase()
+  if (extension === 'png') {
+    return 'image/png'
+  }
+
+  if (extension === 'pdf') {
+    return 'application/pdf'
+  }
+
+  return ''
+}
+
+function localUploadValidationError(path: string, message: string) {
+  return {
+    ok: false,
+    status: 400,
+    body: {
+      message,
+      errors: [{path, message}],
+    },
   } satisfies PressKitApiEnvelope<PressKitAssetMutationResponse>
 }
 

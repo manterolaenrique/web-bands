@@ -1,6 +1,6 @@
 'use client'
 
-import {createContext, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode} from 'react'
+import {createContext, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode} from 'react'
 
 import type {PlaybackSession, PlaybackSourceContext, PlaybackSourceType} from '@web-bands/bands-domain'
 
@@ -149,14 +149,7 @@ export function DashboardAudioProvider({children}: {children: ReactNode}) {
   const sourceRequestRef = useRef(new Map<string, Promise<string>>())
   const requestIdRef = useRef(0)
   const playbackMetricRef = useRef<PlaybackMetricTransition | null>(null)
-  const storeRef = useRef<DashboardAudioStore | null>(null)
-  const controlsRef = useRef<DashboardAudioControls | null>(null)
-
-  if (!storeRef.current) {
-    storeRef.current = createDashboardAudioStore()
-  }
-
-  const store = storeRef.current
+  const [store] = useState(createDashboardAudioStore)
 
   function getCachedSource(trackId: string) {
     const cached = sourceCacheRef.current.get(trackId)
@@ -433,8 +426,7 @@ export function DashboardAudioProvider({children}: {children: ReactNode}) {
     }
   }
 
-  if (!controlsRef.current) {
-    controlsRef.current = {
+  const [controls] = useState<DashboardAudioControls>(() => ({
       prepareTrack,
       playSession,
       togglePlayPause,
@@ -442,8 +434,7 @@ export function DashboardAudioProvider({children}: {children: ReactNode}) {
       seekBy,
       playNext,
       setSpeed,
-    }
-  }
+  }))
 
   useEffect(() => {
     const audio = audioRef.current
@@ -486,7 +477,7 @@ export function DashboardAudioProvider({children}: {children: ReactNode}) {
           trackId: sessionRef.current?.queue[sessionRef.current.currentIndex]?.id,
         },
       })
-      void playNext()
+      void controls.playNext()
     }
 
     audio.addEventListener('timeupdate', handleTimeUpdate)
@@ -504,14 +495,14 @@ export function DashboardAudioProvider({children}: {children: ReactNode}) {
       audio.removeEventListener('playing', handlePlaying)
       audio.removeEventListener('ended', handleEnded)
     }
-  }, [store])
+  }, [controls, store])
 
   const contextValue = useMemo(
     () => ({
-      controls: controlsRef.current as DashboardAudioControls,
+      controls,
       store,
     }),
-    [store]
+    [controls, store]
   )
 
   return (

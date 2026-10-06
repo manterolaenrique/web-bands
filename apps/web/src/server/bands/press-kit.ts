@@ -1,6 +1,7 @@
 import type {
   BandPressKitPayload,
   BandPrivateAsset,
+  BandPrivateAssetKind,
   PressKitSharePreset,
 } from '@web-bands/bands-domain'
 import {
@@ -32,7 +33,7 @@ type RequestContext = {
 type PrivateAssetRow = {
   id: string
   band_id: string
-  kind: 'logo'
+  kind: BandPrivateAssetKind
   label: string
   storage_bucket: string
   storage_path: string
@@ -46,8 +47,6 @@ type PrivateAssetRow = {
 
 const PRESS_KIT_BUCKET = 'band-press-assets'
 const PRESS_KIT_PREVIEW_TTL_SECONDS = 60 * 10
-const PRESS_KIT_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
-const PRESS_KIT_ALLOWED_MIME_TYPES = new Set(['image/png'])
 const PRESS_KIT_SHARE_PRESET_SECONDS: Record<PressKitSharePreset, number> = {
   '1h': 60 * 60,
   '24h': 60 * 60 * 24,
@@ -346,14 +345,6 @@ export async function createBandPrivateAssetUpload(
     })
   }
 
-  if (!PRESS_KIT_ALLOWED_MIME_TYPES.has(parsed.data.mimeType)) {
-    throw new BandServiceError('Only PNG logos are allowed in the press kit.', 400)
-  }
-
-  if (parsed.data.fileSizeBytes > PRESS_KIT_MAX_FILE_SIZE_BYTES) {
-    throw new BandServiceError('PNG logos must be 5MB or smaller.', 400)
-  }
-
   const {data: bandRow, error: bandError} = await supabase
     .from('bands')
     .select('id')
@@ -419,14 +410,6 @@ export async function completeBandPrivateAssetUpload(
     })
   }
 
-  if (!PRESS_KIT_ALLOWED_MIME_TYPES.has(parsed.data.upload.mimeType)) {
-    throw new BandServiceError('Only PNG logos are allowed in the press kit.', 400)
-  }
-
-  if (parsed.data.upload.fileSizeBytes > PRESS_KIT_MAX_FILE_SIZE_BYTES) {
-    throw new BandServiceError('PNG logos must be 5MB or smaller.', 400)
-  }
-
   if (!parsed.data.upload.storagePath.startsWith(`${bandId}/${parsed.data.upload.assetId}/`)) {
     throw new BandServiceError('Invalid press kit storage path.', 400)
   }
@@ -444,30 +427,74 @@ export async function completeBandPrivateAssetUpload(
     throw new BandServiceError('The uploaded press kit asset could not be verified.', 400)
   }
 
-  const {data: insertedAsset, error: insertError} = await supabase
-    .from('band_private_assets')
-    .insert({
-      id: parsed.data.upload.assetId,
-      band_id: bandId,
-      kind: parsed.data.kind,
-      label: parsed.data.label,
-      storage_bucket: PRESS_KIT_BUCKET,
-      storage_path: parsed.data.upload.storagePath,
-      original_file_name: parsed.data.upload.originalFileName,
-      mime_type: parsed.data.upload.mimeType,
-      file_size_bytes: parsed.data.upload.fileSizeBytes,
-      uploaded_by: userId,
-    })
-    .select(PRIVATE_ASSET_SELECT_FIELDS)
-    .maybeSingle()
+  const assetValues = {
+    band_id: bandId,
+    kind: parsed.data.kind,
+    label: parsed.data.label,
+    storage_bucket: PRESS_KIT_BUCKET,
+    storage_path: parsed.data.upload.storagePath,
+    original_file_name: parsed.data.upload.originalFileName,
+    mime_type: parsed.data.upload.mimeType,
+    file_size_bytes: parsed.data.upload.fileSizeBytes,
+    uploaded_by: userId,
+  }
 
-  if (insertError || !insertedAsset) {
+  let previousRider: PrivateAssetRow | null = null
+  let savedAsset: PrivateAssetRow | null = null
+  let saveError: unknown = null
+
+  if (parsed.data.kind === 'technical_rider') {
+    const {data: existingRider, error: existingRiderError} = await supabase
+      .from('band_private_assets')
+      .select(PRIVATE_ASSET_SELECT_FIELDS)
+      .eq('band_id', bandId)
+      .eq('kind', 'technical_rider')
+      .maybeSingle()
+
+    if (existingRiderError) {
+      await removePrivateAssetStorageObject(parsed.data.upload.storagePath)
+      throw new BandServiceError('The current technical rider could not be verified.', 500)
+    }
+
+    previousRider = (existingRider as PrivateAssetRow | null) || null
+  }
+
+  if (previousRider) {
+    const {data, error} = await supabase
+      .from('band_private_assets')
+      .update(assetValues)
+      .eq('band_id', bandId)
+      .eq('id', previousRider.id)
+      .select(PRIVATE_ASSET_SELECT_FIELDS)
+      .maybeSingle()
+
+    savedAsset = (data as PrivateAssetRow | null) || null
+    saveError = error
+  } else {
+    const {data, error} = await supabase
+      .from('band_private_assets')
+      .insert({
+        id: parsed.data.upload.assetId,
+        ...assetValues,
+      })
+      .select(PRIVATE_ASSET_SELECT_FIELDS)
+      .maybeSingle()
+
+    savedAsset = (data as PrivateAssetRow | null) || null
+    saveError = error
+  }
+
+  if (saveError || !savedAsset) {
     await removePrivateAssetStorageObject(parsed.data.upload.storagePath)
-    if (isMissingPressKitTableError(insertError)) {
+    if (isMissingPressKitTableError(saveError)) {
       throw new BandServiceError(getMissingPressKitInfrastructureMessage(), 503)
     }
 
     throw new BandServiceError('Press kit asset metadata could not be saved.', 500)
+  }
+
+  if (previousRider && previousRider.storage_path !== parsed.data.upload.storagePath) {
+    await removePrivateAssetStorageObject(previousRider.storage_path)
   }
 
   revalidatePath(`/dashboard/bands/${bandId}/press-kit`)
@@ -478,13 +505,13 @@ export async function completeBandPrivateAssetUpload(
     bandId,
     ip: requestContext.ip,
     metadata: {
-      assetId: parsed.data.upload.assetId,
+      assetId: savedAsset.id,
       fileName: parsed.data.upload.originalFileName,
       kind: parsed.data.kind,
       requestId: requestContext.requestId,
       size: parsed.data.upload.fileSizeBytes,
     },
-    targetId: parsed.data.upload.assetId,
+    targetId: savedAsset.id,
     targetType: 'band_private_asset',
     userAgent: requestContext.userAgent,
   })
@@ -493,7 +520,7 @@ export async function completeBandPrivateAssetUpload(
 
   return {
     ok: true,
-    asset: toPrivateAsset(insertedAsset as PrivateAssetRow, previewUrl),
+    asset: toPrivateAsset(savedAsset, previewUrl),
   }
 }
 

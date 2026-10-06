@@ -896,12 +896,6 @@ export function BandEditorForm({
   const showSeoSection = showDesktopFullEditor || currentRouteSection === 'general' || currentRouteSection === 'social'
   const effectiveEditorMode: EditorMode = isOverviewRoute ? editorMode : 'public'
 
-  useEffect(() => {
-    if (effectiveEditorMode !== 'public' && isPreviewOpen) {
-      setIsPreviewOpen(false)
-    }
-  }, [effectiveEditorMode, isPreviewOpen])
-
   const mobileEditorSectionKeys = [
     'general',
     'images',
@@ -1101,6 +1095,7 @@ export function BandEditorForm({
                 className={`button${editorMode === 'kit' ? ' button--primary' : ''}`}
                 type="button"
                 onClick={() => {
+                  setIsPreviewOpen(false)
                   setEditorMode('kit')
                 }}
               >
@@ -2660,7 +2655,7 @@ export function BandEditorForm({
         viewport={previewViewport}
         onViewportChange={setPreviewViewport}
         inline={isPreviewRoute}
-        isOpen={isPreviewOpen}
+        isOpen={effectiveEditorMode === 'public' && isPreviewOpen}
         onOpenChange={setIsPreviewOpen}
       />
     </form>

@@ -26,6 +26,7 @@ import {
 import {ZodError} from 'zod'
 
 import {writeAuditLog} from '@/lib/server/audit'
+import {canEditBand} from '@/lib/auth/permissions'
 import {logServerWarning} from '@/lib/server/log'
 import {createClient} from '@/lib/supabase/server'
 import {getBandEditorPayload} from './editor-payload'
@@ -84,7 +85,13 @@ const SETLIST_SELECT_FIELDS =
   'id, band_id, title, show_date, venue_name, location, press_logo_asset_id, print_font_preset, print_all_caps, linked_show_key, created_by, updated_by, created_at, updated_at' as const
 const SETLIST_ITEM_SELECT_FIELDS =
   'id, setlist_id, sort_order, item_type, song_id, song_title_snapshot, block_label, notes_override, created_at' as const
-const SETLISTS_INFRASTRUCTURE_TABLES = ['band_song_library', 'band_setlists', 'band_setlist_items'] as const
+const SETLISTS_INFRASTRUCTURE_TABLES = [
+  'band_song_library',
+  'band_setlists',
+  'band_setlist_items',
+  'insert_band_setlist_item_at',
+  'reorder_band_setlist_items',
+] as const
 
 function isMissingSetlistsTableError(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -97,6 +104,7 @@ function isMissingSetlistsTableError(error: unknown) {
   return (
     candidate.code === '42P01' ||
     candidate.code === 'PGRST205' ||
+    candidate.code === 'PGRST202' ||
     SETLISTS_INFRASTRUCTURE_TABLES.some((tableName) => haystack.includes(tableName))
   )
 }
@@ -170,6 +178,24 @@ async function requireSetlistsEditorPayload(userId: string, bandId: string) {
   }
 
   return payload
+}
+
+async function requireSetlistsEditorAccess(userId: string, bandId: string) {
+  const supabase = await createClient()
+  const {data: membership, error} = await supabase
+    .from('band_memberships')
+    .select('role')
+    .eq('band_id', bandId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) {
+    throw new BandServiceError('Setlist permissions could not be verified.', 500)
+  }
+
+  if (!canEditBand(membership?.role)) {
+    throw new BandServiceError('You do not have permission to access setlists.', 403)
+  }
 }
 
 async function loadSongRows(bandId: string) {
@@ -295,6 +321,7 @@ async function requireBandLogo(bandId: string, assetId: string | undefined) {
     .select('id')
     .eq('band_id', bandId)
     .eq('id', assetId)
+    .eq('kind', 'logo')
     .maybeSingle()
 
   if (error) {
@@ -359,11 +386,12 @@ export async function getBandSetlistsHubPayload(
     return null
   }
 
-  const [songs, setlistRows, availableLogos] = await Promise.all([
+  const [songs, setlistRows, privateAssets] = await Promise.all([
     loadSongRows(bandId),
     loadSetlistRows(bandId),
     listBandPrivateAssets(userId, bandId),
   ])
+  const availableLogos = privateAssets.filter((asset) => asset.kind === 'logo')
   const itemCountMap = await loadSetlistItemCountMap(setlistRows.map((row) => row.id))
 
   return {
@@ -916,7 +944,7 @@ export async function createBandSetlistItem(
   rawInput: unknown,
   requestContext: RequestContext
 ) {
-  await requireSetlistsEditorPayload(userId, bandId)
+  await requireSetlistsEditorAccess(userId, bandId)
 
   let parsed: BandSetlistItemCreateInput
   try {
@@ -931,74 +959,25 @@ export async function createBandSetlistItem(
     throw error
   }
 
-  const setlistRow = await loadSetlistRowById(bandId, setlistId)
-  if (!setlistRow) {
-    throw new BandServiceError('Setlist not found.', 404)
-  }
-
   const supabase = await createClient()
-  const {data: currentItems, error: currentItemsError} = await supabase
-    .from('band_setlist_items')
-    .select('sort_order')
-    .eq('setlist_id', setlistId)
-    .order('sort_order', {ascending: false})
-    .limit(1)
-
-  if (currentItemsError) {
-    if (isMissingSetlistsTableError(currentItemsError)) {
-      throw new BandServiceError(getMissingSetlistsInfrastructureMessage(), 503)
-    }
-
-    throw new BandServiceError('Setlist items could not be loaded.', 500)
-  }
-
-  let songRow: SongLibraryRow | null = null
-  if (parsed.itemType === 'song') {
-    const {data, error} = await supabase
-      .from('band_song_library')
-      .select(SONG_SELECT_FIELDS)
-      .eq('band_id', bandId)
-      .eq('id', parsed.songId)
-      .maybeSingle()
-
-    if (error) {
-      if (isMissingSetlistsTableError(error)) {
-        throw new BandServiceError(getMissingSetlistsInfrastructureMessage(), 503)
-      }
-
-      throw new BandServiceError('Song library could not be loaded.', 500)
-    }
-
-    if (!data) {
-      throw new BandServiceError('Song not found in the band library.', 404)
-    }
-
-    songRow = data as SongLibraryRow
-  }
-
-  const nextSortOrder = ((currentItems || [])[0]?.sort_order || 0) + 1
-  const itemId = crypto.randomUUID()
   const {data: insertedItem, error} = await supabase
-    .from('band_setlist_items')
-    .insert({
-      id: itemId,
-      setlist_id: setlistId,
-      sort_order: nextSortOrder,
-      item_type: parsed.itemType,
-      song_id: parsed.itemType === 'song' ? parsed.songId : null,
-      song_title_snapshot: parsed.itemType === 'song' ? songRow?.title || null : null,
-      block_label: parsed.itemType === 'block' ? parsed.blockLabel : null,
-      notes_override:
-        parsed.itemType === 'song'
-          ? parsed.notesOverride || songRow?.default_notes || null
-          : parsed.notesOverride || null,
+    .rpc('insert_band_setlist_item_at', {
+      p_setlist_id: setlistId,
+      p_item_type: parsed.itemType,
+      p_song_id: parsed.itemType === 'song' ? parsed.songId : null,
+      p_block_label: parsed.itemType === 'block' ? parsed.blockLabel : null,
+      p_notes_override: parsed.notesOverride || null,
+      p_insert_index: parsed.insertIndex ?? null,
     })
-    .select(SETLIST_ITEM_SELECT_FIELDS)
     .maybeSingle()
 
   if (error) {
     if (isMissingSetlistsTableError(error)) {
       throw new BandServiceError(getMissingSetlistsInfrastructureMessage(), 503)
+    }
+
+    if (error.code === 'P0002') {
+      throw new BandServiceError(error.message || 'Setlist item source was not found.', 404)
     }
 
     throw new BandServiceError('Setlist item could not be created.', 500)
@@ -1017,10 +996,11 @@ export async function createBandSetlistItem(
     ip: requestContext.ip,
     metadata: {
       itemType: parsed.itemType,
+      insertIndex: parsed.insertIndex ?? null,
       requestId: requestContext.requestId,
       setlistId,
     },
-    targetId: itemId,
+    targetId: (insertedItem as SetlistItemRow).id,
     targetType: 'band_setlist_item',
     userAgent: requestContext.userAgent,
   })
@@ -1039,7 +1019,7 @@ export async function updateBandSetlistItem(
   rawInput: unknown,
   requestContext: RequestContext
 ) {
-  await requireSetlistsEditorPayload(userId, bandId)
+  await requireSetlistsEditorAccess(userId, bandId)
 
   let parsed: BandSetlistItemUpdateInput
   try {
@@ -1170,7 +1150,7 @@ export async function deleteBandSetlistItem(
   itemId: string,
   requestContext: RequestContext
 ) {
-  await requireSetlistsEditorPayload(userId, bandId)
+  await requireSetlistsEditorAccess(userId, bandId)
 
   const setlistRow = await loadSetlistRowById(bandId, setlistId)
   if (!setlistRow) {
@@ -1225,7 +1205,7 @@ export async function reorderBandSetlistItems(
   rawInput: unknown,
   requestContext: RequestContext
 ) {
-  await requireSetlistsEditorPayload(userId, bandId)
+  await requireSetlistsEditorAccess(userId, bandId)
 
   let parsed: BandSetlistItemOrderInput
   try {
@@ -1240,37 +1220,27 @@ export async function reorderBandSetlistItems(
     throw error
   }
 
-  const setlistRow = await loadSetlistRowById(bandId, setlistId)
-  if (!setlistRow) {
-    throw new BandServiceError('Setlist not found.', 404)
-  }
-
   const supabase = await createClient()
-  const {data: currentRows, error} = await supabase
-    .from('band_setlist_items')
-    .select('id')
-    .eq('setlist_id', setlistId)
+  const {error} = await supabase.rpc('reorder_band_setlist_items', {
+    p_setlist_id: setlistId,
+    p_ordered_item_ids: parsed.orderedItemIds,
+  })
 
   if (error) {
     if (isMissingSetlistsTableError(error)) {
       throw new BandServiceError(getMissingSetlistsInfrastructureMessage(), 503)
     }
 
-    throw new BandServiceError('Setlist order could not be loaded.', 500)
+    if (error.code === '22023') {
+      throw new BandServiceError(error.message || 'Setlist order payload does not match current items.', 400)
+    }
+
+    if (error.code === 'P0002') {
+      throw new BandServiceError('Setlist not found.', 404)
+    }
+
+    throw new BandServiceError('Setlist could not be reordered.', 500)
   }
-
-  const currentIds = ((currentRows || []) as Array<{id: string}>).map((row) => row.id).sort()
-  const incomingIds = [...parsed.orderedItemIds].sort()
-
-  if (currentIds.length !== incomingIds.length || currentIds.join('|') !== incomingIds.join('|')) {
-    throw new BandServiceError('Setlist order payload does not match current items.', 400)
-  }
-
-  await Promise.all(
-    parsed.orderedItemIds.map((id, index) =>
-      supabase.from('band_setlist_items').update({sort_order: index + 1}).eq('setlist_id', setlistId).eq('id', id)
-    )
-  )
 
   revalidateSetlistPaths(bandId, setlistId)
 

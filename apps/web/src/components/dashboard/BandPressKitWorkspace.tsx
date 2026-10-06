@@ -155,13 +155,18 @@ export function BandPressKitWorkspace({
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadPhase, setUploadPhase] = useState<UploadPhase>('idle')
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
+  const [riderFile, setRiderFile] = useState<File | null>(null)
+  const [riderPhase, setRiderPhase] = useState<UploadPhase>('idle')
+  const [riderMessage, setRiderMessage] = useState<string | null>(null)
   const [workingAssetId, setWorkingAssetId] = useState<string | null>(null)
 
+  const logos = assets.filter((asset) => asset.kind === 'logo')
+  const technicalRider = assets.find((asset) => asset.kind === 'technical_rider') || null
   const hasPendingChanges = JSON.stringify(values) !== JSON.stringify(baseline)
   const checklist = [
     {
       label: 'Logo PNG cargado',
-      done: assets.length > 0,
+      done: logos.length > 0,
     },
     {
       label: 'Biografia corta completa',
@@ -178,6 +183,10 @@ export function BandPressKitWorkspace({
     {
       label: 'Texto listo para compartir',
       done: values.shareNotes.trim().length > 0,
+    },
+    {
+      label: 'Rider tecnico cargado',
+      done: Boolean(technicalRider),
     },
   ]
   const completedCount = checklist.filter((item) => item.done).length
@@ -272,6 +281,7 @@ export function BandPressKitWorkspace({
     const response = await uploadPressKitAssetRequest(
       bandId,
       {
+        kind: 'logo',
         label: uploadLabel.trim(),
         file: uploadFile,
       },
@@ -284,7 +294,7 @@ export function BandPressKitWorkspace({
 
     if (!response.ok || !response.body?.asset) {
       setUploadPhase('idle')
-      setUploadMessage(response.body?.message || 'No se pudo subir el logo.')
+      setUploadMessage(response.body?.errors?.[0]?.message || response.body?.message || 'No se pudo subir el logo.')
       return
     }
 
@@ -295,8 +305,42 @@ export function BandPressKitWorkspace({
     setUploadMessage('Logo cargado al centro de prensa.')
   }
 
+  const handleRiderUpload = async () => {
+    if (!riderFile) {
+      setRiderMessage('Selecciona un PDF antes de subir.')
+      return
+    }
+
+    setRiderMessage(null)
+    const response = await uploadPressKitAssetRequest(
+      bandId,
+      {
+        kind: 'technical_rider',
+        label: 'Rider tecnico',
+        file: riderFile,
+      },
+      {
+        onPhaseChange: setRiderPhase,
+      }
+    )
+
+    if (!response.ok || !response.body?.asset) {
+      setRiderPhase('idle')
+      setRiderMessage(response.body?.errors?.[0]?.message || response.body?.message || 'No se pudo subir el rider.')
+      return
+    }
+
+    const nextRider = response.body.asset as BandPrivateAsset
+    setAssets((current) => [nextRider, ...current.filter((asset) => asset.kind !== 'technical_rider')])
+    setRiderFile(null)
+    setRiderPhase('idle')
+    setRiderMessage(technicalRider ? 'Rider tecnico reemplazado.' : 'Rider tecnico cargado.')
+  }
+
   const handleDeleteAsset = async (assetId: string) => {
-    if (!window.confirm('¿Eliminar este logo del centro de prensa?')) {
+    const asset = assets.find((current) => current.id === assetId)
+    const assetLabel = asset?.kind === 'technical_rider' ? 'rider tecnico' : 'logo'
+    if (!window.confirm(`Eliminar este ${assetLabel} del centro de prensa?`)) {
       return
     }
 
@@ -306,12 +350,12 @@ export function BandPressKitWorkspace({
     setWorkingAssetId(null)
 
     if (!response.ok) {
-      setShareFeedback(response.body?.message || 'No se pudo eliminar el logo.')
+      setShareFeedback(response.body?.message || `No se pudo eliminar el ${assetLabel}.`)
       return
     }
 
     setAssets((current) => current.filter((asset) => asset.id !== assetId))
-    setShareFeedback('Logo eliminado.')
+    setShareFeedback(`${assetLabel === 'logo' ? 'Logo' : 'Rider tecnico'} eliminado.`)
   }
 
   const handleShareLink = async (assetId: string, mode: 'copy' | 'download') => {
@@ -438,7 +482,7 @@ export function BandPressKitWorkspace({
             <div>
               <p className="eyebrow">Logos</p>
               <h2>Biblioteca PNG privada</h2>
-              <p className="muted">Solo se aceptan PNG. Cada logo puede generar un link temporal vencible.</p>
+              <p className="muted">Solo se aceptan PNG de hasta 20 MB. Cada logo puede generar un link temporal vencible.</p>
             </div>
             <label className="form-field press-kit-preset-field">
               <span className="form-label">Vigencia de links</span>
@@ -484,13 +528,13 @@ export function BandPressKitWorkspace({
           </div>
           {uploadMessage ? <p className="muted">{uploadMessage}</p> : null}
           <div className="press-kit-assets">
-            {assets.length === 0 ? (
+            {logos.length === 0 ? (
               <div className="press-kit-empty">
                 <h3>No hay logos cargados</h3>
                 <p className="muted">Sube al menos un PNG para completar el kit y compartirlo con un link temporal.</p>
               </div>
             ) : (
-              assets.map((asset) => (
+              logos.map((asset) => (
                 <article className="press-kit-asset-card" key={asset.id}>
                   <div className="press-kit-asset-card__preview">
                     {asset.previewUrl ? (
@@ -532,6 +576,92 @@ export function BandPressKitWorkspace({
                   </div>
                 </article>
               ))
+            )}
+          </div>
+        </section>
+
+        <section className="dashboard-card press-kit-card">
+          <div className="press-kit-card__header">
+            <div>
+              <p className="eyebrow">Rider tecnico</p>
+              <h2>PDF vigente para venues y produccion</h2>
+              <p className="muted">
+                Guarda un unico rider oficial de hasta 25 MB. Al subir otro, el anterior se reemplaza solo
+                cuando el nuevo queda guardado correctamente.
+              </p>
+            </div>
+          </div>
+
+          <div className="press-kit-upload press-kit-upload--rider">
+            <label className="form-field">
+              <span className="form-label">Archivo PDF</span>
+              <input
+                className="form-input"
+                accept="application/pdf,.pdf"
+                type="file"
+                onChange={(event) => setRiderFile(event.currentTarget.files?.[0] || null)}
+              />
+            </label>
+            <button
+              className="button button--primary"
+              type="button"
+              onClick={() => void handleRiderUpload()}
+              disabled={riderPhase !== 'idle'}
+            >
+              {riderPhase === 'preparing'
+                ? 'Preparando upload...'
+                : riderPhase === 'uploading'
+                  ? 'Subiendo rider...'
+                  : riderPhase === 'finalizing'
+                    ? 'Guardando rider...'
+                    : technicalRider
+                      ? 'Reemplazar rider PDF'
+                      : 'Subir rider PDF'}
+            </button>
+          </div>
+          {riderMessage ? <p className="muted">{riderMessage}</p> : null}
+
+          <div className="press-kit-assets">
+            {technicalRider ? (
+              <article className="press-kit-asset-card press-kit-asset-card--document">
+                <div className="press-kit-asset-card__preview press-kit-asset-card__preview--document">PDF</div>
+                <div className="press-kit-asset-card__copy">
+                  <strong>Rider tecnico vigente</strong>
+                  <span>{technicalRider.originalFileName}</span>
+                  <span>{formatBytes(technicalRider.fileSizeBytes)}</span>
+                </div>
+                <div className="press-kit-asset-card__actions">
+                  <button
+                    className="button"
+                    type="button"
+                    disabled={workingAssetId === technicalRider.id}
+                    onClick={() => void handleShareLink(technicalRider.id, 'download')}
+                  >
+                    Ver / Descargar
+                  </button>
+                  <button
+                    className="button"
+                    type="button"
+                    disabled={workingAssetId === technicalRider.id}
+                    onClick={() => void handleShareLink(technicalRider.id, 'copy')}
+                  >
+                    Generar link
+                  </button>
+                  <button
+                    className="button button--ghost"
+                    type="button"
+                    disabled={workingAssetId === technicalRider.id}
+                    onClick={() => void handleDeleteAsset(technicalRider.id)}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </article>
+            ) : (
+              <div className="press-kit-empty">
+                <h3>No hay un rider tecnico cargado</h3>
+                <p className="muted">Sube el PDF que la banda envia a venues, tecnicos y produccion.</p>
+              </div>
             )}
           </div>
         </section>

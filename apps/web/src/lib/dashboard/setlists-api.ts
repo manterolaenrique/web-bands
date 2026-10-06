@@ -166,11 +166,13 @@ export async function createSetlistItemRequest(
         itemType: 'song'
         songId: string
         notesOverride?: string
+        insertIndex?: number
       }
     | {
         itemType: 'block'
         blockLabel: string
         notesOverride?: string
+        insertIndex?: number
       }
 ) {
   return sendJson<MutationResponse<{item?: BandSetlistItem}>>(

@@ -5,8 +5,10 @@ import type {BandInternalKit, BandMemberRole, SupabaseBand} from './types'
 
 const requiredTrimmedString = (min: number, max: number) => z.string().trim().min(min).max(max)
 
-export const BAND_PRIVATE_ASSET_KINDS = ['logo'] as const
+export const BAND_PRIVATE_ASSET_KINDS = ['logo', 'technical_rider'] as const
 export const PRESS_KIT_SHARE_PRESETS = ['1h', '24h', '7d'] as const
+export const PRESS_KIT_LOGO_MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
+export const PRESS_KIT_RIDER_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024
 
 export type BandPrivateAssetKind = (typeof BAND_PRIVATE_ASSET_KINDS)[number]
 export type PressKitSharePreset = (typeof PRESS_KIT_SHARE_PRESETS)[number]
@@ -69,25 +71,71 @@ export const bandPressKitUpdateSchema = z.object({
     .default([]),
 })
 
-export const bandPrivateAssetUploadStartSchema = z.object({
-  kind: z.enum(BAND_PRIVATE_ASSET_KINDS).default('logo'),
-  label: requiredTrimmedString(2, 120),
+const privateAssetDescriptorSchema = z.object({
   fileName: requiredTrimmedString(1, 255),
   mimeType: requiredTrimmedString(3, 120),
-  fileSizeBytes: z.number().int().positive().max(5 * 1024 * 1024),
+  fileSizeBytes: z.number().int().positive(),
 })
 
-export const bandPrivateAssetFinalizeSchema = z.object({
-  kind: z.enum(BAND_PRIVATE_ASSET_KINDS).default('logo'),
-  label: requiredTrimmedString(2, 120),
-  upload: z.object({
-    assetId: z.string().uuid(),
-    storagePath: requiredTrimmedString(1, 1024),
-    originalFileName: requiredTrimmedString(1, 255),
-    mimeType: requiredTrimmedString(3, 120),
-    fileSizeBytes: z.number().int().positive().max(5 * 1024 * 1024),
-  }),
-})
+function validatePrivateAssetDescriptor(
+  value: {kind: BandPrivateAssetKind; mimeType: string; fileSizeBytes: number},
+  context: z.RefinementCtx,
+  pathPrefix: Array<string | number> = []
+) {
+  const isLogo = value.kind === 'logo'
+  const expectedMimeType = isLogo ? 'image/png' : 'application/pdf'
+  const maximumSize = isLogo
+    ? PRESS_KIT_LOGO_MAX_FILE_SIZE_BYTES
+    : PRESS_KIT_RIDER_MAX_FILE_SIZE_BYTES
+
+  if (value.mimeType !== expectedMimeType) {
+    context.addIssue({
+      code: 'custom',
+      path: [...pathPrefix, 'mimeType'],
+      message: isLogo ? 'El logo debe ser un archivo PNG.' : 'El rider tecnico debe ser un archivo PDF.',
+    })
+  }
+
+  if (value.fileSizeBytes > maximumSize) {
+    context.addIssue({
+      code: 'custom',
+      path: [...pathPrefix, 'fileSizeBytes'],
+      message: isLogo ? 'El logo PNG no puede superar 20 MB.' : 'El rider tecnico no puede superar 25 MB.',
+    })
+  }
+}
+
+export const bandPrivateAssetUploadStartSchema = z
+  .object({
+    kind: z.enum(BAND_PRIVATE_ASSET_KINDS).default('logo'),
+    label: requiredTrimmedString(2, 120),
+    ...privateAssetDescriptorSchema.shape,
+  })
+  .superRefine(validatePrivateAssetDescriptor)
+
+export const bandPrivateAssetFinalizeSchema = z
+  .object({
+    kind: z.enum(BAND_PRIVATE_ASSET_KINDS).default('logo'),
+    label: requiredTrimmedString(2, 120),
+    upload: z.object({
+      assetId: z.string().uuid(),
+      storagePath: requiredTrimmedString(1, 1024),
+      originalFileName: requiredTrimmedString(1, 255),
+      mimeType: requiredTrimmedString(3, 120),
+      fileSizeBytes: z.number().int().positive(),
+    }),
+  })
+  .superRefine((value, context) => {
+    validatePrivateAssetDescriptor(
+      {
+        kind: value.kind,
+        mimeType: value.upload.mimeType,
+        fileSizeBytes: value.upload.fileSizeBytes,
+      },
+      context,
+      ['upload']
+    )
+  })
 
 export const bandPrivateAssetShareSchema = z.object({
   preset: z.enum(PRESS_KIT_SHARE_PRESETS).default('24h'),

@@ -5,23 +5,21 @@ import {useEffect, useState} from 'react'
 import type {DashboardFlash} from '@/lib/dashboard/messages'
 
 export function DashboardFlashToast({flash}: {flash: DashboardFlash | null}) {
-  const [visible, setVisible] = useState(Boolean(flash))
+  const [dismissedFlash, setDismissedFlash] = useState<DashboardFlash | null>(null)
 
   useEffect(() => {
     if (!flash) {
-      setVisible(false)
       return
     }
 
-    setVisible(true)
     const timeout = window.setTimeout(() => {
-      setVisible(false)
+      setDismissedFlash(flash)
     }, 4200)
 
     return () => window.clearTimeout(timeout)
   }, [flash])
 
-  if (!flash || !visible) {
+  if (!flash || dismissedFlash === flash) {
     return null
   }
 
@@ -33,7 +31,7 @@ export function DashboardFlashToast({flash}: {flash: DashboardFlash | null}) {
           className="editor-toast__close"
           type="button"
           onClick={() => {
-            setVisible(false)
+            setDismissedFlash(flash)
           }}
           aria-label="Cerrar notificacion"
         >
