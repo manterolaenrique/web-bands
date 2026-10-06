@@ -8,6 +8,7 @@ export function formatSetlistDate(value: string) {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+    timeZone: 'UTC',
   }).format(date)
 }
 
@@ -20,6 +21,7 @@ export function formatCompactSetlistDate(value: string) {
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
     month: 'short',
+    timeZone: 'UTC',
   }).format(date)
 }
 
