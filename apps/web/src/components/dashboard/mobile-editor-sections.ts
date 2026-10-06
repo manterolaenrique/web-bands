@@ -1,4 +1,4 @@
-export type MobileEditorSectionKey =
+export type SiteEditorSectionKey =
   | 'overview'
   | 'general'
   | 'images'
@@ -6,11 +6,10 @@ export type MobileEditorSectionKey =
   | 'members'
   | 'social'
   | 'shows'
-  | 'team'
   | 'preview'
 
 export const MOBILE_EDITOR_SECTIONS: Record<
-  MobileEditorSectionKey,
+  SiteEditorSectionKey,
   {
     label: string
     title: string
@@ -52,11 +51,6 @@ export const MOBILE_EDITOR_SECTIONS: Record<
     title: 'Shows y fechas',
     description: 'Fechas, venues y links de entradas.',
   },
-  team: {
-    label: 'Equipo',
-    title: 'Equipo y permisos',
-    description: 'Invitaciones, roles y acceso privado de la banda para admins y owners.',
-  },
   preview: {
     label: 'Preview',
     title: 'Vista previa',
@@ -64,13 +58,15 @@ export const MOBILE_EDITOR_SECTIONS: Record<
   },
 }
 
-export function isMobileEditorSectionKey(value: string): value is MobileEditorSectionKey {
+export const SITE_EDITOR_SECTION_KEYS = Object.keys(MOBILE_EDITOR_SECTIONS) as SiteEditorSectionKey[]
+
+export function isSiteEditorSectionKey(value: string): value is SiteEditorSectionKey {
   return value in MOBILE_EDITOR_SECTIONS
 }
 
-export function getMobileEditorHref(bandId: string, section: MobileEditorSectionKey) {
+export function getSiteEditorHref(bandId: string, section: SiteEditorSectionKey) {
   if (section === 'overview') {
-    return `/dashboard/bands/${bandId}`
+    return `/dashboard/bands/${bandId}/site`
   }
 
   return `/dashboard/bands/${bandId}/${section}`

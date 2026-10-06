@@ -1,18 +1,26 @@
 'use client'
 
-import {useRouter} from 'next/navigation'
-
+import {usePendingNavigation} from '@/components/ui/usePendingNavigation'
 import {formatTrackDuration, getTrackTypeLabel} from '@/lib/demos/format'
 
-import {useDashboardAudio} from './DashboardAudioProvider'
-import {ChevronRightIcon, PauseCircleIcon, PlayCircleIcon} from './DemoIcons'
+import {useDashboardAudioControls, useDashboardAudioSelector} from './DashboardAudioProvider'
+import {ChevronRightIcon, PauseCircleIcon, PlayCircleIcon, PlaylistIcon} from './DemoIcons'
 import {useTapAction} from './useTapAction'
 
 export function MiniPlayer() {
-  const router = useRouter()
-  const {currentTrack, isLoading, isPlaying, error, playNext, togglePlayPause} = useDashboardAudio()
+  const navigation = usePendingNavigation()
+  const currentTrack = useDashboardAudioSelector((state) => state.currentTrack)
+  const canPlayNext = useDashboardAudioSelector((state) => state.canPlayNext)
+  const error = useDashboardAudioSelector((state) => state.error)
+  const isLoading = useDashboardAudioSelector((state) => state.isLoading)
+  const isPlaying = useDashboardAudioSelector((state) => state.isPlaying)
+  const isTransitioningTrack = useDashboardAudioSelector((state) => state.isTransitioningTrack)
+  const sourceHref = useDashboardAudioSelector((state) => state.sourceHref)
+  const sourceLabel = useDashboardAudioSelector((state) => state.sourceLabel)
+  const sourceType = useDashboardAudioSelector((state) => state.sourceType)
+  const {playNext, togglePlayPause} = useDashboardAudioControls()
   const openTrackTap = useTapAction<HTMLButtonElement>(() => {
-    router.push(currentTrack!.detailHref)
+    navigation.push(currentTrack!.detailHref)
   })
   const toggleTap = useTapAction<HTMLButtonElement>(() => {
     void togglePlayPause()
@@ -20,6 +28,12 @@ export function MiniPlayer() {
   const nextTap = useTapAction<HTMLButtonElement>(() => {
     void playNext()
   })
+  const sourceTap = useTapAction<HTMLButtonElement>(() => {
+    if (sourceHref) {
+      navigation.push(sourceHref)
+    }
+  })
+  const isNavigating = navigation.isPending
 
   if (!currentTrack) {
     return null
@@ -33,14 +47,32 @@ export function MiniPlayer() {
         onTouchEnd={openTrackTap.onTouchEnd}
         onClick={openTrackTap.onClick}
       >
-        <span className="demos-mini-player__eyebrow">{getTrackTypeLabel(currentTrack.trackType)}</span>
+        <span className="demos-mini-player__eyebrow">
+          {sourceLabel || getTrackTypeLabel(currentTrack.trackType)}
+        </span>
         <strong className="demos-mini-player__title">{currentTrack.title}</strong>
         <small className="demos-mini-player__meta">
-          {isLoading ? 'Preparando audio...' : formatTrackDuration(currentTrack.durationSeconds)}
+          {isNavigating
+            ? 'Abriendo detalle...'
+            : isTransitioningTrack || isLoading
+              ? 'Cambiando de cancion...'
+              : `${getTrackTypeLabel(currentTrack.trackType)} Â· ${formatTrackDuration(currentTrack.durationSeconds)}`}
         </small>
       </button>
 
       <div className="demos-mini-player__actions">
+        {sourceType === 'playlist' && sourceHref ? (
+          <button
+            className="demos-mini-player__control"
+            type="button"
+            aria-label={`Ir a ${sourceLabel || 'la playlist'}`}
+            disabled={isNavigating}
+            onTouchEnd={sourceTap.onTouchEnd}
+            onClick={sourceTap.onClick}
+          >
+            <PlaylistIcon />
+          </button>
+        ) : null}
         <button
           className="demos-mini-player__control"
           type="button"
@@ -54,6 +86,7 @@ export function MiniPlayer() {
           className="demos-mini-player__control"
           type="button"
           aria-label="Siguiente audio"
+          disabled={!canPlayNext}
           onTouchEnd={nextTap.onTouchEnd}
           onClick={nextTap.onClick}
         >

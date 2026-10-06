@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import {usePathname, useSearchParams} from 'next/navigation'
+import {usePathname} from 'next/navigation'
 
 import {HomeIcon, SearchIcon, UserIcon} from '@/components/layout/MobileNavIcons'
 
@@ -38,9 +38,11 @@ function getItemIcon(kind: PublicNavItem['kind']) {
 
 export function PublicMobileChrome({accountHref, accountLabel}: PublicMobileChromeProps) {
   const pathname = usePathname() || ''
-  const searchParams = useSearchParams()
   const navItems = getNavItems(accountHref, accountLabel)
-  const focusMode = searchParams?.get('focus')
+  const focusMode =
+    typeof window === 'undefined'
+      ? null
+      : new URLSearchParams(window.location.search).get('focus')
 
   return (
     <>

@@ -1,8 +1,9 @@
 'use client'
 
-import {useRouter} from 'next/navigation'
 import {useState, type FormEvent} from 'react'
 
+import {InlineButtonSpinner} from '@/components/ui/InlineButtonSpinner'
+import {usePendingNavigation} from '@/components/ui/usePendingNavigation'
 import {createBandRequest} from '@/lib/dashboard/api'
 
 type CreateBandFormProps = {
@@ -10,7 +11,7 @@ type CreateBandFormProps = {
 }
 
 export function CreateBandForm({defaultName = ''}: CreateBandFormProps) {
-  const router = useRouter()
+  const navigation = usePendingNavigation()
   const [name, setName] = useState(defaultName)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -28,9 +29,10 @@ export function CreateBandForm({defaultName = ''}: CreateBandFormProps) {
       return
     }
 
-    router.push(result.body.editorHref || `/dashboard/bands/${result.body.band.id}`)
-    router.refresh()
+    navigation.push(result.body.editorHref || `/dashboard/bands/${result.body.band.id}`)
   }
+
+  const isPending = isSubmitting || navigation.isPending
 
   return (
     <form onSubmit={handleSubmit} className="form-grid">
@@ -45,13 +47,13 @@ export function CreateBandForm({defaultName = ''}: CreateBandFormProps) {
           maxLength={120}
           value={name}
           onChange={(event) => setName(event.currentTarget.value)}
-          disabled={isSubmitting}
+          disabled={isPending}
         />
       </label>
       {error ? <div className="status status--error form-field--full">{error}</div> : null}
       <div className="row-actions row-actions--stack-mobile form-field--full">
-        <button className="button button--primary" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creando...' : 'Crear banda'}
+        <button className="button button--primary" type="submit" disabled={isPending} aria-busy={isPending}>
+          {isPending ? <InlineButtonSpinner label="Creando..." /> : 'Crear banda'}
         </button>
       </div>
     </form>

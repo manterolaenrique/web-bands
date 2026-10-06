@@ -17,10 +17,11 @@
     "test:e2e:strict": "node ./scripts/ensure-e2e-fixture-strict.mjs && playwright test"
   },
   "dependencies": {
-    "@web-bands/bands-domain": "file:../../packages/bands-domain",
     "@sanity/client": "^7.22.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
+    "@vercel/speed-insights": "^2.0.0",
+    "@web-bands/bands-domain": "file:../../packages/bands-domain",
     "next": "^16.2.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

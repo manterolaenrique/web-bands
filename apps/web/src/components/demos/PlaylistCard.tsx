@@ -1,6 +1,6 @@
-import Link from 'next/link'
-
 import type {BandAudioPlaylistSummary} from '@web-bands/bands-domain'
+
+import {PendingLink} from '@/components/ui/PendingLink'
 
 import {PlayCircleIcon, PlaylistIcon} from './DemoIcons'
 import {PlayPlaylistButton} from './PlayPlaylistButton'
@@ -46,6 +46,8 @@ export function PlaylistCard({
             <PlayPlaylistButton
               bandId={bandId}
               playlistId={playlist.id}
+              sourceHref={`/dashboard/bands/${bandId}/demos/playlists/${playlist.id}`}
+              sourceLabel={playlist.title}
               className="button button--ghost"
               aria-label={`Reproducir playlist ${playlist.title}`}
               disabled={playlist.trackCount === 0}
@@ -53,9 +55,13 @@ export function PlaylistCard({
               <PlayCircleIcon />
               Play
             </PlayPlaylistButton>
-            <Link className="button button--ghost" href={`/dashboard/bands/${bandId}/demos/playlists/${playlist.id}`}>
+            <PendingLink
+              className="button button--ghost"
+              href={`/dashboard/bands/${bandId}/demos/playlists/${playlist.id}`}
+              pendingLabel={`Abriendo ${playlist.title}...`}
+            >
               Abrir
-            </Link>
+            </PendingLink>
           </div>
         </div>
       </div>

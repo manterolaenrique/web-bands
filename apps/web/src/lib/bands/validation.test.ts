@@ -129,6 +129,24 @@ const validPayload = {
       },
     ],
   },
+  internalKit: {
+    shortPitch: 'Pitch interno.',
+    bioShort: 'Bio corta privada.',
+    bioLong: 'Bio larga privada para el centro de prensa.',
+    shareNotes: 'Texto listo para enviar por mail o WhatsApp.',
+    contactName: 'Booking Demo',
+    contactEmail: 'booking@example.com',
+    contactPhone: '+54 11 4444 4444',
+    bookingNotes: 'Notas internas del equipo.',
+    keyLinks: [
+      {
+        _key: 'kit-1',
+        label: 'Drive press',
+        url: 'https://example.com/press',
+        kind: 'press',
+      },
+    ],
+  },
   seo: {
     title: 'Demo Band',
     description: 'Demo Band en Web Bands.',
@@ -234,6 +252,8 @@ describe('toSanityBandPatch', () => {
     expect(patch.featuredRelease?.coverImage?.asset?._ref).toBe('image-cover-1-jpg')
     expect(patch.gallerySection?.items?.[0]?.image?.asset?._ref).toBe('image-gallery-1-jpg')
     expect(patch.seo.palabras_clave).toEqual(['metal argentino', 'doom', 'show en vivo'])
+    expect(patch.internalKit?.bioShort).toBe('Bio corta privada.')
+    expect(patch.internalKit?.shareNotes).toBe('Texto listo para enviar por mail o WhatsApp.')
   })
 
   it('creates dotted Sanity set paths and preserves nested arrays with image refs', () => {
@@ -290,6 +310,7 @@ describe('toSanityBandPatch', () => {
     expect(patchSet).not.toHaveProperty('hero')
     expect(patchSet).not.toHaveProperty('contacto')
     expect(patchSet['seo.palabras_clave']).toEqual(['metal argentino', 'doom', 'show en vivo'])
+    expect(patchSet['internalKit.bioLong']).toBe('Bio larga privada para el centro de prensa.')
   })
 
   it('creates unset paths for optional fields cleared in the dashboard', () => {
@@ -343,6 +364,17 @@ describe('toSanityBandPatch', () => {
         titulo: '',
         items: [],
       },
+      internalKit: {
+        shortPitch: '',
+        bioShort: '',
+        bioLong: '',
+        shareNotes: '',
+        contactName: '',
+        contactEmail: '',
+        contactPhone: '',
+        bookingNotes: '',
+        keyLinks: [],
+      },
       seo: {
         ...validPayload.seo,
         keywords: [],
@@ -360,6 +392,7 @@ describe('toSanityBandPatch', () => {
         'featuredRelease',
         'showsSection',
         'gallerySection',
+        'internalKit',
         'seo.palabras_clave',
       ])
     )

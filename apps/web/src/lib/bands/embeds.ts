@@ -81,8 +81,13 @@ export function resolveSpotifyEmbedUrl(url: string | undefined): SpotifyEmbedRes
       return null
     }
 
+    const params = new URLSearchParams({
+      utm_source: 'generator',
+      theme: '0',
+    })
+
     return {
-      embedUrl: `https://open.spotify.com/embed/${supportedType}/${id}?utm_source=generator`,
+      embedUrl: `https://open.spotify.com/embed/${supportedType}/${id}?${params.toString()}`,
       type: supportedType as SpotifyEmbedType,
       id,
     }

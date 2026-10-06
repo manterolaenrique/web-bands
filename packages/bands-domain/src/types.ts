@@ -72,6 +72,9 @@ export type BandInternalKitLink = {
 
 export type BandInternalKit = {
   shortPitch?: string
+  bioShort?: string
+  bioLong?: string
+  shareNotes?: string
   contactName?: string
   contactEmail?: string
   contactPhone?: string

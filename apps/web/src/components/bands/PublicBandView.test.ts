@@ -152,8 +152,10 @@ describe('PublicBandView', () => {
     expect(html).toContain('X / Twitter')
     expect(html).toContain('title="YouTube: Sesion en vivo"')
     expect(html).toContain('https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0')
-    expect(html).toContain('title="Spotify: perfil oficial"')
-    expect(html).toContain('https://open.spotify.com/embed/playlist/1234567890ab?utm_source=generator')
+    expect(html).not.toContain('title="Spotify: Perfil oficial"')
+    expect(html).toContain('title="Spotify: Favoritas"')
+    expect(html).toContain('https://open.spotify.com/embed/playlist/1234567890ab?utm_source=generator&amp;theme=0')
+    expect(html).toContain('Abrir perfil')
     expect(html).toContain('data-network="twitter"')
     expect(html).toContain('contact-panel__icon')
   })
@@ -240,8 +242,74 @@ describe('PublicBandView', () => {
 
     expect(html).toContain('No se pudo embeber este video')
     expect(html).toContain('Abrir en YouTube')
-    expect(html).toContain('No se pudo embeber este perfil')
-    expect(html).toContain('No se pudo embeber esta playlist')
+    expect(html).toContain('No se pudo embeber este recurso')
+    expect(html).toContain('Perfil oficial')
+    expect(html).toContain('Favoritas')
+    expect(html).toContain('Abrir en Spotify')
+    expect(html).toContain('Abrir perfil')
+  })
+
+  it('uses the first embeddable spotify playlist as primary when no profile exists', () => {
+    const html = renderToStaticMarkup(
+      createElement(PublicBandView, {
+        band: createBand({
+          escuchanos: {
+            ...createBand().escuchanos,
+            spotify: {
+              habilitado: true,
+              titulo: 'Spotify',
+              perfil_url: '',
+              playlists: [
+                {
+                  _key: 'playlist-1',
+                  titulo: 'Lista principal',
+                  url: 'https://open.spotify.com/playlist/1234567890ab',
+                  descripcion: 'La lista para arrancar.',
+                },
+                {
+                  _key: 'playlist-2',
+                  titulo: 'Segunda lista',
+                  url: 'https://open.spotify.com/album/abc123456789',
+                  descripcion: 'Otra escucha.',
+                },
+              ],
+            },
+          },
+        }),
+      })
+    )
+
+    expect(html).toContain('title="Spotify: Lista principal"')
+    expect(html).toContain('https://open.spotify.com/embed/playlist/1234567890ab?utm_source=generator&amp;theme=0')
+    expect(html).toContain('Segunda lista')
+  })
+
+  it('renders spotify as secondary links when only invalid resources are configured', () => {
+    const html = renderToStaticMarkup(
+      createElement(PublicBandView, {
+        band: createBand({
+          escuchanos: {
+            ...createBand().escuchanos,
+            spotify: {
+              habilitado: true,
+              titulo: 'Spotify',
+              perfil_url: '',
+              playlists: [
+                {
+                  _key: 'playlist-1',
+                  titulo: 'Favoritas',
+                  url: 'https://example.com/playlist-invalida',
+                  descripcion: 'Curada por la banda.',
+                },
+              ],
+            },
+          },
+        }),
+      })
+    )
+
+    expect(html).toContain('No se pudo embeber este recurso')
+    expect(html).toContain('Favoritas')
     expect(html).toContain('Abrir en Spotify')
   })
 

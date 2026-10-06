@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import {notFound} from 'next/navigation'
 
+import {BandWorkspaceHeader} from '@/components/dashboard/BandWorkspaceHeader'
 import {BandWorkspaceNav} from '@/components/demos/BandWorkspaceNav'
 import {EmptyState} from '@/components/demos/EmptyState'
 import {PlaylistCard} from '@/components/demos/PlaylistCard'
@@ -8,6 +8,8 @@ import {PlaylistFormSheet} from '@/components/demos/PlaylistFormSheet'
 import {TrackCard} from '@/components/demos/TrackCard'
 import {PlayTrackButton} from '@/components/demos/PlayTrackButton'
 import {UploadIcon} from '@/components/demos/DemoIcons'
+import {PendingLink} from '@/components/ui/PendingLink'
+import {getBandEditorPayload} from '@/server/bands/editor-payload'
 import {formatTrackDuration, getTrackTypeLabel} from '@/lib/demos/format'
 import {requireUser} from '@/lib/auth/session'
 import {getBandDemosHome} from '@/server/demos/home'
@@ -25,9 +27,12 @@ export default async function BandDemosPage({params, searchParams}: PageProps) {
   const {bandId} = await params
   const {q} = await searchParams
   const user = await requireUser()
-  const payload = await getBandDemosHome(user.id, bandId, q)
+  const [payload, editorPayload] = await Promise.all([
+    getBandDemosHome(user.id, bandId, q),
+    getBandEditorPayload(user.id, bandId),
+  ])
 
-  if (!payload) {
+  if (!payload || !editorPayload) {
     notFound()
   }
 
@@ -35,26 +40,30 @@ export default async function BandDemosPage({params, searchParams}: PageProps) {
 
   return (
     <div className="demos-screen">
-      <header className="dashboard-header editor-page-header demos-page-header">
-        <div>
-          <p className="eyebrow">Workspace privado</p>
-          <h1 className="dashboard-title">Demos</h1>
-          <p className="muted">Audios privados de {payload.band.name} para ideas, ensayos, mezclas y versiones finales.</p>
-        </div>
-        <div className="row-actions row-actions--stack-mobile">
-          {payload.canEdit ? (
+      <BandWorkspaceHeader
+        bandId={bandId}
+        bandName={payload.band.name}
+        bandStatus={payload.band.status}
+        publicBandHref={editorPayload.publicBandHref}
+        canManage={editorPayload.canManage}
+        activeSection="demos"
+        eyebrow="Herramientas privadas · Demos"
+        description={`Audios privados de ${payload.band.name} para ideas, ensayos, mezclas y versiones finales.`}
+        actions={
+          payload.canEdit ? (
             <>
-              <Link className="button button--primary" href={`/dashboard/bands/${bandId}/demos/upload`}>
+              <PendingLink
+                className="button button--primary"
+                href={`/dashboard/bands/${bandId}/demos/upload`}
+                pendingLabel="Abriendo subida de demo..."
+              >
                 Subir demo
-              </Link>
+              </PendingLink>
               <PlaylistFormSheet bandId={bandId} triggerLabel="Nueva playlist" />
             </>
-          ) : null}
-          <Link className="button" href={`/dashboard/bands/${bandId}`}>
-            Volver al editor
-          </Link>
-        </div>
-      </header>
+          ) : null
+        }
+      />
 
       <BandWorkspaceNav bandId={bandId} active="demos" />
 
@@ -68,10 +77,14 @@ export default async function BandDemosPage({params, searchParams}: PageProps) {
 
         {payload.canEdit ? (
           <div className="demos-toolbar__actions">
-            <Link className="button button--primary" href={`/dashboard/bands/${bandId}/demos/upload`}>
+            <PendingLink
+              className="button button--primary"
+              href={`/dashboard/bands/${bandId}/demos/upload`}
+              pendingLabel="Abriendo subida de demo..."
+            >
               <UploadIcon />
               Subir demo
-            </Link>
+            </PendingLink>
             <PlaylistFormSheet bandId={bandId} triggerLabel="Nueva playlist" />
           </div>
         ) : null}
@@ -91,6 +104,8 @@ export default async function BandDemosPage({params, searchParams}: PageProps) {
             tracks={payload.recentTracks}
             trackId={payload.featuredTrack.id}
             source={{sourceType: 'featured'}}
+            sourceHref={`/dashboard/bands/${bandId}/demos`}
+            sourceLabel="Demos"
           >
             Reproducir
           </PlayTrackButton>
@@ -116,9 +131,13 @@ export default async function BandDemosPage({params, searchParams}: PageProps) {
                 <h2>Playlists</h2>
                 <p>{payload.totalPlaylists} colecciones privadas</p>
               </div>
-              <Link className="button" href={`/dashboard/bands/${bandId}/demos/playlists`}>
+              <PendingLink
+                className="button"
+                href={`/dashboard/bands/${bandId}/demos/playlists`}
+                pendingLabel="Abriendo playlists..."
+              >
                 Ver todas
-              </Link>
+              </PendingLink>
             </div>
             {payload.playlists.length > 0 ? (
               <div className="demos-playlist-grid">

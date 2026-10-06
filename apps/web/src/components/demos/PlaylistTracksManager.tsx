@@ -1,11 +1,10 @@
 'use client'
-
-import Link from 'next/link'
-import {useRouter} from 'next/navigation'
 import {useState, useTransition} from 'react'
 
 import type {BandAudioPlaylistTrack} from '@web-bands/bands-domain'
 
+import {InlineButtonSpinner} from '@/components/ui/InlineButtonSpinner'
+import {PendingLink} from '@/components/ui/PendingLink'
 import {removeTrackFromPlaylistRequest, reorderPlaylistTracksRequest} from '@/lib/dashboard/demos-api'
 import {formatTrackDuration, getTrackTypeLabel} from '@/lib/demos/format'
 
@@ -15,23 +14,28 @@ import {PlayTrackButton} from './PlayTrackButton'
 export function PlaylistTracksManager({
   bandId,
   playlistId,
+  playlistTitle,
   tracks,
   canEdit,
   isLocked,
+  onTracksChange,
 }: {
   bandId: string
   playlistId: string
+  playlistTitle: string
   tracks: BandAudioPlaylistTrack[]
   canEdit: boolean
   isLocked: boolean
+  onTracksChange?: (tracks: BandAudioPlaylistTrack[]) => void
 }) {
-  const router = useRouter()
   const [orderedTracks, setOrderedTracks] = useState(tracks)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const syncOrder = (nextTracks: BandAudioPlaylistTrack[]) => {
+    const previousTracks = orderedTracks
     setOrderedTracks(nextTracks)
+    onTracksChange?.(nextTracks)
     startTransition(async () => {
       const response = await reorderPlaylistTracksRequest(
         bandId,
@@ -41,11 +45,10 @@ export function PlaylistTracksManager({
 
       if (!response.ok) {
         setError(response.body?.message || 'No se pudo reordenar la playlist.')
-        setOrderedTracks(tracks)
+        setOrderedTracks(previousTracks)
+        onTracksChange?.(previousTracks)
         return
       }
-
-      router.refresh()
     })
   }
 
@@ -63,6 +66,8 @@ export function PlaylistTracksManager({
               tracks={orderedTracks.map((entry) => entry.track)}
               trackId={item.track.id}
               source={{sourceType: 'playlist', sourceId: playlistId}}
+              sourceHref={`/dashboard/bands/${bandId}/demos/playlists/${playlistId}`}
+              sourceLabel={playlistTitle}
             >
               <PlayCircleIcon />
             </PlayTrackButton>
@@ -74,13 +79,14 @@ export function PlaylistTracksManager({
             </div>
           </div>
           <div className="demos-playlist-track-row__actions">
-            <Link
-              href={`/dashboard/bands/${bandId}/demos/${item.track.id}`}
+            <PendingLink
+              href={`/dashboard/bands/${bandId}/demos/${item.track.id}?playlistId=${playlistId}`}
               className="demos-track-card__icon-button"
               aria-label={`Abrir ${item.track.title}`}
+              pendingLabel={`Abriendo ${item.track.title}...`}
             >
               <ChevronRightIcon />
-            </Link>
+            </PendingLink>
             {canEdit && !isLocked ? (
               <>
                 <button
@@ -112,6 +118,10 @@ export function PlaylistTracksManager({
                   type="button"
                   disabled={isPending}
                   onClick={() => {
+                    const previousTracks = orderedTracks
+                    const nextTracks = previousTracks.filter((entry) => entry.id !== item.id)
+                    setOrderedTracks(nextTracks)
+                    onTracksChange?.(nextTracks)
                     startTransition(async () => {
                       const response = await removeTrackFromPlaylistRequest(
                         bandId,
@@ -121,15 +131,14 @@ export function PlaylistTracksManager({
 
                       if (!response.ok) {
                         setError(response.body?.message || 'No se pudo quitar el track.')
+                        setOrderedTracks(previousTracks)
+                        onTracksChange?.(previousTracks)
                         return
                       }
-
-                      setOrderedTracks((current) => current.filter((entry) => entry.id !== item.id))
-                      router.refresh()
                     })
                   }}
                 >
-                  Quitar
+                  {isPending ? <InlineButtonSpinner label="Guardando..." /> : 'Quitar'}
                 </button>
               </>
             ) : null}
@@ -138,6 +147,7 @@ export function PlaylistTracksManager({
       ))}
 
       {error ? <div className="status status--error">{error}</div> : null}
+      {isPending ? <div className="status status--warning">Sincronizando cambios de la playlist...</div> : null}
     </div>
   )
 }

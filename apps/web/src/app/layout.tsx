@@ -1,7 +1,8 @@
 import type {Metadata, Viewport} from 'next'
 import Link from 'next/link'
-import {Inter, Montserrat} from 'next/font/google'
+import {Cormorant_Garamond, Inter, Montserrat, Oswald} from 'next/font/google'
 import type {ReactNode} from 'react'
+import {SpeedInsights} from '@vercel/speed-insights/next'
 
 import {SiteHeader} from '@/components/layout/SiteHeader'
 import {AppRuntimeBridge} from '@/components/pwa/AppRuntimeBridge'
@@ -17,6 +18,18 @@ const montserrat = Montserrat({
   subsets: ['latin'],
   variable: '--font-display',
   weight: ['700', '800', '900'],
+})
+
+const oswald = Oswald({
+  subsets: ['latin'],
+  variable: '--font-stage',
+  weight: ['500', '600', '700'],
+})
+
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  variable: '--font-editorial',
+  weight: ['600', '700'],
 })
 
 export const metadata: Metadata = {
@@ -49,7 +62,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({children}: {children: ReactNode}) {
   return (
-    <html lang="es" data-scroll-behavior="smooth" className={`${inter.variable} ${montserrat.variable}`}>
+    <html
+      lang="es"
+      data-scroll-behavior="smooth"
+      className={`${inter.variable} ${montserrat.variable} ${oswald.variable} ${cormorant.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <AppRuntimeBridge />
         <div className="app-shell">
@@ -65,7 +83,7 @@ export default function RootLayout({children}: {children: ReactNode}) {
                   unificada.
                 </p>
               </div>
-              <div className="site-footer__links">
+              <div className="site-footer__links" aria-label="Enlaces de navegacion principal">
                 <Link href="/">Bandas</Link>
                 <Link href="/dashboard">Dashboard</Link>
                 <Link href="/login">Login</Link>
@@ -73,6 +91,7 @@ export default function RootLayout({children}: {children: ReactNode}) {
             </div>
           </footer>
         </div>
+        <SpeedInsights />
       </body>
     </html>
   )

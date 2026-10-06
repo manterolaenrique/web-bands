@@ -1,4 +1,5 @@
 import {revalidatePath} from 'next/cache'
+import {cache} from 'react'
 
 import type {
   BandAudioPlaylistDetail,
@@ -20,6 +21,7 @@ import {
   DEMOS_ALLOWED_COVER_MIME_TYPES,
   DEMOS_MAX_COVER_FILE_SIZE_BYTES,
   ensureGeneralPlaylist,
+  GENERAL_PLAYLIST_SYSTEM_KEY,
   getBandDemosAccess,
   isLockedPlaylistSystemKey,
   loadBandPlaylistRowById,
@@ -48,6 +50,18 @@ type PlaylistTrackRow = {
   track_id: string
   sort_order: number
   created_at: string
+}
+
+function revalidateDemosHome(bandId: string) {
+  revalidatePath(`/dashboard/bands/${bandId}/demos`)
+}
+
+function revalidatePlaylistIndex(bandId: string) {
+  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
+}
+
+function revalidatePlaylistDetail(bandId: string, playlistId: string) {
+  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${playlistId}`)
 }
 
 function readOptionalString(formData: FormData, key: string) {
@@ -147,14 +161,20 @@ async function loadPlaylistTrackCountMap(playlistIds: string[]) {
   }, new Map())
 }
 
-async function loadPlaylistTracks(playlistId: string, bandId: string) {
+async function loadPlaylistTracks(
+  playlistId: string,
+  bandId: string,
+  options?: {
+    newestFirst?: boolean
+  }
+) {
   const supabase = await createClient()
   const {data: playlistTrackRows, error: playlistTrackError} = await supabase
     .from('band_audio_playlist_tracks')
     .select('id, playlist_id, track_id, sort_order, created_at')
     .eq('playlist_id', playlistId)
-    .order('sort_order', {ascending: true})
-    .order('created_at', {ascending: true})
+    .order('sort_order', {ascending: !options?.newestFirst})
+    .order('created_at', {ascending: !options?.newestFirst})
 
   if (playlistTrackError) {
     throw new BandServiceError('Playlist tracks could not be loaded.', 500)
@@ -200,7 +220,11 @@ async function loadPlaylistTracks(playlistId: string, bandId: string) {
     .filter((track): track is BandAudioPlaylistTrack => track !== null)
 }
 
-export async function getBandPlaylists(userId: string, bandId: string, query?: string | null) {
+const loadBandPlaylistSummariesInternal = cache(async function loadBandPlaylistSummariesInternal(
+  userId: string,
+  bandId: string,
+  query?: string | null
+) {
   const access = requireDemosAccess(await getBandDemosAccess(userId, bandId))
   await ensureGeneralPlaylist(bandId, userId)
   const supabase = await createClient()
@@ -222,15 +246,38 @@ export async function getBandPlaylists(userId: string, bandId: string, query?: s
   )
 
   return {
-    band: access.band,
-    role: access.role,
-    canEdit: access.canEdit,
+    access,
     query: normalizedQuery,
     playlists,
   }
-}
+})
 
-export async function getBandPlaylist(
+export const getBandPlaylistSummaries = cache(async function getBandPlaylistSummaries(
+  userId: string,
+  bandId: string,
+  query?: string | null
+) {
+  const payload = await loadBandPlaylistSummariesInternal(userId, bandId, query)
+  return payload.playlists
+})
+
+export const getBandPlaylists = cache(async function getBandPlaylists(
+  userId: string,
+  bandId: string,
+  query?: string | null
+) {
+  const payload = await loadBandPlaylistSummariesInternal(userId, bandId, query)
+
+  return {
+    band: payload.access.band,
+    role: payload.access.role,
+    canEdit: payload.access.canEdit,
+    query: payload.query,
+    playlists: payload.playlists,
+  }
+})
+
+export const getBandPlaylist = cache(async function getBandPlaylist(
   userId: string,
   bandId: string,
   playlistId: string
@@ -253,7 +300,9 @@ export async function getBandPlaylist(
     return null
   }
 
-  const tracks = await loadPlaylistTracks(playlistId, bandId)
+  const tracks = await loadPlaylistTracks(playlistId, bandId, {
+    newestFirst: playlistRow.system_key === GENERAL_PLAYLIST_SYSTEM_KEY,
+  })
   const coverUrlMap = await resolvePlaylistCoverUrlMap([playlistRow as PlaylistRow])
   return {
     ...toPlaylistSummary(playlistRow, tracks.length, coverUrlMap.get(playlistId)),
@@ -262,7 +311,7 @@ export async function getBandPlaylist(
     canEdit: access.canEdit,
     tracks,
   }
-}
+})
 
 export async function createBandPlaylist(
   userId: string,
@@ -338,8 +387,8 @@ export async function createBandPlaylist(
 
   const coverUrlMap = await resolvePlaylistCoverUrlMap([playlistRow])
 
-  revalidatePath(`/dashboard/bands/${bandId}/demos`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
+  revalidateDemosHome(bandId)
+  revalidatePlaylistIndex(bandId)
 
   await writeAuditLog({
     action: 'band.demo_playlist_created',
@@ -466,9 +515,9 @@ export async function updateBandPlaylist(
 
   const coverUrlMap = await resolvePlaylistCoverUrlMap([playlistRow])
 
-  revalidatePath(`/dashboard/bands/${bandId}/demos`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${playlistId}`)
+  revalidateDemosHome(bandId)
+  revalidatePlaylistIndex(bandId)
+  revalidatePlaylistDetail(bandId, playlistId)
 
   await writeAuditLog({
     action: 'band.demo_playlist_updated',
@@ -523,8 +572,8 @@ export async function deleteBandPlaylist(
 
   await removePlaylistCoverStorageObject(existingPlaylist.cover_storage_bucket, existingPlaylist.cover_storage_path)
 
-  revalidatePath(`/dashboard/bands/${bandId}/demos`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
+  revalidateDemosHome(bandId)
+  revalidatePlaylistIndex(bandId)
 
   await writeAuditLog({
     action: 'band.demo_playlist_deleted',
@@ -585,9 +634,9 @@ export async function addTrackToPlaylist(
     throw new BandServiceError('Track could not be added to the playlist.', 400)
   }
 
-  revalidatePath(`/dashboard/bands/${bandId}/demos`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${playlistId}`)
+  revalidateDemosHome(bandId)
+  revalidatePlaylistIndex(bandId)
+  revalidatePlaylistDetail(bandId, playlistId)
 
   await writeAuditLog({
     action: 'band.demo_playlist_track_added',
@@ -639,9 +688,9 @@ export async function removeTrackFromPlaylist(
     throw new BandServiceError('Track could not be removed from the playlist.', 500)
   }
 
-  revalidatePath(`/dashboard/bands/${bandId}/demos`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${playlistId}`)
+  revalidateDemosHome(bandId)
+  revalidatePlaylistIndex(bandId)
+  revalidatePlaylistDetail(bandId, playlistId)
 
   await writeAuditLog({
     action: 'band.demo_playlist_track_removed',
@@ -723,7 +772,7 @@ export async function reorderPlaylistTracks(
     )
   )
 
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${playlistId}`)
+  revalidatePlaylistDetail(bandId, playlistId)
 
   await writeAuditLog({
     action: 'band.demo_playlist_reordered',

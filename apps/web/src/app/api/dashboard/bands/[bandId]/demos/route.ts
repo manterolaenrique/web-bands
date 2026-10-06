@@ -5,7 +5,7 @@ import {resolveRequestContext} from '@/lib/server/request-context'
 import {createClient} from '@/lib/supabase/server'
 import {BandServiceError} from '@/server/bands/service-error'
 import {getBandDemosHome} from '@/server/demos/home'
-import {uploadBandTrack} from '@/server/demos/tracks'
+import {completeBandTrackUpload, uploadBandTrack} from '@/server/demos/tracks'
 
 export const runtime = 'nodejs'
 
@@ -76,14 +76,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const {bandId} = await context.params
   const requestContext = resolveRequestContext(request.headers)
-  const formData = await request.formData().catch(() => null)
+  const contentType = request.headers.get('content-type') || ''
+  const body = contentType.includes('multipart/form-data')
+    ? await request.formData().catch(() => null)
+    : await request.json().catch(() => null)
 
-  if (!formData) {
-    return NextResponse.json({message: 'Form data is required.'}, {status: 400})
+  if (!body) {
+    return NextResponse.json({message: 'Request body is required.'}, {status: 400})
   }
 
   try {
-    const payload = await uploadBandTrack(user.id, bandId, formData, requestContext)
+    const payload =
+      body instanceof FormData
+        ? await uploadBandTrack(user.id, bandId, body, requestContext)
+        : await completeBandTrackUpload(user.id, bandId, body, requestContext)
     return NextResponse.json(payload, {status: 201})
   } catch (error) {
     if (error instanceof BandServiceError) {

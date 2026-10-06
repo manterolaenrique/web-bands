@@ -3,26 +3,14 @@ import Link from 'next/link'
 import {BandDirectoryExplorer} from '@/components/bands/BandDirectoryExplorer'
 import {PublicMobileChrome} from '@/components/layout/PublicMobileChrome'
 import {PublicMobileFooter} from '@/components/layout/PublicMobileFooter'
-import {getCurrentUser} from '@/lib/auth/session'
 import {getPublishedBands} from '@/lib/sanity/queries'
 import type {PublicBandListItem} from '@/types/band'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    focus?: string
-  }>
-}) {
+export default async function HomePage() {
   let bands: PublicBandListItem[] = []
   let error = false
-  const {focus} = await searchParams
-  const user = await getCurrentUser()
-  const accountHref = user ? '/dashboard' : '/login'
-  const accountLabel = user ? 'Cuenta' : 'Login'
-  const shouldFocusSearch = focus === 'search'
 
   try {
     bands = await getPublishedBands()
@@ -48,9 +36,9 @@ export default async function HomePage({
                 <a href="#directory" className="button button--primary">
                   Explorar bandas
                 </a>
-                <a href="/dashboard" className="button button--ghost">
+                <Link href="/dashboard" className="button button--ghost">
                   Ir al dashboard
-                </a>
+                </Link>
               </div>
             </div>
             <div className="hero-panel reveal reveal--visible">
@@ -107,14 +95,14 @@ export default async function HomePage({
                 </p>
               </div>
             ) : (
-              <BandDirectoryExplorer bands={bands} autoFocusSearch={shouldFocusSearch} searchInputId="directory-search" />
+              <BandDirectoryExplorer bands={bands} searchInputId="directory-search" />
             )}
           </div>
         </section>
       </div>
 
       <div className="mobile-surface home-mobile-screen">
-        <PublicMobileChrome accountHref={accountHref} accountLabel={accountLabel} />
+        <PublicMobileChrome accountHref="/login" accountLabel="Login" />
         <section className="home-mobile-hero">
           <p className="eyebrow">Directorio Web Bands</p>
           <h1 className="home-mobile-hero__title">Bandas listas para descubrir</h1>
@@ -169,7 +157,6 @@ export default async function HomePage({
             <BandDirectoryExplorer
               bands={bands}
               variant="mobile"
-              autoFocusSearch={shouldFocusSearch}
               searchInputId="mobile-directory-search"
             />
           )}
@@ -181,8 +168,8 @@ export default async function HomePage({
           <p className="muted">
             Entra al dashboard, crea tu banda y empieza a darle forma al perfil publico.
           </p>
-          <Link href={accountHref} className="button button--primary">
-            {user ? 'Abrir mi cuenta' : 'Entrar para empezar'}
+          <Link href="/login" className="button button--primary">
+            Entrar para empezar
           </Link>
         </section>
 

@@ -1,10 +1,10 @@
 'use client'
 
-import {useRouter} from 'next/navigation'
-import {useState, useTransition} from 'react'
+import {useState, useTransition, type ReactNode} from 'react'
 
 import type {BandAudioPlaylistSummary, BandAudioTrackSummary} from '@web-bands/bands-domain'
 
+import {usePendingNavigation} from '@/components/ui/usePendingNavigation'
 import {createTrackAccessRequest, deleteDemoTrackRequest} from '@/lib/dashboard/demos-api'
 import type {PlaybackTrackLike} from '@/lib/demos/playback'
 
@@ -31,6 +31,9 @@ export function TrackOptionsSheet({
   playlists,
   canEdit,
   queueTracks,
+  triggerChildren,
+  triggerClassName,
+  triggerLabel,
 }: {
   bandId: string
   track: BandAudioTrackSummary
@@ -38,8 +41,11 @@ export function TrackOptionsSheet({
   playlists: BandAudioPlaylistSummary[]
   canEdit: boolean
   queueTracks: PlaybackTrackLike[]
+  triggerChildren?: ReactNode
+  triggerClassName?: string
+  triggerLabel?: string
 }) {
-  const router = useRouter()
+  const navigation = usePendingNavigation()
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -47,18 +53,24 @@ export function TrackOptionsSheet({
     setError(null)
     setIsOpen(true)
   })
+  const editHref = detailHref.includes('?') ? `${detailHref}&sheet=edit` : `${detailHref}?sheet=edit`
 
   return (
     <>
       <button
-        className="demos-track-card__icon-button"
+        className={triggerClassName || 'demos-track-card__icon-button'}
         type="button"
-        aria-label={`Opciones de ${track.title}`}
+        aria-label={triggerLabel ? undefined : `Opciones de ${track.title}`}
         aria-haspopup="dialog"
         onTouchEnd={openSheetTap.onTouchEnd}
         onClick={openSheetTap.onClick}
       >
-        <MoreIcon />
+        {triggerChildren || (
+          <>
+            <MoreIcon />
+            {triggerLabel ? <span className="demos-track-card__action-label">{triggerLabel}</span> : null}
+          </>
+        )}
       </button>
 
       {isOpen ? (
@@ -69,6 +81,8 @@ export function TrackOptionsSheet({
               tracks={queueTracks}
               trackId={track.id}
               source={{sourceType: 'demos_list'}}
+              sourceHref={`/dashboard/bands/${bandId}/demos`}
+              sourceLabel="Demos"
               navigateHref={detailHref}
             >
               <span className="demos-sheet__list-item-icon">
@@ -126,9 +140,10 @@ export function TrackOptionsSheet({
             <button
               className="demos-sheet__list-item"
               type="button"
+              disabled={isPending || navigation.isPending}
               onClick={() => {
                 setIsOpen(false)
-                router.push(`${detailHref}?sheet=edit`)
+                navigation.push(editHref)
               }}
             >
               <span className="demos-sheet__list-item-icon">
@@ -159,7 +174,7 @@ export function TrackOptionsSheet({
                     }
 
                     setIsOpen(false)
-                    router.refresh()
+                    navigation.refresh()
                   })
                 }}
               >

@@ -26,6 +26,16 @@ type SocialEntry = {
   network: SocialNetwork
 }
 
+type SpotifyListenResource = {
+  _key?: string
+  titulo: string
+  url: string
+  descripcion?: string
+  embed: ReturnType<typeof resolveSpotifyEmbedUrl>
+  label: string
+  kind: 'profile' | 'release'
+}
+
 function formatLongDate(date: string | undefined) {
   if (!date) return null
 
@@ -156,11 +166,43 @@ export function PublicBandView({
     ...video,
     embedUrl: resolveYouTubeEmbedUrl(video.url),
   }))
-  const spotifyProfileEmbed = resolveSpotifyEmbedUrl(band.escuchanos?.spotify?.perfil_url)
-  const spotifyPlaylistEmbeds = spotifyPlaylists.map((playlist) => ({
-    ...playlist,
-    embed: resolveSpotifyEmbedUrl(playlist.url),
-  }))
+  const spotifyResources: SpotifyListenResource[] = [
+    ...((band.escuchanos?.spotify?.perfil_url
+      ? [
+          {
+            _key: 'spotify-profile',
+            titulo: 'Perfil oficial',
+            url: band.escuchanos.spotify.perfil_url,
+            descripcion: 'Artista o perfil principal configurado desde el panel.',
+            embed: resolveSpotifyEmbedUrl(band.escuchanos.spotify.perfil_url),
+            label: 'Perfil',
+            kind: 'profile' as const,
+          },
+        ]
+      : []) as SpotifyListenResource[]),
+    ...spotifyPlaylists.map<SpotifyListenResource>((playlist) => ({
+      _key: playlist._key,
+      titulo: playlist.titulo || '',
+      url: playlist.url || '',
+      descripcion: playlist.descripcion,
+      embed: resolveSpotifyEmbedUrl(playlist.url),
+      label: 'Spotify',
+      kind: 'release',
+    })),
+  ]
+  const spotifyProfileResource = spotifyResources.find((resource) => resource.kind === 'profile') ?? null
+  const spotifyPrimaryEmbedItem =
+    spotifyResources.find((resource) => resource.kind === 'release' && resource.embed) ??
+    spotifyResources.find((resource) => resource.embed && resource.embed.type !== 'artist') ??
+    null
+  const spotifyFallbackPrimaryItem =
+    spotifyPrimaryEmbedItem ? null : spotifyResources.find((resource) => resource.kind === 'release') ?? null
+  const spotifySecondaryItems = spotifyResources.filter(
+    (resource) =>
+      resource._key !== spotifyPrimaryEmbedItem?._key &&
+      resource._key !== spotifyFallbackPrimaryItem?._key &&
+      resource._key !== spotifyProfileResource?._key
+  )
   const showYoutube = Boolean(band.escuchanos?.youtube?.habilitado && youtubeVideos.length > 0)
   const showSpotify = Boolean(
     band.escuchanos?.spotify?.habilitado &&
@@ -503,62 +545,89 @@ export function PublicBandView({
                 <h3>{band.escuchanos?.spotify?.titulo || 'Playlists y perfil oficial'}</h3>
               </div>
               <div className="listen-panel__list">
-                {band.escuchanos?.spotify?.perfil_url ? (
-                  <article className="listen-item listen-item--embed listen-item--profile">
-                    <div className="listen-item__media listen-item__media--spotify">
-                      {spotifyProfileEmbed ? (
+                {spotifyPrimaryEmbedItem || spotifyFallbackPrimaryItem ? (
+                  <article
+                    className={`listen-item listen-item--embed listen-item--spotify-primary listen-item--spotify-${
+                      spotifyPrimaryEmbedItem?.embed?.type || 'fallback'
+                    }`}
+                  >
+                    <div
+                      className={`listen-item__media listen-item__media--spotify${
+                        spotifyPrimaryEmbedItem?.embed ? ` listen-item__media--spotify-${spotifyPrimaryEmbedItem.embed.type}` : ''
+                      }`}
+                    >
+                      {spotifyPrimaryEmbedItem?.embed ? (
                         <iframe
                           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                           loading="lazy"
-                          src={spotifyProfileEmbed.embedUrl}
-                          title="Spotify: perfil oficial"
+                          src={spotifyPrimaryEmbedItem.embed.embedUrl}
+                          title={`Spotify: ${spotifyPrimaryEmbedItem.titulo}`}
                         />
                       ) : (
-                        <a className="listen-item__fallback" href={band.escuchanos.spotify.perfil_url} rel="noreferrer" target="_blank">
-                          <strong>No se pudo embeber este perfil</strong>
+                        <a
+                          className="listen-item__fallback"
+                          href={spotifyFallbackPrimaryItem?.url || spotifyProfileResource?.url || '#'}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          <strong>No se pudo embeber este recurso</strong>
                           <span className="listen-item__cta">Abrir en Spotify</span>
                         </a>
                       )}
                     </div>
-                    <div className="listen-item__copy">
-                      <strong>Perfil oficial</strong>
-                      <p className="muted">Artista o perfil principal configurado desde el panel.</p>
-                      {!spotifyProfileEmbed ? (
-                        <a className="listen-item__cta" href={band.escuchanos.spotify.perfil_url} rel="noreferrer" target="_blank">
+                    <div className="listen-item__copy listen-item__copy--spotify-primary">
+                      <div className="listen-item__meta">
+                        <span className="listen-item__tag">{spotifyPrimaryEmbedItem?.label || spotifyFallbackPrimaryItem?.label}</span>
+                        <strong>{spotifyPrimaryEmbedItem?.titulo || spotifyFallbackPrimaryItem?.titulo}</strong>
+                      </div>
+                      {spotifyPrimaryEmbedItem?.descripcion || spotifyFallbackPrimaryItem?.descripcion ? (
+                        <p className="muted">{spotifyPrimaryEmbedItem?.descripcion || spotifyFallbackPrimaryItem?.descripcion}</p>
+                      ) : null}
+                      {!spotifyPrimaryEmbedItem?.embed ? (
+                        <a
+                          className="listen-item__cta"
+                          href={spotifyFallbackPrimaryItem?.url || spotifyProfileResource?.url || '#'}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
                           Abrir Spotify
                         </a>
                       ) : null}
                     </div>
                   </article>
                 ) : null}
-                {spotifyPlaylistEmbeds.map((playlist) => (
-                  <article className="listen-item listen-item--embed" key={playlist._key || playlist.url}>
-                    <div className="listen-item__media listen-item__media--spotify">
-                      {playlist.embed ? (
-                        <iframe
-                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                          loading="lazy"
-                          src={playlist.embed.embedUrl}
-                          title={`Spotify: ${playlist.titulo}`}
-                        />
-                      ) : (
-                        <a className="listen-item__fallback" href={playlist.url} rel="noreferrer" target="_blank">
-                          <strong>No se pudo embeber esta playlist</strong>
-                          <span className="listen-item__cta">Abrir en Spotify</span>
-                        </a>
-                      )}
+                {spotifyProfileResource ? (
+                  <article className="listen-item listen-item--spotify-profile">
+                    <div className="listen-item__copy listen-item__copy--spotify-link">
+                      <div className="listen-item__meta">
+                        <span className="listen-item__tag">{spotifyProfileResource.label}</span>
+                        <strong>{spotifyProfileResource.titulo}</strong>
+                      </div>
+                      {spotifyProfileResource.descripcion ? <p className="muted">{spotifyProfileResource.descripcion}</p> : null}
                     </div>
-                    <div className="listen-item__copy">
-                      <strong>{playlist.titulo}</strong>
-                      {playlist.descripcion ? <p className="muted">{playlist.descripcion}</p> : null}
-                      {!playlist.embed ? (
-                        <a className="listen-item__cta" href={playlist.url} rel="noreferrer" target="_blank">
-                          Abrir playlist
-                        </a>
-                      ) : null}
-                    </div>
+                    <a className="listen-item__cta" href={spotifyProfileResource.url} rel="noreferrer" target="_blank">
+                      Abrir perfil
+                    </a>
                   </article>
-                ))}
+                ) : null}
+                {spotifySecondaryItems.length > 0 ? (
+                  <div className="listen-secondary-list">
+                    {spotifySecondaryItems.map((resource) => (
+                      <article className="listen-item listen-item--spotify-link" key={resource._key || resource.url}>
+                        <div className="listen-item__copy listen-item__copy--spotify-link">
+                          <div className="listen-item__meta">
+                            <span className="listen-item__tag">{resource.label}</span>
+                            <strong>{resource.titulo}</strong>
+                          </div>
+                          {resource.descripcion ? <p className="muted">{resource.descripcion}</p> : null}
+                        </div>
+                        <a className="listen-item__cta" href={resource.url} rel="noreferrer" target="_blank">
+                          Abrir en Spotify
+                        </a>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </article>
           ) : null}

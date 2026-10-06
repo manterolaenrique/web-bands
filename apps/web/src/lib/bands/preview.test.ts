@@ -49,6 +49,9 @@ function createValues(): BandEditorValues {
       sectionOrder: ['members', 'featured', 'listen', 'about', 'timeline', 'shows', 'gallery', 'contact'],
     },
     internalKit: {
+      bioShort: '',
+      bioLong: '',
+      shareNotes: '',
       keyLinks: [],
     },
     seo: {},

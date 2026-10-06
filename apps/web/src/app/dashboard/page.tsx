@@ -1,10 +1,10 @@
 import Image from 'next/image'
-import Link from 'next/link'
 
 import {CreateBandForm} from '@/components/dashboard/CreateBandForm'
 import {DashboardFlashToast} from '@/components/dashboard/DashboardFlashToast'
 import {PendingInvitesPanel} from '@/components/dashboard/PendingInvitesPanel'
 import {PlusIcon} from '@/components/layout/MobileNavIcons'
+import {PendingLink} from '@/components/ui/PendingLink'
 import {canManageBand} from '@/lib/auth/permissions'
 import {
   getBandStatusLabel,
@@ -16,7 +16,7 @@ import {
 import {getDashboardFlash} from '@/lib/dashboard/messages'
 import {isSupabaseConfigured} from '@/lib/env'
 import {getSanityImageUrl} from '@/lib/sanity/image'
-import {getBandByBandId, getBandByDocumentId} from '@/lib/sanity/queries'
+import {getDashboardBandCardMetadataLookup} from '@/lib/sanity/queries'
 import {requireUser} from '@/lib/auth/session'
 import {getDashboardBands} from '@/server/bands/dashboard'
 
@@ -53,21 +53,25 @@ export default async function DashboardPage({searchParams}: DashboardPageProps) 
   const data = await getDashboardBands(user.id, user.email)
   const memberships = data.memberships
   const pendingInvites = data.pendingInvites
-  const mobileBandCards = await Promise.all(
-    memberships.map(async (membership) => {
-      const band = membership.band
-      const sanityBand =
-        (band.sanity_document_id ? await getBandByDocumentId(band.sanity_document_id).catch(() => null) : null) ||
-        (await getBandByBandId(band.id).catch(() => null))
+  const bandCardLookup = await getDashboardBandCardMetadataLookup({
+    documentIds: memberships
+      .map((membership) => membership.band.sanity_document_id)
+      .filter((value): value is string => Boolean(value)),
+    bandIds: memberships.map((membership) => membership.band.id),
+  })
+  const mobileBandCards = memberships.map((membership) => {
+    const metadata =
+      (membership.band.sanity_document_id
+        ? bandCardLookup.byDocumentId.get(membership.band.sanity_document_id)
+        : null) || bandCardLookup.byBandId.get(membership.band.id)
 
-      return {
-        membership,
-        heroImage: getSanityImageUrl(sanityBand?.hero?.imagen, {width: 800, height: 420, fit: 'crop'}),
-        genre: sanityBand?.genero || null,
-        heroTitle: sanityBand?.hero?.titulo || null,
-      }
-    })
-  )
+    return {
+      membership,
+      heroImage: getSanityImageUrl(metadata?.heroImage, {width: 800, height: 420, fit: 'crop'}),
+      genre: metadata?.genero || null,
+      heroTitle: metadata?.heroTitle || null,
+    }
+  })
 
   return (
     <>
@@ -177,21 +181,33 @@ export default async function DashboardPage({searchParams}: DashboardPageProps) 
                       </div>
 
                       <div className="dashboard-band-row__actions">
-                        <Link href={`/dashboard/bands/${membership.band.id}`} className="button button--primary">
-                          Editar
-                        </Link>
-                        <Link href={`/dashboard/bands/${membership.band.id}/demos`} className="button button--ghost">
+                        <PendingLink
+                          href={`/dashboard/bands/${membership.band.id}`}
+                          className="button button--primary"
+                          pendingLabel={`Abriendo workspace de ${membership.band.name}...`}
+                        >
+                          Abrir banda
+                        </PendingLink>
+                        <PendingLink
+                          href={`/dashboard/bands/${membership.band.id}/demos`}
+                          className="button button--ghost"
+                          pendingLabel={`Abriendo demos de ${membership.band.name}...`}
+                        >
                           Demos
-                        </Link>
+                        </PendingLink>
                         {canManageBand(membership.role) ? (
-                          <Link href={`/dashboard/bands/${membership.band.id}/team`} className="button button--ghost">
+                          <PendingLink
+                            href={`/dashboard/bands/${membership.band.id}/team`}
+                            className="button button--ghost"
+                            pendingLabel={`Abriendo equipo de ${membership.band.name}...`}
+                          >
                             Equipo
-                          </Link>
+                          </PendingLink>
                         ) : null}
                         {membership.publicBandHref ? (
-                          <Link href={membership.publicBandHref} className="button button--ghost">
+                          <a href={membership.publicBandHref} className="button button--ghost">
                             Ver publica
-                          </Link>
+                          </a>
                         ) : (
                           <span className="button button--disabled" aria-disabled="true">
                             No publica
@@ -324,21 +340,33 @@ export default async function DashboardPage({searchParams}: DashboardPageProps) 
                     {heroTitle || getBandVisibilityMessage(membership.band.status)}
                   </p>
                   <div className="dashboard-mobile-band-card__actions">
-                    <Link href={`/dashboard/bands/${membership.band.id}`} className="button button--primary">
-                      Editar
-                    </Link>
-                    <Link href={`/dashboard/bands/${membership.band.id}/demos`} className="button button--ghost">
+                    <PendingLink
+                      href={`/dashboard/bands/${membership.band.id}`}
+                      className="button button--primary"
+                      pendingLabel={`Abriendo workspace de ${membership.band.name}...`}
+                    >
+                      Abrir banda
+                    </PendingLink>
+                    <PendingLink
+                      href={`/dashboard/bands/${membership.band.id}/demos`}
+                      className="button button--ghost"
+                      pendingLabel={`Abriendo demos de ${membership.band.name}...`}
+                    >
                       Demos
-                    </Link>
+                    </PendingLink>
                     {canManageBand(membership.role) ? (
-                      <Link href={`/dashboard/bands/${membership.band.id}/team`} className="button button--ghost">
+                      <PendingLink
+                        href={`/dashboard/bands/${membership.band.id}/team`}
+                        className="button button--ghost"
+                        pendingLabel={`Abriendo equipo de ${membership.band.name}...`}
+                      >
                         Equipo
-                      </Link>
+                      </PendingLink>
                     ) : null}
                     {membership.publicBandHref ? (
-                      <Link href={membership.publicBandHref} className="button button--ghost">
+                      <a href={membership.publicBandHref} className="button button--ghost">
                         Ver publica
-                      </Link>
+                      </a>
                     ) : (
                       <span className="button button--disabled" aria-disabled="true">
                         No publica

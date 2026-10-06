@@ -1,36 +1,38 @@
 'use client'
-
-import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 
 import {signOut} from '@/app/login/actions'
-import {
-  DashboardIcon,
-  EditIcon,
-  UserIcon,
-} from '@/components/layout/MobileNavIcons'
+import {DashboardIcon, EditIcon, UserIcon} from '@/components/layout/MobileNavIcons'
+import {PendingLink} from '@/components/ui/PendingLink'
 import type {CurrentUserSummary} from '@/lib/auth/user-summary'
 
+import {LAST_EDITOR_HREF_STORAGE_KEY} from './editor-navigation-state'
 import {getUserInitials} from './user-initials'
 
-function resolveEditorHref(pathname: string, initialEditorHref?: string | null) {
-  if (/^\/dashboard\/bands\/[^/]+(?:\/.*)?$/.test(pathname)) {
+function isEditBandRoute(pathname: string) {
+  return /^\/dashboard\/bands\/[^/]+(?:\/.*)?$/.test(pathname)
+}
+
+function resolveEditorHref(pathname: string) {
+  if (isEditBandRoute(pathname)) {
     return pathname
   }
 
-  return initialEditorHref || '/dashboard#dashboard-create-band'
+  if (typeof window === 'undefined') {
+    return '/dashboard#dashboard-management'
+  }
+
+  return window.sessionStorage.getItem(LAST_EDITOR_HREF_STORAGE_KEY) || '/dashboard#dashboard-management'
 }
 
 export function DashboardNav({
-  initialEditorHref,
   currentUser,
 }: {
-  initialEditorHref?: string | null
   currentUser?: CurrentUserSummary | null
 }) {
   const pathname = usePathname()
-  const isEditRoute = /^\/dashboard\/bands\/[^/]+(?:\/.*)?$/.test(pathname)
-  const editorHref = resolveEditorHref(pathname, initialEditorHref)
+  const isEditRoute = isEditBandRoute(pathname)
+  const editorHref = resolveEditorHref(pathname)
   const dashboardActive = pathname === '/dashboard'
   const editorActive = isEditRoute
   const accountActive = pathname === '/dashboard/account'
@@ -41,87 +43,98 @@ export function DashboardNav({
   return (
     <>
       <div className="dashboard-mobile-appbar">
-        <Link href="/dashboard" className="dashboard-mobile-appbar__brand">
+        <PendingLink href="/dashboard" className="dashboard-mobile-appbar__brand" pendingLabel="Volviendo al dashboard...">
           <span className="dashboard-mobile-appbar__mark">WB</span>
           <div className="dashboard-mobile-appbar__copy">
             <strong>Web Bands</strong>
           </div>
-        </Link>
-        <Link
+        </PendingLink>
+        <PendingLink
           className={`dashboard-user-trigger${accountActive ? ' dashboard-user-trigger--active' : ''}`}
           href="/dashboard/account"
           aria-label="Ir a cuenta"
+          pendingLabel="Abriendo cuenta..."
         >
           <span className="dashboard-user-trigger__avatar">{getUserInitials(displayName)}</span>
-        </Link>
+        </PendingLink>
       </div>
 
-      <nav className={`dashboard-mobile-nav${isEditRoute ? ' dashboard-mobile-nav--editor' : ''}`} aria-label="Navegacion mobile del dashboard">
-        <Link
+      <nav
+        className={`dashboard-mobile-nav${isEditRoute ? ' dashboard-mobile-nav--editor' : ''}`}
+        aria-label="Navegacion mobile del dashboard"
+      >
+        <PendingLink
           className={`dashboard-mobile-nav__item${dashboardActive ? ' dashboard-mobile-nav__item--active' : ''}`}
           href="/dashboard"
+          pendingLabel="Volviendo al dashboard..."
         >
           <span className="dashboard-mobile-nav__item-icon" aria-hidden="true">
             <DashboardIcon />
           </span>
           <span className="dashboard-mobile-nav__item-label">Bandas</span>
-        </Link>
-        <Link
+        </PendingLink>
+        <PendingLink
           className={`dashboard-mobile-nav__item${editorActive ? ' dashboard-mobile-nav__item--active' : ''}`}
           href={editorHref}
+          pendingLabel="Abriendo workspace..."
         >
           <span className="dashboard-mobile-nav__item-icon" aria-hidden="true">
             <EditIcon />
           </span>
-          <span className="dashboard-mobile-nav__item-label">Editor</span>
-        </Link>
-        <Link
+          <span className="dashboard-mobile-nav__item-label">Workspace</span>
+        </PendingLink>
+        <PendingLink
           className={`dashboard-mobile-nav__item${accountActive ? ' dashboard-mobile-nav__item--active' : ''}`}
           href="/dashboard/account"
+          pendingLabel="Abriendo cuenta..."
         >
           <span className="dashboard-mobile-nav__item-icon" aria-hidden="true">
             <UserIcon />
           </span>
           <span className="dashboard-mobile-nav__item-label">Cuenta</span>
-        </Link>
+        </PendingLink>
       </nav>
 
       <div className="dashboard-desktop-toolbar" aria-label="Comandos del dashboard">
         <div className="dashboard-desktop-toolbar__nav">
-          <Link
+          <PendingLink
             className={`dashboard-desktop-toolbar__link${dashboardActive ? ' dashboard-desktop-toolbar__link--active' : ''}`}
             href="/dashboard"
+            pendingLabel="Volviendo al dashboard..."
           >
             Mis bandas
-          </Link>
-          <Link
+          </PendingLink>
+          <PendingLink
             className={`dashboard-desktop-toolbar__link${studioActive ? ' dashboard-desktop-toolbar__link--active' : ''}`}
             href="/studio"
+            pendingLabel="Abriendo studio..."
           >
             Studio interno
-          </Link>
-          <Link
+          </PendingLink>
+          <PendingLink
             className={`dashboard-desktop-toolbar__link${accountActive ? ' dashboard-desktop-toolbar__link--active' : ''}`}
             href="/dashboard/account"
+            pendingLabel="Abriendo cuenta..."
           >
             Cuenta
-          </Link>
-          {editorActive ? <span className="dashboard-desktop-toolbar__pill">Editor activo</span> : null}
+          </PendingLink>
+          {editorActive ? <span className="dashboard-desktop-toolbar__pill">Workspace activo</span> : null}
         </div>
 
         <div className="dashboard-desktop-toolbar__actions">
           {currentUser ? (
-            <Link
+            <PendingLink
               className={`dashboard-desktop-toolbar__account${accountActive ? ' dashboard-desktop-toolbar__account--active' : ''}`}
               href="/dashboard/account"
               aria-label="Cuenta actual"
+              pendingLabel="Abriendo cuenta..."
             >
               <strong>{currentUser.displayName}</strong>
               <span>
                 {currentUser.roleLabel}
-                {email ? ` · ${email}` : ''}
+                {email ? ` | ${email}` : ''}
               </span>
-            </Link>
+            </PendingLink>
           ) : null}
 
           <form action={signOut}>

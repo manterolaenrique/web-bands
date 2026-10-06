@@ -152,14 +152,34 @@ const trackMetadataSchema = z.object({
   durationSeconds: z.number().int().positive().max(14400).nullable().optional(),
 })
 
-const optionalPlaylistId = z
-  .string()
-  .trim()
-  .transform((value) => (value.length === 0 ? undefined : value))
-  .pipe(z.string().uuid().optional())
+const optionalPlaylistId = z.preprocess((value) => {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  const normalized = value.trim()
+  return normalized.length === 0 ? undefined : normalized
+}, z.string().uuid().optional())
 
 export const trackUploadSchema = trackMetadataSchema.extend({
   playlistId: optionalPlaylistId,
+})
+
+export const trackUploadStartSchema = z.object({
+  fileName: requiredTrimmedString(1, 255),
+  mimeType: requiredTrimmedString(3, 120),
+  fileSizeBytes: z.number().int().positive().max(50 * 1024 * 1024),
+})
+
+export const trackUploadCompleteSchema = trackMetadataSchema.extend({
+  playlistId: optionalPlaylistId,
+  upload: z.object({
+    trackId: z.string().uuid(),
+    storagePath: requiredTrimmedString(1, 1024),
+    originalFileName: requiredTrimmedString(1, 255),
+    mimeType: requiredTrimmedString(3, 120),
+    fileSizeBytes: z.number().int().positive().max(50 * 1024 * 1024),
+  }),
 })
 
 export const trackUpdateSchema = trackMetadataSchema.extend({
@@ -181,6 +201,8 @@ export const trackAccessSchema = z.object({
 })
 
 export type TrackUploadInput = z.infer<typeof trackUploadSchema>
+export type TrackUploadStartInput = z.infer<typeof trackUploadStartSchema>
+export type TrackUploadCompleteInput = z.infer<typeof trackUploadCompleteSchema>
 export type TrackUpdateInput = z.infer<typeof trackUpdateSchema>
 export type PlaylistInput = z.infer<typeof playlistSchema>
 export type PlaylistTrackOrderInput = z.infer<typeof playlistTrackOrderSchema>

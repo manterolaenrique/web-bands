@@ -20,6 +20,14 @@ const optionalTrimmedString = z
   .transform((value) => (value.length === 0 ? undefined : value))
   .optional()
 
+const buildOptionalTrimmedString = (max = 2000) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((value) => (value.length === 0 ? undefined : value))
+    .optional()
+
 const optionalKeywordsSchema = z
   .array(z.string().trim().min(1).max(80))
   .transform((values) => values.map((value) => value.trim()).filter(Boolean))
@@ -161,6 +169,9 @@ const internalKitLinkSchema = z.object({
 
 const internalKitSchema = z.object({
   shortPitch: optionalTrimmedString,
+  bioShort: buildOptionalTrimmedString(1200),
+  bioLong: buildOptionalTrimmedString(6000),
+  shareNotes: buildOptionalTrimmedString(3000),
   contactName: optionalTrimmedString,
   contactEmail: z.string().trim().email().optional().or(z.literal('').transform(() => undefined)),
   contactPhone: optionalTrimmedString,
@@ -289,6 +300,9 @@ export const bandUpdateSchema = z.object({
   }),
   internalKit: internalKitSchema.default({
     shortPitch: undefined,
+    bioShort: undefined,
+    bioLong: undefined,
+    shareNotes: undefined,
     contactName: undefined,
     contactEmail: undefined,
     contactPhone: undefined,
@@ -441,6 +455,9 @@ function hasGalleryContent(input: BandUpdateInput['gallerySection']) {
 function hasInternalKitContent(input: BandUpdateInput['internalKit']) {
   return Boolean(
     input.shortPitch ||
+      input.bioShort ||
+      input.bioLong ||
+      input.shareNotes ||
       input.contactName ||
       input.contactEmail ||
       input.contactPhone ||
@@ -544,6 +561,9 @@ export function toSanityBandPatch(input: BandUpdateInput, syncedAt = new Date().
     internalKit: hasInternalKitContent(input.internalKit)
       ? compactObject({
           shortPitch: input.internalKit.shortPitch,
+          bioShort: input.internalKit.bioShort,
+          bioLong: input.internalKit.bioLong,
+          shareNotes: input.internalKit.shareNotes,
           contactName: input.internalKit.contactName,
           contactEmail: input.internalKit.contactEmail,
           contactPhone: input.internalKit.contactPhone,
@@ -623,6 +643,9 @@ export function toSanityBandSet(input: BandUpdateInput, syncedAt?: string) {
     'gallerySection.items': patch.gallerySection?.items,
     'presentation.sectionOrder': patch.presentation?.sectionOrder,
     'internalKit.shortPitch': patch.internalKit?.shortPitch,
+    'internalKit.bioShort': patch.internalKit?.bioShort,
+    'internalKit.bioLong': patch.internalKit?.bioLong,
+    'internalKit.shareNotes': patch.internalKit?.shareNotes,
     'internalKit.contactName': patch.internalKit?.contactName,
     'internalKit.contactEmail': patch.internalKit?.contactEmail,
     'internalKit.contactPhone': patch.internalKit?.contactPhone,
@@ -671,6 +694,9 @@ export function toSanityBandUnset(input: BandUpdateInput) {
     'showsSection.descripcion': input.showsSection.descripcion,
     'gallerySection.titulo': input.gallerySection.titulo,
     'internalKit.shortPitch': input.internalKit.shortPitch,
+    'internalKit.bioShort': input.internalKit.bioShort,
+    'internalKit.bioLong': input.internalKit.bioLong,
+    'internalKit.shareNotes': input.internalKit.shareNotes,
     'internalKit.contactName': input.internalKit.contactName,
     'internalKit.contactEmail': input.internalKit.contactEmail,
     'internalKit.contactPhone': input.internalKit.contactPhone,

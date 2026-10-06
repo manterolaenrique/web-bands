@@ -38,8 +38,8 @@ import {
 } from '@/lib/bands/editor'
 import {
   MOBILE_EDITOR_SECTIONS,
-  getMobileEditorHref,
-  type MobileEditorSectionKey,
+  getSiteEditorHref,
+  type SiteEditorSectionKey,
 } from '@/components/dashboard/mobile-editor-sections'
 import {
   updateBandRequest,
@@ -415,7 +415,7 @@ export function BandEditorForm({
   initialImages: BandEditorImages
   previewBandBase?: PublicBand | null
   initialServerSavedAt?: string | null
-  routeSection?: MobileEditorSectionKey
+  routeSection?: SiteEditorSectionKey
   canManage?: boolean
 }) {
   const router = useRouter()
@@ -909,13 +909,12 @@ export function BandEditorForm({
     'members',
     'social',
     'shows',
-    ...(canManage ? (['team'] as const) : []),
     'preview',
-  ] satisfies MobileEditorSectionKey[]
+  ] satisfies SiteEditorSectionKey[]
 
   const mobileEditorSections = mobileEditorSectionKeys.map((section) => ({
       key: section,
-      href: getMobileEditorHref(bandId, section),
+      href: getSiteEditorHref(bandId, section),
       ...MOBILE_EDITOR_SECTIONS[section],
       state:
         section === 'general'
@@ -927,15 +926,13 @@ export function BandEditorForm({
               : section === 'members'
                 ? membersState
                 : section === 'social'
-                  ? combineSectionStates(contactState, listenState, featuredReleaseState, seoState)
-                  : section === 'shows'
-                    ? showsState
-                    : section === 'team'
-                      ? 'saved'
-                    : combineSectionStates(
-                        submitError ? 'error' : 'saved',
-                        hasPendingChanges ? 'pending' : 'saved'
-                      ),
+            ? combineSectionStates(contactState, listenState, featuredReleaseState, seoState)
+            : section === 'shows'
+              ? showsState
+              : combineSectionStates(
+                  submitError ? 'error' : 'saved',
+                  hasPendingChanges ? 'pending' : 'saved'
+                ),
     }))
 
   const lastSavedLabel = formatEditorTimestamp(lastSavedAt)
@@ -1071,7 +1068,7 @@ export function BandEditorForm({
               <div className="editor-mobile-route-pills">
                 <Link
                   className="editor-route-pill editor-route-pill--overview"
-                  href={getMobileEditorHref(bandId, 'overview')}
+                  href={getSiteEditorHref(bandId, 'overview')}
                 >
                   Indice
                 </Link>

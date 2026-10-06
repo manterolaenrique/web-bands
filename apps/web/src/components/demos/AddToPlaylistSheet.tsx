@@ -1,10 +1,10 @@
 'use client'
 
-import {useRouter} from 'next/navigation'
 import {cloneElement, isValidElement, useState, useTransition, type ReactElement, type MouseEvent, type ReactNode} from 'react'
 
 import type {BandAudioPlaylistSummary} from '@web-bands/bands-domain'
 
+import {InlineButtonSpinner} from '@/components/ui/InlineButtonSpinner'
 import {addTrackToPlaylistRequest} from '@/lib/dashboard/demos-api'
 
 export function AddToPlaylistSheet({
@@ -12,15 +12,17 @@ export function AddToPlaylistSheet({
   trackId,
   playlists,
   trigger,
+  onAdded,
 }: {
   bandId: string
   trackId: string
   playlists: BandAudioPlaylistSummary[]
   trigger: ReactNode
+  onAdded?: (playlistId: string) => void
 }) {
-  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [pendingPlaylistId, setPendingPlaylistId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const availablePlaylists = playlists.filter((playlist) => !playlist.isLocked)
 
@@ -75,15 +77,18 @@ export function AddToPlaylistSheet({
                     disabled={isPending}
                     onClick={() => {
                       startTransition(async () => {
+                        setPendingPlaylistId(playlist.id)
                         const response = await addTrackToPlaylistRequest(bandId, playlist.id, trackId)
 
                         if (!response.ok) {
                           setError(response.body?.message || 'No se pudo agregar a la playlist.')
+                          setPendingPlaylistId(null)
                           return
                         }
 
                         setIsOpen(false)
-                        router.refresh()
+                        setPendingPlaylistId(null)
+                        onAdded?.(playlist.id)
                       })
                     }}
                   >
@@ -91,7 +96,13 @@ export function AddToPlaylistSheet({
                       <strong>{playlist.title}</strong>
                       <small>{playlist.trackCount} audios</small>
                     </span>
-                    <span>{isPending ? '...' : 'Agregar'}</span>
+                    <span>
+                      {isPending && pendingPlaylistId === playlist.id ? (
+                        <InlineButtonSpinner label="Agregando..." />
+                      ) : (
+                        'Agregar'
+                      )}
+                    </span>
                   </button>
                 ))}
               </div>

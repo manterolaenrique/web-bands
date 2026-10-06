@@ -20,6 +20,11 @@
 
 # Coverage directory used by testing tools
 /coverage
+/test-results
+
+# Local Codex runtime and diagnostics
+/.codex-logs
+/.codex-tmp
 
 # Misc
 .DS_Store

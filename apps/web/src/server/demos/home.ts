@@ -1,4 +1,5 @@
 import type {BandDemosHomePayload} from '@web-bands/bands-domain'
+import {cache} from 'react'
 
 import {createClient} from '@/lib/supabase/server'
 
@@ -17,15 +18,12 @@ import {getBandDemosAccess} from './shared'
 type TrackRow = Parameters<typeof toTrackSummary>[0]
 type PlaylistRow = Parameters<typeof toPlaylistSummary>[0]
 
-export async function getBandDemosHome(
-  userId: string,
+async function loadRecentTrackRows(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   bandId: string,
-  query?: string | null
-): Promise<BandDemosHomePayload | null> {
-  const access = requireDemosAccess(await getBandDemosAccess(userId, bandId))
-  await ensureGeneralPlaylist(bandId, userId)
-  const supabase = await createClient()
-  const normalizedQuery = normalizeDemoQuery(query)
+  normalizedQuery: string,
+  limit: number
+) {
   const likePattern = `%${normalizedQuery}%`
 
   let trackQuery = supabase
@@ -35,7 +33,7 @@ export async function getBandDemosHome(
     )
     .eq('band_id', bandId)
     .order('created_at', {ascending: false})
-    .limit(8)
+    .limit(limit)
 
   if (normalizedQuery) {
     trackQuery = trackQuery.or(
@@ -43,9 +41,38 @@ export async function getBandDemosHome(
     )
   }
 
-  const [{data: trackRows}, playlistRows, {count: totalTracks}, {count: totalPlaylists}] =
+  const {data} = await trackQuery
+  return (data || []) as TrackRow[]
+}
+
+export const getBandDemosRecentTracks = cache(async function getBandDemosRecentTracks(
+  userId: string,
+  bandId: string,
+  query?: string | null,
+  limit = 8
+) {
+  requireDemosAccess(await getBandDemosAccess(userId, bandId))
+  await ensureGeneralPlaylist(bandId, userId)
+  const supabase = await createClient()
+  const normalizedQuery = normalizeDemoQuery(query)
+  const trackRows = await loadRecentTrackRows(supabase, bandId, normalizedQuery, limit)
+
+  return trackRows.map((row) => toTrackSummary(row))
+})
+
+export const getBandDemosHome = cache(async function getBandDemosHome(
+  userId: string,
+  bandId: string,
+  query?: string | null
+): Promise<BandDemosHomePayload | null> {
+  const access = requireDemosAccess(await getBandDemosAccess(userId, bandId))
+  await ensureGeneralPlaylist(bandId, userId)
+  const supabase = await createClient()
+  const normalizedQuery = normalizeDemoQuery(query)
+
+  const [trackRows, playlistRows, {count: totalTracks}, {count: totalPlaylists}] =
     await Promise.all([
-      trackQuery,
+      loadRecentTrackRows(supabase, bandId, normalizedQuery, 8),
       loadBandPlaylistRows(supabase, bandId, {query: normalizedQuery, limit: 6}),
       supabase
         .from('band_audio_tracks')
@@ -84,10 +111,10 @@ export async function getBandDemosHome(
     role: access.role,
     canEdit: access.canEdit,
     query: normalizedQuery,
-    featuredTrack: trackRows?.[0] ? toTrackSummary(trackRows[0] as TrackRow) : null,
-    recentTracks: ((trackRows || []) as TrackRow[]).map((row) => toTrackSummary(row)),
+    featuredTrack: trackRows[0] ? toTrackSummary(trackRows[0]) : null,
+    recentTracks: trackRows.map((row) => toTrackSummary(row)),
     playlists,
     totalTracks: totalTracks || 0,
     totalPlaylists: totalPlaylists || 0,
   }
-}
+})

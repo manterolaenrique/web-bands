@@ -6,7 +6,7 @@ export const publicSanityClient = createClient({
   projectId: sanityEnv.projectId,
   dataset: sanityEnv.dataset,
   apiVersion: sanityEnv.apiVersion,
-  useCdn: false,
+  useCdn: true,
 })
 
 function resolveSanityServerToken() {

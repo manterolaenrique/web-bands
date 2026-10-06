@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import {PendingLink} from '@/components/ui/PendingLink'
 
 export function EmptyState({
   title,
@@ -21,9 +21,9 @@ export function EmptyState({
         <h2>{title}</h2>
         <p>{copy}</p>
       </div>
-      <Link className="button button--primary demos-empty-state__cta" href={ctaHref}>
+      <PendingLink className="button button--primary demos-empty-state__cta" href={ctaHref} pendingLabel="Abriendo...">
         {ctaLabel}
-      </Link>
+      </PendingLink>
     </section>
   )
 }

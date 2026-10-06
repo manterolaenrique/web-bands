@@ -1,7 +1,6 @@
-import Link from 'next/link'
-
 import type {BandAudioPlaylistSummary, BandAudioTrackSummary} from '@web-bands/bands-domain'
 
+import {PendingLink} from '@/components/ui/PendingLink'
 import {formatCompactDate, formatTrackDuration, getTrackTypeLabel} from '@/lib/demos/format'
 
 import {AudioWaveIcon, PlayCircleIcon} from './DemoIcons'
@@ -21,7 +20,7 @@ export function TrackCard({
   canEdit: boolean
   queueTracks: BandAudioTrackSummary[]
 }) {
-  const detailHref = `/dashboard/bands/${bandId}/demos/${track.id}`
+  const detailHref = `/dashboard/bands/${bandId}/demos/${track.id}?source=demos`
 
   return (
     <article className="demos-track-card">
@@ -31,7 +30,9 @@ export function TrackCard({
         </span>
         <div className="demos-track-card__copy">
           <h3>
-            <Link href={detailHref}>{track.title}</Link>
+            <PendingLink href={detailHref} pendingLabel={`Abriendo ${track.title}...`}>
+              {track.title}
+            </PendingLink>
           </h3>
           <div className="demos-track-card__meta">
             <span className="demos-track-chip">{getTrackTypeLabel(track.trackType)}</span>
@@ -44,13 +45,16 @@ export function TrackCard({
 
       <div className="demos-track-card__actions">
         <PlayTrackButton
-          className="demos-track-card__icon-button"
+          className="demos-track-card__icon-button demos-track-card__action-button"
           aria-label={`Reproducir ${track.title}`}
           tracks={queueTracks}
           trackId={track.id}
           source={{sourceType: 'demos_list'}}
+          sourceHref={`/dashboard/bands/${bandId}/demos`}
+          sourceLabel="Demos"
         >
           <PlayCircleIcon />
+          <span className="demos-track-card__action-label">Reproducir</span>
         </PlayTrackButton>
         <TrackOptionsSheet
           bandId={bandId}
@@ -59,6 +63,8 @@ export function TrackCard({
           playlists={playlists}
           canEdit={canEdit}
           queueTracks={queueTracks}
+          triggerClassName="demos-track-card__icon-button demos-track-card__action-button"
+          triggerLabel="Opciones"
         />
       </div>
     </article>

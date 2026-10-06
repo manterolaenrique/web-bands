@@ -1,7 +1,6 @@
 'use client'
 
-import {useRouter} from 'next/navigation'
-import {useMemo, useState, useTransition, type ChangeEvent, type FormEvent} from 'react'
+import {useMemo, useState, type ChangeEvent, type FormEvent} from 'react'
 
 import {
   BAND_AUDIO_TRACK_STATUSES,
@@ -11,6 +10,8 @@ import {
 
 import {uploadDemoTrackRequest, type DemoApiValidationIssue} from '@/lib/dashboard/demos-api'
 import {getTrackStatusLabel, getTrackTypeLabel, formatFileSize} from '@/lib/demos/format'
+import {InlineButtonSpinner} from '@/components/ui/InlineButtonSpinner'
+import {usePendingNavigation} from '@/components/ui/usePendingNavigation'
 
 import {UploadIcon} from './DemoIcons'
 
@@ -47,7 +48,7 @@ export function DemoUploadForm({
   bandId: string
   playlists?: BandAudioPlaylistSummary[]
 }) {
-  const router = useRouter()
+  const navigation = usePendingNavigation()
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [lastAutoTitle, setLastAutoTitle] = useState('')
@@ -59,7 +60,7 @@ export function DemoUploadForm({
   const [isDownloadable, setIsDownloadable] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [issues, setIssues] = useState<DemoApiValidationIssue[]>([])
-  const [isPending, startTransition] = useTransition()
+  const [phase, setPhase] = useState<'idle' | 'preparing' | 'uploading' | 'finalizing'>('idle')
   const availablePlaylists = playlists.filter((playlist) => !playlist.isLocked)
 
   const filePreview = useMemo(() => {
@@ -106,44 +107,64 @@ export function DemoUploadForm({
       return
     }
 
-    startTransition(async () => {
-      const formData = new FormData()
-      const durationSeconds = await resolveDurationSeconds(file)
-      formData.set('file', file)
-      formData.set('title', title)
-      formData.set('description', description)
-      formData.set('relatedSongTitle', relatedSongTitle)
-      formData.set('trackType', trackType)
-      formData.set('trackStatus', trackStatus)
-      formData.set('isDownloadable', String(isDownloadable))
-      if (playlistId) {
-        formData.set('playlistId', playlistId)
+    void (async () => {
+      try {
+        const formData = new FormData()
+        const durationSeconds = await resolveDurationSeconds(file)
+        formData.set('file', file)
+        formData.set('title', title)
+        formData.set('description', description)
+        formData.set('relatedSongTitle', relatedSongTitle)
+        formData.set('trackType', trackType)
+        formData.set('trackStatus', trackStatus)
+        formData.set('isDownloadable', String(isDownloadable))
+        if (playlistId) {
+          formData.set('playlistId', playlistId)
+        }
+        if (durationSeconds) {
+          formData.set('durationSeconds', String(durationSeconds))
+        }
+
+        const response = await uploadDemoTrackRequest(bandId, formData, {
+          onPhaseChange: setPhase,
+        })
+
+        if (!response.ok) {
+          setError(response.body?.message || 'No se pudo guardar el demo.')
+          setIssues(response.body?.errors || [])
+          setPhase('idle')
+          return
+        }
+
+        const nextTrackId =
+          response.body?.track && typeof response.body.track === 'object' && 'id' in response.body.track
+            ? String((response.body.track as {id: string}).id)
+            : null
+
+        setPhase('idle')
+
+        if (nextTrackId) {
+          navigation.push(`/dashboard/bands/${bandId}/demos/${nextTrackId}`)
+          return
+        }
+
+        navigation.push(`/dashboard/bands/${bandId}/demos`)
+      } catch {
+        setError('No se pudo guardar el demo.')
+        setPhase('idle')
       }
-      if (durationSeconds) {
-        formData.set('durationSeconds', String(durationSeconds))
-      }
-
-      const response = await uploadDemoTrackRequest(bandId, formData)
-
-      if (!response.ok) {
-        setError(response.body?.message || 'No se pudo guardar el demo.')
-        setIssues(response.body?.errors || [])
-        return
-      }
-
-      const nextTrackId =
-        response.body?.track && typeof response.body.track === 'object' && 'id' in response.body.track
-          ? String((response.body.track as {id: string}).id)
-          : null
-
-      if (nextTrackId) {
-        router.push(`/dashboard/bands/${bandId}/demos/${nextTrackId}`)
-        return
-      }
-
-      router.push(`/dashboard/bands/${bandId}/demos`)
-    })
+    })()
   }
+
+  const isPending = phase !== 'idle' || navigation.isPending
+  const phaseMessage =
+    phase === 'preparing'
+      ? 'Preparando upload...'
+      : phase === 'uploading'
+        ? 'Subiendo audio...'
+        : phase === 'finalizing'
+          ? 'Guardando demo...'
+          : null
 
   return (
     <form className="demos-upload-form" onSubmit={handleSubmit}>
@@ -261,14 +282,20 @@ export function DemoUploadForm({
         </label>
       </div>
 
+      {phaseMessage ? <div className="status status--warning">{phaseMessage}</div> : null}
       {error ? <div className="status status--error">{error}</div> : null}
 
       <div className="demos-upload-form__actions">
-        <button className="button" type="button" onClick={() => router.push(`/dashboard/bands/${bandId}/demos`)}>
+        <button
+          className="button"
+          type="button"
+          disabled={isPending}
+          onClick={() => navigation.push(`/dashboard/bands/${bandId}/demos`)}
+        >
           Cancelar
         </button>
-        <button className="button button--primary" type="submit" disabled={isPending}>
-          {isPending ? 'Guardando...' : 'Guardar demo'}
+        <button className="button button--primary" type="submit" disabled={isPending} aria-busy={isPending}>
+          {isPending ? <InlineButtonSpinner label="Guardando..." /> : 'Guardar demo'}
         </button>
       </div>
     </form>

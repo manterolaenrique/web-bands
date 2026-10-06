@@ -5,6 +5,7 @@ import type {
   BandMemberRole,
   BandWorkspaceSummary,
 } from '@web-bands/bands-domain'
+import {cache} from 'react'
 
 import {canEditBand, canManageBand, getMembershipRole} from '@/lib/auth/permissions'
 import {isSupabaseAdminConfigured} from '@/lib/env'
@@ -86,7 +87,10 @@ async function createDemosPermissionClient() {
   return createClient()
 }
 
-export async function getBandDemosAccess(userId: string, bandId: string): Promise<DemosAccess | null> {
+export const getBandDemosAccess = cache(async function getBandDemosAccess(
+  userId: string,
+  bandId: string
+): Promise<DemosAccess | null> {
   const supabase = await createDemosPermissionClient()
   const role = await getMembershipRole(supabase, bandId, userId)
 
@@ -110,7 +114,7 @@ export async function getBandDemosAccess(userId: string, bandId: string): Promis
     canEdit: canEditBand(role),
     canManage: canManageBand(role),
   }
-}
+})
 
 function normalizePlaylistSystemKey(value: string | null): BandAudioPlaylistSystemKey | null {
   return value === GENERAL_PLAYLIST_SYSTEM_KEY ? GENERAL_PLAYLIST_SYSTEM_KEY : null

@@ -1,6 +1,14 @@
 import {getServerSanityClient, publicSanityClient} from '@/lib/sanity/client'
 import type {PublicBand, PublicBandListItem} from '@/types/band'
 
+export type DashboardBandCardMetadata = {
+  _id: string
+  bandId: string | null
+  genero: string | null
+  heroImage: PublicBandListItem['heroImage']
+  heroTitle: string | null
+}
+
 const publicBandFilter =
   '_type == "banda" && coalesce(status, "published") == "published" && coalesce(visibility, "public") == "public"'
 
@@ -233,6 +241,9 @@ const editorBandFields = `{
   },
   internalKit{
     shortPitch,
+    bioShort,
+    bioLong,
+    shareNotes,
     contactName,
     contactEmail,
     contactPhone,
@@ -268,6 +279,13 @@ const bandBySlugQuery = `*[${publicBandFilter} && slug.current == $slug] | order
 
 const bandByDocumentIdQuery = `*[_type == "banda" && _id == $id][0]${editorBandFields}`
 const bandByBandIdQuery = `*[_type == "banda" && bandId == $bandId] | order(coalesce(lastSyncedAt, _updatedAt) desc)[0]${editorBandFields}`
+const dashboardBandCardMetadataQuery = `*[_type == "banda" && (_id in $documentIds || bandId in $bandIds)] | order(coalesce(lastSyncedAt, _updatedAt) desc) {
+  _id,
+  bandId,
+  genero,
+  "heroImage": hero.imagen,
+  "heroTitle": hero.titulo
+}`
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -287,6 +305,46 @@ export async function getBandByDocumentId(id: string) {
 
 export async function getBandByBandId(bandId: string) {
   return getBandWithRetry({bandId})
+}
+
+export async function getDashboardBandCardMetadataLookup(input: {
+  documentIds?: string[]
+  bandIds?: string[]
+}) {
+  const documentIds = Array.from(new Set((input.documentIds || []).filter(Boolean)))
+  const bandIds = Array.from(new Set((input.bandIds || []).filter(Boolean)))
+  const byDocumentId = new Map<string, DashboardBandCardMetadata>()
+  const byBandId = new Map<string, DashboardBandCardMetadata>()
+
+  if (documentIds.length === 0 && bandIds.length === 0) {
+    return {
+      byDocumentId,
+      byBandId,
+    }
+  }
+
+  const rows = await getServerSanityClient().fetch<DashboardBandCardMetadata[]>(
+    dashboardBandCardMetadataQuery,
+    {
+      documentIds,
+      bandIds,
+    }
+  )
+
+  for (const row of rows) {
+    if (row._id && !byDocumentId.has(row._id)) {
+      byDocumentId.set(row._id, row)
+    }
+
+    if (row.bandId && !byBandId.has(row.bandId)) {
+      byBandId.set(row.bandId, row)
+    }
+  }
+
+  return {
+    byDocumentId,
+    byBandId,
+  }
 }
 
 async function getBandWithRetry(input: {id?: string; bandId?: string}) {

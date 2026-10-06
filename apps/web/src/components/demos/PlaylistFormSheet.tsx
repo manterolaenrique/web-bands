@@ -1,8 +1,12 @@
 'use client'
 
-import {useEffect, useState, useTransition, type FormEvent} from 'react'
-import {useRouter} from 'next/navigation'
+import {useEffect, useMemo, useState, useTransition, type FormEvent} from 'react'
+import {usePathname, useRouter, useSearchParams} from 'next/navigation'
 
+import type {BandAudioPlaylistSummary} from '@web-bands/bands-domain'
+
+import {InlineButtonSpinner} from '@/components/ui/InlineButtonSpinner'
+import {usePendingNavigation} from '@/components/ui/usePendingNavigation'
 import {
   createPlaylistRequest,
   updatePlaylistRequest,
@@ -15,6 +19,19 @@ function getFieldError(errors: DemoApiValidationIssue[], field: string) {
   return errors.find((issue) => issue.path === field)?.message || null
 }
 
+function asPlaylistSummary(value: unknown): BandAudioPlaylistSummary | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const candidate = value as Partial<BandAudioPlaylistSummary>
+  if (typeof candidate.id !== 'string' || typeof candidate.title !== 'string') {
+    return null
+  }
+
+  return candidate as BandAudioPlaylistSummary
+}
+
 export function PlaylistFormSheet({
   bandId,
   title = 'Nueva playlist',
@@ -23,6 +40,7 @@ export function PlaylistFormSheet({
   initialTitle = '',
   initialDescription = '',
   initialCoverUrl = '',
+  onSuccess,
 }: {
   bandId: string
   title?: string
@@ -31,28 +49,32 @@ export function PlaylistFormSheet({
   initialTitle?: string
   initialDescription?: string
   initialCoverUrl?: string
+  onSuccess?: (playlist: BandAudioPlaylistSummary) => void
 }) {
   const router = useRouter()
+  const navigation = usePendingNavigation()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isOpen, setIsOpen] = useState(false)
   const [formTitle, setFormTitle] = useState(initialTitle)
   const [description, setDescription] = useState(initialDescription)
   const [coverFile, setCoverFile] = useState<File | null>(null)
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState('')
   const [removeCover, setRemoveCover] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [issues, setIssues] = useState<DemoApiValidationIssue[]>([])
   const [isPending, startTransition] = useTransition()
 
+  const coverPreviewUrl = useMemo(() => {
+    return coverFile ? URL.createObjectURL(coverFile) : ''
+  }, [coverFile])
+
   useEffect(() => {
-    if (!coverFile) {
-      setCoverPreviewUrl('')
+    if (!coverPreviewUrl) {
       return
     }
 
-    const objectUrl = URL.createObjectURL(coverFile)
-    setCoverPreviewUrl(objectUrl)
-    return () => URL.revokeObjectURL(objectUrl)
-  }, [coverFile])
+    return () => URL.revokeObjectURL(coverPreviewUrl)
+  }, [coverPreviewUrl])
 
   const resetForm = () => {
     setFormTitle(initialTitle)
@@ -79,6 +101,13 @@ export function PlaylistFormSheet({
 
   const visibleCoverUrl = coverPreviewUrl || (!removeCover ? initialCoverUrl : '')
 
+  const buildRefreshHref = (targetPath: string) => {
+    const nextSearchParams = new URLSearchParams(searchParams.toString())
+    nextSearchParams.set('playlistUpdatedAt', String(Date.now()))
+    const query = nextSearchParams.toString()
+    return query ? `${targetPath}?${query}` : targetPath
+  }
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
@@ -104,7 +133,28 @@ export function PlaylistFormSheet({
         return
       }
 
+      const nextPlaylist = asPlaylistSummary(response.body?.playlist)
       close()
+
+      if (nextPlaylist) {
+        onSuccess?.(nextPlaylist)
+
+        if (onSuccess) {
+          return
+        }
+
+        const detailHref = `/dashboard/bands/${bandId}/demos/playlists/${nextPlaylist.id}`
+
+        if (playlistId) {
+          const targetHref = pathname === detailHref ? buildRefreshHref(detailHref) : detailHref
+          navigation.replace(targetHref, {scroll: false}, `Actualizando ${nextPlaylist.title}...`)
+          return
+        }
+
+        navigation.push(detailHref, undefined, `Abriendo ${nextPlaylist.title}...`)
+        return
+      }
+
       router.refresh()
     })
   }
@@ -202,8 +252,14 @@ export function PlaylistFormSheet({
                 <button className="button" type="button" onClick={close} disabled={isPending}>
                   Cancelar
                 </button>
-                <button className="button button--primary" type="submit" disabled={isPending}>
-                  {isPending ? 'Guardando...' : playlistId ? 'Guardar cambios' : 'Crear playlist'}
+                <button className="button button--primary" type="submit" disabled={isPending} aria-busy={isPending}>
+                  {isPending ? (
+                    <InlineButtonSpinner label="Guardando..." />
+                  ) : playlistId ? (
+                    'Guardar cambios'
+                  ) : (
+                    'Crear playlist'
+                  )}
                 </button>
               </div>
             </form>

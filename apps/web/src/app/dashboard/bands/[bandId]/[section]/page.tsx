@@ -1,7 +1,7 @@
 import {notFound} from 'next/navigation'
 
 import {BandEditorScreen} from '../BandEditorScreen'
-import {isMobileEditorSectionKey} from '@/components/dashboard/mobile-editor-sections'
+import {isSiteEditorSectionKey} from '@/components/dashboard/mobile-editor-sections'
 
 type PageProps = {
   params: Promise<{
@@ -17,7 +17,7 @@ export default async function EditBandSectionPage({params, searchParams}: PagePr
   const {bandId, section} = await params
   const {message} = await searchParams
 
-  if (!isMobileEditorSectionKey(section) || section === 'overview') {
+  if (!isSiteEditorSectionKey(section) || section === 'overview') {
     notFound()
   }
 

@@ -1,4 +1,4 @@
-import {BandEditorScreen} from './BandEditorScreen'
+import {BandWorkspaceHomeScreen} from './BandWorkspaceHomeScreen'
 
 type PageProps = {
   params: Promise<{
@@ -12,5 +12,5 @@ type PageProps = {
 export default async function EditBandPage({params, searchParams}: PageProps) {
   const {bandId} = await params
   const {message} = await searchParams
-  return <BandEditorScreen bandId={bandId} message={message} routeSection="overview" />
+  return <BandWorkspaceHomeScreen bandId={bandId} message={message} />
 }

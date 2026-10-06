@@ -134,6 +134,9 @@ function createValues(): BandEditorValues {
     },
     internalKit: {
       shortPitch: 'Resumen interno',
+      bioShort: 'Bio corta interna',
+      bioLong: 'Bio larga interna con contexto adicional.',
+      shareNotes: 'Texto listo para compartir con prensa.',
       contactName: 'Booking QA',
       contactEmail: 'booking@example.com',
       contactPhone: '+54 11 4444 4444',

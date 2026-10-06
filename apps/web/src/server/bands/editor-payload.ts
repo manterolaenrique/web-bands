@@ -8,6 +8,7 @@ import type {
   PublicBand,
   SupabaseBand,
 } from '@web-bands/bands-domain'
+import {cache} from 'react'
 
 import {formatTimelineDateForInput} from '@/lib/bands/content'
 import {normalizeBandSectionOrder} from '@/lib/bands/presentation'
@@ -168,6 +169,9 @@ export function createInitialValues(bandRow: SupabaseBand, sanityBand: PublicBan
     },
     internalKit: {
       shortPitch: sanityBand?.internalKit?.shortPitch || '',
+      bioShort: sanityBand?.internalKit?.bioShort || '',
+      bioLong: sanityBand?.internalKit?.bioLong || '',
+      shareNotes: sanityBand?.internalKit?.shareNotes || '',
       contactName: sanityBand?.internalKit?.contactName || '',
       contactEmail: sanityBand?.internalKit?.contactEmail || '',
       contactPhone: sanityBand?.internalKit?.contactPhone || '',
@@ -216,7 +220,10 @@ export function createInitialImages(sanityBand: PublicBand | null): BandEditorIm
   }
 }
 
-export async function getBandEditorPayload(userId: string, bandId: string): Promise<BandEditorPayload | null> {
+export const getBandEditorPayload = cache(async function getBandEditorPayload(
+  userId: string,
+  bandId: string
+): Promise<BandEditorPayload | null> {
   const supabase = await createClient()
   const role = await getMembershipRole(supabase, bandId, userId)
 
@@ -324,4 +331,4 @@ export async function getBandEditorPayload(userId: string, bandId: string): Prom
     previewBandBase: sanityBand,
     initialServerSavedAt: sanityBand?.lastSyncedAt || typedBandRow.updated_at,
   }
-}
+})

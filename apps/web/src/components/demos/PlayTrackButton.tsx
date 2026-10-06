@@ -1,19 +1,22 @@
 'use client'
 
-import {useRouter} from 'next/navigation'
 import {useState, type ButtonHTMLAttributes, type ReactNode} from 'react'
 
 import type {PlaybackSourceContext} from '@web-bands/bands-domain'
 
+import {LoadingSpinner} from '@/components/ui/LoadingSpinner'
+import {usePendingNavigation} from '@/components/ui/usePendingNavigation'
 import {buildPlaybackSession, toPlaybackQueueItem, type PlaybackTrackLike} from '@/lib/demos/playback'
 
-import {createDashboardPlaybackSession, useDashboardAudio} from './DashboardAudioProvider'
+import {createDashboardPlaybackSession, useDashboardAudioControls} from './DashboardAudioProvider'
 import {useTapAction} from './useTapAction'
 
 type PlayTrackButtonProps = {
   tracks: PlaybackTrackLike[]
   trackId: string
   source: PlaybackSourceContext
+  sourceHref?: string | null
+  sourceLabel?: string | null
   navigateHref?: string
   children: ReactNode
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'onClick' | 'type'>
@@ -22,6 +25,8 @@ export function PlayTrackButton({
   tracks,
   trackId,
   source,
+  sourceHref,
+  sourceLabel,
   navigateHref,
   children,
   disabled,
@@ -30,8 +35,8 @@ export function PlayTrackButton({
   onTouchStart,
   ...buttonProps
 }: PlayTrackButtonProps) {
-  const router = useRouter()
-  const {playSession, prepareTrack} = useDashboardAudio()
+  const navigation = usePendingNavigation()
+  const {playSession, prepareTrack} = useDashboardAudioControls()
   const [isPending, setIsPending] = useState(false)
   const activeTrack = tracks.find((track) => track.id === trackId) || null
 
@@ -50,10 +55,15 @@ export function PlayTrackButton({
 
     try {
       const session = buildPlaybackSession(tracks, trackId, source)
-      await playSession(createDashboardPlaybackSession(session.queue, session.currentIndex, source))
+      await playSession(
+        createDashboardPlaybackSession(session.queue, session.currentIndex, source, {
+          sourceHref,
+          sourceLabel,
+        })
+      )
 
       if (navigateHref) {
-        router.push(navigateHref)
+        navigation.push(navigateHref)
       }
     } catch {
       // Provider exposes the playback error state when access or playback fails.
@@ -65,13 +75,14 @@ export function PlayTrackButton({
   const tapAction = useTapAction<HTMLButtonElement>(() => {
     void handleActivate()
   })
+  const isBusy = isPending || navigation.isPending
 
   return (
     <button
       {...buttonProps}
       type="button"
-      disabled={disabled || isPending}
-      aria-busy={isPending}
+      disabled={disabled || isBusy}
+      aria-busy={isBusy}
       onMouseEnter={(event) => {
         onMouseEnter?.(event)
         prewarmTrack()
@@ -96,6 +107,7 @@ export function PlayTrackButton({
         }
       }}
     >
+      {isBusy ? <LoadingSpinner size="sm" label="Reproduciendo" className="button__spinner" /> : null}
       {children}
     </button>
   )

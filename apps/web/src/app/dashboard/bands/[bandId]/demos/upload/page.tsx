@@ -1,9 +1,11 @@
 import {notFound} from 'next/navigation'
 
+import {BandWorkspaceHeader} from '@/components/dashboard/BandWorkspaceHeader'
 import {BandWorkspaceNav} from '@/components/demos/BandWorkspaceNav'
 import {DemoUploadForm} from '@/components/demos/DemoUploadForm'
 import {requireUser} from '@/lib/auth/session'
-import {getBandPlaylists} from '@/server/demos/playlists'
+import {getBandEditorPayload} from '@/server/bands/editor-payload'
+import {getBandPlaylistSummaries} from '@/server/demos/playlists'
 import {getBandDemosAccess} from '@/server/demos/shared'
 
 type PageProps = {
@@ -15,28 +17,34 @@ type PageProps = {
 export default async function UploadBandDemoPage({params}: PageProps) {
   const {bandId} = await params
   const user = await requireUser()
-  const access = await getBandDemosAccess(user.id, bandId)
+  const [access, editorPayload] = await Promise.all([
+    getBandDemosAccess(user.id, bandId),
+    getBandEditorPayload(user.id, bandId),
+  ])
 
-  if (!access) {
+  if (!access || !editorPayload) {
     notFound()
   }
 
-  const playlistsData = await getBandPlaylists(user.id, bandId)
+  const playlists = await getBandPlaylistSummaries(user.id, bandId)
 
   return (
     <div className="demos-screen">
-      <header className="dashboard-header editor-page-header demos-page-header">
-        <div>
-          <p className="eyebrow">Carga privada</p>
-          <h1 className="dashboard-title">Subir demo</h1>
-          <p className="muted">Guarda audios privados en Supabase Storage sin exponerlos publicamente.</p>
-        </div>
-      </header>
+      <BandWorkspaceHeader
+        bandId={bandId}
+        bandName={access.band.name}
+        bandStatus={access.band.status}
+        publicBandHref={editorPayload.publicBandHref}
+        canManage={editorPayload.canManage}
+        activeSection="demos"
+        eyebrow="Herramientas privadas · Subir demo"
+        description="Guarda audios privados en Supabase Storage sin exponerlos publicamente."
+      />
 
       <BandWorkspaceNav bandId={bandId} active="upload" />
 
       <section className="demos-form-card">
-        <DemoUploadForm bandId={bandId} playlists={playlistsData.playlists} />
+        <DemoUploadForm bandId={bandId} playlists={playlists} />
       </section>
     </div>
   )

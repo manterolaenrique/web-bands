@@ -114,6 +114,24 @@ export function ForwardTenIcon(props: IconProps) {
   )
 }
 
+export function SkipPreviousIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M6 6v12" />
+      <path d="m18 7-7 5 7 5V7Z" fill="currentColor" stroke="none" />
+    </BaseIcon>
+  )
+}
+
+export function SkipNextIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M18 6v12" />
+      <path d="m6 7 7 5-7 5V7Z" fill="currentColor" stroke="none" />
+    </BaseIcon>
+  )
+}
+
 export function CloseIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>

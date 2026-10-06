@@ -25,6 +25,10 @@ export function BandDirectoryExplorer({
   const [activeGenre, setActiveGenre] = useState('Todos')
   const deferredQuery = useDeferredValue(query)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
+  const shouldAutoFocusSearch =
+    autoFocusSearch ||
+    (typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('focus') === 'search')
 
   const genres = useMemo(() => {
     return ['Todos', ...Array.from(new Set(bands.map((band) => normalizeGenre(band.genero)))).sort()]
@@ -46,14 +50,14 @@ export function BandDirectoryExplorer({
   }, [activeGenre, bands, deferredQuery])
 
   useEffect(() => {
-    if (!autoFocusSearch || !searchInputRef.current) {
+    if (!shouldAutoFocusSearch || !searchInputRef.current) {
       return
     }
 
     searchInputRef.current.scrollIntoView({behavior: 'smooth', block: 'center'})
     searchInputRef.current.focus()
     searchInputRef.current.select()
-  }, [autoFocusSearch])
+  }, [shouldAutoFocusSearch])
 
   if (variant === 'mobile') {
     return (

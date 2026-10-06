@@ -891,6 +891,24 @@ export default {
           rows: 3,
         },
         {
+          name: 'bioShort',
+          title: 'Biografia corta',
+          type: 'text',
+          rows: 4,
+        },
+        {
+          name: 'bioLong',
+          title: 'Biografia larga',
+          type: 'text',
+          rows: 8,
+        },
+        {
+          name: 'shareNotes',
+          title: 'Texto listo para compartir',
+          type: 'text',
+          rows: 5,
+        },
+        {
           name: 'contactName',
           title: 'Nombre de contacto',
           type: 'string',

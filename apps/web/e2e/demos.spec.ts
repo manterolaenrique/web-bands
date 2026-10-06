@@ -143,11 +143,11 @@ test.describe('demos module', () => {
       await bandCard.getByRole('link', {name: 'Demos'}).click()
 
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos$`))
-      await expect(page.locator('.demos-page-header').getByRole('heading', {name: 'Demos', exact: true})).toBeVisible()
+      await expect(page.getByRole('heading', {name: fixture.band.name, exact: true})).toBeVisible()
+      await expect(page.getByText('Herramientas privadas · Demos')).toBeVisible()
       await expect(page.getByText(new RegExp(`Audios privados de ${fixture.band.name}`))).toBeVisible()
-      await expect(page.locator('.demos-section__header h2')).toHaveText(['Playlists', 'Ultimos audios'])
 
-      await page.locator('.demos-page-header').getByRole('button', {name: 'Nueva playlist'}).click()
+      await page.getByRole('button', {name: 'Nueva playlist'}).first().click()
       const playlistSheet = page.locator('.demos-sheet[aria-label="Nueva playlist"]')
       await expect(playlistSheet).toBeVisible()
       await playlistSheet.getByLabel('Nombre').fill(playlistTitle)
@@ -168,9 +168,10 @@ test.describe('demos module', () => {
           : null
       expect(createdPlaylistId).toBeTruthy()
 
-      await page.locator('.demos-page-header').getByRole('link', {name: 'Subir demo'}).click()
+      await page.locator(`a[href="/dashboard/bands/${fixture.band.id}/demos/upload"]`).first().click()
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos/upload$`))
-      await expect(page.getByRole('heading', {name: 'Subir demo'})).toBeVisible()
+      await expect(page.getByRole('heading', {name: fixture.band.name, exact: true})).toBeVisible()
+      await expect(page.getByText('Herramientas privadas · Subir demo')).toBeVisible()
 
       await page.locator('input[type="file"]').setInputFiles(uploadFile)
       await page.getByLabel('Titulo').fill(trackTitle)
@@ -180,9 +181,10 @@ test.describe('demos module', () => {
       await page.getByLabel('Estado').selectOption('aprobado')
 
       const uploadResponsePromise = page.waitForResponse(
-        (response) =>
-          response.url().includes(`/api/dashboard/bands/${fixture.band.id}/demos`) &&
-          response.request().method() === 'POST'
+        (response) => {
+          const url = new URL(response.url())
+          return url.pathname === `/api/dashboard/bands/${fixture.band.id}/demos` && response.request().method() === 'POST'
+        }
       )
       await page.getByRole('button', {name: 'Guardar demo'}).click()
       const uploadResponse = await uploadResponsePromise
@@ -198,7 +200,7 @@ test.describe('demos module', () => {
       }
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos/${createdTrackId}$`))
 
-      await expect(page.locator('.demos-page-header').getByRole('heading', {name: trackTitle, exact: true})).toBeVisible()
+      await expect(page.locator('.demos-player-card').getByRole('heading', {name: trackTitle, exact: true})).toBeVisible()
       await expect(page.getByText(trackDescription)).toBeVisible()
       await expect(page.getByText(relatedSongTitle)).toBeVisible()
 
@@ -265,9 +267,10 @@ test.describe('demos module', () => {
       await page.getByLabel('Tipo').selectOption('demo')
       await page.getByLabel('Estado').selectOption('aprobado')
       const secondUploadResponsePromise = page.waitForResponse(
-        (response) =>
-          response.url().includes(`/api/dashboard/bands/${fixture.band.id}/demos`) &&
-          response.request().method() === 'POST'
+        (response) => {
+          const url = new URL(response.url())
+          return url.pathname === `/api/dashboard/bands/${fixture.band.id}/demos` && response.request().method() === 'POST'
+        }
       )
       await page.getByRole('button', {name: 'Guardar demo'}).click()
       const secondUploadResponse = await secondUploadResponsePromise
@@ -290,7 +293,8 @@ test.describe('demos module', () => {
 
       await page.locator(`a[href="/dashboard/bands/${fixture.band.id}/demos/playlists"]`).click()
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos/playlists$`))
-      await expect(page.locator('.demos-page-header').getByRole('heading', {name: 'Playlists', exact: true})).toBeVisible()
+      await expect(page.getByRole('heading', {name: fixture.band.name, exact: true})).toBeVisible()
+      await expect(page.getByText('Herramientas privadas · Playlists')).toBeVisible()
       await expect(page.locator('.demos-playlist-card').first()).toContainText('General')
 
       const playlistCard = page.locator('.demos-playlist-card').filter({hasText: playlistTitle}).first()
@@ -302,7 +306,7 @@ test.describe('demos module', () => {
       await expect(miniPlayer.locator('.demos-mini-player__title')).toHaveText(trackTitle)
       await playlistCard.getByRole('link', {name: 'Abrir'}).click()
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos/playlists/${createdPlaylistId}$`))
-      await expect(page.locator('.demos-page-header').getByRole('heading', {name: playlistTitle, exact: true})).toBeVisible()
+      await expect(page.locator('.demos-featured-card').getByRole('heading', {name: playlistTitle, exact: true})).toBeVisible()
       await expect(page.getByText(trackTitle)).toBeVisible()
       await expect(page.locator('.demos-featured-card__cover img')).toBeVisible()
 
@@ -319,13 +323,13 @@ test.describe('demos module', () => {
       await expect(page).toHaveURL(new RegExp(`/dashboard/bands/${fixture.band.id}/demos/playlists$`))
       const generalCard = page.locator('.demos-playlist-card').first()
       await generalCard.getByRole('link', {name: 'Abrir'}).click()
-      await expect(page.locator('.demos-page-header').getByRole('heading', {name: 'General', exact: true})).toBeVisible()
+      await expect(page.locator('.demos-featured-card').getByRole('heading', {name: 'General', exact: true})).toBeVisible()
       await expect(page.getByRole('button', {name: 'Editar playlist'})).toHaveCount(0)
       await expect(page.getByRole('button', {name: 'Subir'})).toHaveCount(0)
       await expect(page.getByRole('button', {name: 'Bajar'})).toHaveCount(0)
       await expect(page.getByRole('button', {name: 'Quitar'})).toHaveCount(0)
 
-      await page.getByRole('link', {name: 'Bandas'}).click()
+      await page.getByRole('link', {name: 'Bandas', exact: true}).click()
       await expect(page).toHaveURL(/\/dashboard$/)
       await expect(miniPlayer).toBeVisible()
     } finally {

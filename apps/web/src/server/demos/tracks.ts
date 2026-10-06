@@ -1,13 +1,16 @@
 import {revalidatePath} from 'next/cache'
+import {cache} from 'react'
 
 import type {
+  TrackUploadCompleteInput,
+  TrackUploadStartInput,
   BandAudioTrackDetail,
   BandTrackAccessPayload,
   TrackAccessInput,
   TrackUpdateInput,
   TrackUploadInput,
 } from '@web-bands/bands-domain'
-import {trackUpdateSchema, trackUploadSchema} from '@web-bands/bands-domain'
+import {trackUpdateSchema, trackUploadCompleteSchema, trackUploadSchema, trackUploadStartSchema} from '@web-bands/bands-domain'
 import {ZodError} from 'zod'
 
 import {writeAuditLog} from '@/lib/server/audit'
@@ -37,6 +40,29 @@ type RequestContext = {
 }
 
 type TrackRow = Parameters<typeof toTrackSummary>[0]
+type UploadedTrackDescriptor = {
+  fileSizeBytes: number
+  mimeType: string
+  originalFileName: string
+  storagePath: string
+  trackId: string
+}
+
+function revalidateDemosHome(bandId: string) {
+  revalidatePath(`/dashboard/bands/${bandId}/demos`)
+}
+
+function revalidatePlaylistIndex(bandId: string) {
+  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
+}
+
+function revalidatePlaylistDetail(bandId: string, playlistId: string) {
+  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${playlistId}`)
+}
+
+function revalidateTrackDetail(bandId: string, trackId: string) {
+  revalidatePath(`/dashboard/bands/${bandId}/demos/${trackId}`)
+}
 
 function readOptionalString(formData: FormData, key: string) {
   const value = formData.get(key)
@@ -82,6 +108,10 @@ function buildTrackInputFromFormData(formData: FormData): TrackUploadInput {
   })
 }
 
+function buildTrackStartInput(input: unknown): TrackUploadStartInput {
+  return trackUploadStartSchema.parse(input)
+}
+
 function assertAudioFile(file: File | null) {
   if (!(file instanceof File)) {
     throw new BandServiceError('Audio file is required.', 400)
@@ -96,6 +126,18 @@ function assertAudioFile(file: File | null) {
   }
 
   return file
+}
+
+function assertAudioUploadDescriptor<T extends {fileSizeBytes: number; mimeType: string}>(descriptor: T) {
+  if (!DEMOS_ALLOWED_MIME_TYPES.has(descriptor.mimeType)) {
+    throw new BandServiceError('Only MP3, WAV, M4A and OGG files are allowed.', 400)
+  }
+
+  if (descriptor.fileSizeBytes > DEMOS_MAX_FILE_SIZE_BYTES) {
+    throw new BandServiceError('Audio must be 50MB or smaller.', 400)
+  }
+
+  return descriptor
 }
 
 async function removeTrackStorageObject(storageBucket: string, storagePath: string) {
@@ -113,6 +155,17 @@ async function removeTrackRecord(bandId: string, trackId: string) {
     await supabase.from('band_audio_tracks').delete().eq('band_id', bandId).eq('id', trackId)
   } catch {
     // Best-effort cleanup.
+  }
+}
+
+async function consumeUploadAllowance(userId: string, bandId: string) {
+  const rateLimitResult = await consumeRateLimit(RATE_LIMIT_POLICIES.demosUpload, [userId, bandId])
+
+  if (!rateLimitResult.allowed) {
+    throw new BandServiceError('Too many demo uploads right now. Try again in a few minutes.', 429, {
+      retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+      headers: getRateLimitHeaders(rateLimitResult),
+    })
   }
 }
 
@@ -151,6 +204,148 @@ async function linkTrackToPlaylist(
   }
 }
 
+async function verifyUploadedTrack(storagePath: string) {
+  const admin = requireDemosAdminClient()
+  const {data, error} = await admin.storage.from('band-demos').info(storagePath)
+
+  if (error || !data) {
+    throw new BandServiceError('The uploaded audio could not be verified.', 400)
+  }
+}
+
+async function loadLinkedPlaylistIdsForTrack(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  trackId: string
+) {
+  const {data, error} = await supabase
+    .from('band_audio_playlist_tracks')
+    .select('playlist_id')
+    .eq('track_id', trackId)
+
+  if (error) {
+    return []
+  }
+
+  return Array.from(new Set((data || []).map((row) => row.playlist_id)))
+}
+
+async function persistUploadedTrack(
+  userId: string,
+  bandId: string,
+  input: TrackUploadInput,
+  upload: UploadedTrackDescriptor,
+  requestContext: RequestContext,
+  options?: {
+    verifyStorage?: boolean
+  }
+) {
+  requireDemosEditor(await getBandDemosAccess(userId, bandId))
+  const supabase = await createClient()
+  const generalPlaylist = await ensureGeneralPlaylist(bandId, userId)
+  let selectedPlaylistId: string | null = null
+
+  if (options?.verifyStorage) {
+    await verifyUploadedTrack(upload.storagePath)
+  }
+
+  if (input.playlistId) {
+    let playlistRow
+    try {
+      playlistRow = await loadBandPlaylistRowById(supabase, bandId, input.playlistId)
+    } catch {
+      throw new BandServiceError('Playlist could not be validated.', 500)
+    }
+
+    if (!playlistRow) {
+      throw new BandServiceError('Playlist not found.', 404, {
+        errors: [
+          {
+            path: 'playlistId',
+            message: 'La playlist seleccionada no existe para esta banda.',
+          },
+        ],
+      })
+    }
+
+    selectedPlaylistId = playlistRow.id
+  }
+
+  const {data: insertedTrack, error: insertError} = await supabase
+    .from('band_audio_tracks')
+    .insert({
+      id: upload.trackId,
+      band_id: bandId,
+      title: input.title,
+      description: input.description || null,
+      related_song_title: input.relatedSongTitle || null,
+      storage_bucket: 'band-demos',
+      storage_path: upload.storagePath,
+      original_file_name: upload.originalFileName,
+      mime_type: upload.mimeType,
+      file_size_bytes: upload.fileSizeBytes,
+      duration_seconds: input.durationSeconds ?? null,
+      track_type: input.trackType,
+      track_status: input.trackStatus,
+      uploaded_by: userId,
+      is_downloadable: input.isDownloadable,
+    })
+    .select(
+      'id, band_id, title, description, related_song_title, storage_bucket, storage_path, original_file_name, mime_type, file_size_bytes, duration_seconds, track_type, track_status, uploaded_by, is_downloadable, created_at, updated_at'
+    )
+    .single()
+
+  if (insertError || !insertedTrack) {
+    await removeTrackStorageObject('band-demos', upload.storagePath)
+    throw new BandServiceError('Track metadata could not be saved.', 500)
+  }
+
+  try {
+    await linkTrackToPlaylist(supabase, generalPlaylist.id, upload.trackId)
+
+    if (selectedPlaylistId && selectedPlaylistId !== generalPlaylist.id) {
+      await linkTrackToPlaylist(supabase, selectedPlaylistId, upload.trackId)
+    }
+  } catch (error) {
+    await Promise.all([
+      removeTrackRecord(bandId, upload.trackId),
+      removeTrackStorageObject('band-demos', upload.storagePath),
+    ])
+    throw error
+  }
+
+  revalidateDemosHome(bandId)
+  revalidatePlaylistIndex(bandId)
+  revalidatePlaylistDetail(bandId, generalPlaylist.id)
+  if (selectedPlaylistId && selectedPlaylistId !== generalPlaylist.id) {
+    revalidatePlaylistDetail(bandId, selectedPlaylistId)
+  }
+
+  await writeAuditLog({
+    action: 'band.demo_uploaded',
+    actorUserId: userId,
+    bandId,
+    ip: requestContext.ip,
+    metadata: {
+      fileName: upload.originalFileName,
+      mimeType: upload.mimeType,
+      requestId: requestContext.requestId,
+      size: upload.fileSizeBytes,
+      title: input.title,
+      trackType: input.trackType,
+      playlistId: selectedPlaylistId,
+      generalPlaylistId: generalPlaylist.id,
+    },
+    targetId: upload.trackId,
+    targetType: 'band_audio_track',
+    userAgent: requestContext.userAgent,
+  })
+
+  return {
+    ok: true,
+    track: toTrackSummary(insertedTrack as TrackRow),
+  }
+}
+
 function buildTrackAccessPayload(
   signedUrl: string,
   mode: TrackAccessInput['mode'],
@@ -171,7 +366,7 @@ function buildTrackAccessPayload(
   }
 }
 
-export async function getBandTrack(
+export const getBandTrack = cache(async function getBandTrack(
   userId: string,
   bandId: string,
   trackId: string
@@ -215,6 +410,92 @@ export async function getBandTrack(
     canDownload: access.role !== 'viewer' || typedTrack.is_downloadable,
     uploadedByName,
   }
+})
+
+export async function createBandTrackUpload(userId: string, bandId: string, input: unknown) {
+  requireDemosEditor(await getBandDemosAccess(userId, bandId))
+
+  let parsed: TrackUploadStartInput
+  try {
+    parsed = buildTrackStartInput(input)
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new BandServiceError('Invalid audio upload payload.', 400, {
+        errors: getTrackValidationIssues(error),
+      })
+    }
+
+    throw error
+  }
+
+  assertAudioUploadDescriptor(parsed)
+
+  const trackId = crypto.randomUUID()
+  const storagePath = buildTrackStoragePath(bandId, trackId, parsed.fileName)
+  const admin = requireDemosAdminClient()
+  const {data, error} = await admin.storage.from('band-demos').createSignedUploadUrl(storagePath)
+
+  if (error || !data?.token) {
+    throw new BandServiceError('Supabase Storage could not prepare the audio upload.', 503)
+  }
+
+  return {
+    ok: true,
+    upload: {
+      trackId,
+      storagePath,
+      token: data.token,
+    },
+  }
+}
+
+export async function completeBandTrackUpload(
+  userId: string,
+  bandId: string,
+  input: unknown,
+  requestContext: RequestContext
+) {
+  requireDemosEditor(await getBandDemosAccess(userId, bandId))
+  await consumeUploadAllowance(userId, bandId)
+
+  let parsed: TrackUploadCompleteInput
+  try {
+    parsed = trackUploadCompleteSchema.parse(input)
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new BandServiceError('Invalid demo metadata.', 400, {
+        errors: getTrackValidationIssues(error),
+      })
+    }
+
+    throw error
+  }
+
+  assertAudioUploadDescriptor(parsed.upload)
+
+  return persistUploadedTrack(
+    userId,
+    bandId,
+    {
+      title: parsed.title,
+      description: parsed.description,
+      relatedSongTitle: parsed.relatedSongTitle,
+      trackType: parsed.trackType,
+      trackStatus: parsed.trackStatus,
+      isDownloadable: parsed.isDownloadable,
+      durationSeconds: parsed.durationSeconds,
+      playlistId: parsed.playlistId,
+    },
+    {
+      trackId: parsed.upload.trackId,
+      storagePath: parsed.upload.storagePath,
+      originalFileName: parsed.upload.originalFileName,
+      mimeType: parsed.upload.mimeType,
+      fileSizeBytes: parsed.upload.fileSizeBytes,
+    },
+    requestContext,
+    {verifyStorage: true}
+  )
 }
 
 export async function uploadBandTrack(
@@ -224,14 +505,7 @@ export async function uploadBandTrack(
   requestContext: RequestContext
 ) {
   requireDemosEditor(await getBandDemosAccess(userId, bandId))
-  const rateLimitResult = await consumeRateLimit(RATE_LIMIT_POLICIES.demosUpload, [userId, bandId])
-
-  if (!rateLimitResult.allowed) {
-    throw new BandServiceError('Too many demo uploads right now. Try again in a few minutes.', 429, {
-      retryAfterSeconds: rateLimitResult.retryAfterSeconds,
-      headers: getRateLimitHeaders(rateLimitResult),
-    })
-  }
+  await consumeUploadAllowance(userId, bandId)
 
   const file = assertAudioFile(formData.get('file') instanceof File ? (formData.get('file') as File) : null)
 
@@ -252,32 +526,6 @@ export async function uploadBandTrack(
   const trackId = crypto.randomUUID()
   const storagePath = buildTrackStoragePath(bandId, trackId, file.name)
   const admin = requireDemosAdminClient()
-  const supabase = await createClient()
-  const generalPlaylist = await ensureGeneralPlaylist(bandId, userId)
-  let selectedPlaylistId: string | null = null
-
-  if (input.playlistId) {
-    let playlistRow
-    try {
-      playlistRow = await loadBandPlaylistRowById(supabase, bandId, input.playlistId)
-    } catch {
-      throw new BandServiceError('Playlist could not be validated.', 500)
-    }
-
-    if (!playlistRow) {
-      throw new BandServiceError('Playlist not found.', 404, {
-        errors: [
-          {
-            path: 'playlistId',
-            message: 'La playlist seleccionada no existe para esta banda.',
-          },
-        ],
-      })
-    }
-
-    selectedPlaylistId = playlistRow.id
-  }
-
   const uploadBuffer = Buffer.from(await file.arrayBuffer())
   const {error: storageError} = await admin.storage.from('band-demos').upload(storagePath, uploadBuffer, {
     contentType: file.type,
@@ -288,80 +536,19 @@ export async function uploadBandTrack(
     throw new BandServiceError('Supabase Storage could not save the audio file.', 503)
   }
 
-  const {data: insertedTrack, error: insertError} = await supabase
-    .from('band_audio_tracks')
-    .insert({
-      id: trackId,
-      band_id: bandId,
-      title: input.title,
-      description: input.description || null,
-      related_song_title: input.relatedSongTitle || null,
-      storage_bucket: 'band-demos',
-      storage_path: storagePath,
-      original_file_name: file.name,
-      mime_type: file.type,
-      file_size_bytes: file.size,
-      duration_seconds: input.durationSeconds ?? null,
-      track_type: input.trackType,
-      track_status: input.trackStatus,
-      uploaded_by: userId,
-      is_downloadable: input.isDownloadable,
-    })
-    .select(
-      'id, band_id, title, description, related_song_title, storage_bucket, storage_path, original_file_name, mime_type, file_size_bytes, duration_seconds, track_type, track_status, uploaded_by, is_downloadable, created_at, updated_at'
-    )
-    .single()
-
-  if (insertError || !insertedTrack) {
-    await removeTrackStorageObject('band-demos', storagePath)
-    throw new BandServiceError('Track metadata could not be saved.', 500)
-  }
-
-  try {
-    await linkTrackToPlaylist(supabase, generalPlaylist.id, trackId)
-
-    if (selectedPlaylistId && selectedPlaylistId !== generalPlaylist.id) {
-      await linkTrackToPlaylist(supabase, selectedPlaylistId, trackId)
-    }
-  } catch (error) {
-    await Promise.all([
-      removeTrackRecord(bandId, trackId),
-      removeTrackStorageObject('band-demos', storagePath),
-    ])
-    throw error
-  }
-
-  revalidatePath(`/dashboard/bands/${bandId}/demos`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${generalPlaylist.id}`)
-  if (selectedPlaylistId && selectedPlaylistId !== generalPlaylist.id) {
-    revalidatePath(`/dashboard/bands/${bandId}/demos/playlists/${selectedPlaylistId}`)
-  }
-
-  await writeAuditLog({
-    action: 'band.demo_uploaded',
-    actorUserId: userId,
+  return persistUploadedTrack(
+    userId,
     bandId,
-    ip: requestContext.ip,
-    metadata: {
-      fileName: file.name,
+    input,
+    {
+      trackId,
+      storagePath,
+      originalFileName: file.name,
       mimeType: file.type,
-      requestId: requestContext.requestId,
-      size: file.size,
-      title: input.title,
-      trackType: input.trackType,
-      playlistId: selectedPlaylistId,
-      generalPlaylistId: generalPlaylist.id,
+      fileSizeBytes: file.size,
     },
-    targetId: trackId,
-    targetType: 'band_audio_track',
-    userAgent: requestContext.userAgent,
-  })
-
-  return {
-    ok: true,
-    track: toTrackSummary(insertedTrack as TrackRow),
-  }
+    requestContext
+  )
 }
 
 export async function updateBandTrack(
@@ -396,6 +583,7 @@ export async function updateBandTrack(
   }
 
   const supabase = await createClient()
+  const linkedPlaylistIds = await loadLinkedPlaylistIdsForTrack(supabase, trackId)
   const {data: updatedTrack, error} = await supabase
     .from('band_audio_tracks')
     .update({
@@ -422,9 +610,11 @@ export async function updateBandTrack(
     throw new BandServiceError('Track not found.', 404)
   }
 
-  revalidatePath(`/dashboard/bands/${bandId}/demos`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/${trackId}`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
+  revalidateDemosHome(bandId)
+  revalidateTrackDetail(bandId, trackId)
+  linkedPlaylistIds.forEach((playlistId) => {
+    revalidatePlaylistDetail(bandId, playlistId)
+  })
 
   await writeAuditLog({
     action: 'band.demo_updated',
@@ -456,6 +646,7 @@ export async function deleteBandTrack(
 ) {
   requireDemosEditor(await getBandDemosAccess(userId, bandId))
   const supabase = await createClient()
+  const linkedPlaylistIds = await loadLinkedPlaylistIdsForTrack(supabase, trackId)
   const {data: deletedTrack, error} = await supabase
     .from('band_audio_tracks')
     .delete()
@@ -476,8 +667,11 @@ export async function deleteBandTrack(
 
   await removeTrackStorageObject(deletedTrack.storage_bucket, deletedTrack.storage_path)
 
-  revalidatePath(`/dashboard/bands/${bandId}/demos`)
-  revalidatePath(`/dashboard/bands/${bandId}/demos/playlists`)
+  revalidateDemosHome(bandId)
+  revalidatePlaylistIndex(bandId)
+  linkedPlaylistIds.forEach((playlistId) => {
+    revalidatePlaylistDetail(bandId, playlistId)
+  })
 
   await writeAuditLog({
     action: 'band.demo_deleted',

@@ -1,0 +1,41 @@
+import {NextRequest} from 'next/server'
+
+import {resolveRequestContext} from '@/lib/server/request-context'
+import {duplicateBandSetlist} from '@/server/bands/setlists'
+import {BandServiceError} from '@/server/bands/service-error'
+
+import {mapSetlistsServiceError, requireSetlistsUser} from '../../route-utils'
+
+export const runtime = 'nodejs'
+
+type RouteContext = {
+  params: Promise<{
+    bandId: string
+    setlistId: string
+  }>
+}
+
+export async function POST(request: NextRequest, context: RouteContext) {
+  const auth = await requireSetlistsUser()
+  if (auth.response || !auth.user) {
+    return auth.response
+  }
+
+  const {bandId, setlistId} = await context.params
+
+  try {
+    const payload = await duplicateBandSetlist(
+      auth.user.id,
+      bandId,
+      setlistId,
+      resolveRequestContext(request.headers)
+    )
+    return Response.json(payload, {status: 201})
+  } catch (error) {
+    if (error instanceof BandServiceError) {
+      return mapSetlistsServiceError(error)
+    }
+
+    throw error
+  }
+}

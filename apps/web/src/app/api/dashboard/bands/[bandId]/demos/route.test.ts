@@ -7,6 +7,7 @@ const mockIsSupabaseConfigured = vi.fn()
 const mockCreateClient = vi.fn()
 const mockGetBandDemosHome = vi.fn()
 const mockUploadBandTrack = vi.fn()
+const mockCompleteBandTrackUpload = vi.fn()
 
 vi.mock('@/lib/env', () => ({
   isSupabaseConfigured: mockIsSupabaseConfigured,
@@ -29,6 +30,7 @@ vi.mock('@/server/demos/home', () => ({
 }))
 
 vi.mock('@/server/demos/tracks', () => ({
+  completeBandTrackUpload: mockCompleteBandTrackUpload,
   uploadBandTrack: mockUploadBandTrack,
 }))
 
@@ -119,7 +121,7 @@ describe('GET /api/dashboard/bands/[bandId]/demos', () => {
 })
 
 describe('POST /api/dashboard/bands/[bandId]/demos', () => {
-  it('delegates uploads to the demos track service', async () => {
+  it('delegates multipart uploads to the legacy demos track service', async () => {
     mockCreateClient.mockResolvedValue(createSupabaseMock())
     mockUploadBandTrack.mockResolvedValue({
       ok: true,
@@ -156,19 +158,73 @@ describe('POST /api/dashboard/bands/[bandId]/demos', () => {
     })
   })
 
-  it('maps service errors into JSON responses', async () => {
+  it('delegates JSON finalize payloads to the direct-upload completion service', async () => {
     mockCreateClient.mockResolvedValue(createSupabaseMock())
-    mockUploadBandTrack.mockRejectedValue(
-      new BandServiceError('Audio must be 50MB or smaller.', 400)
-    )
-
-    const formData = new FormData()
-    formData.set('file', new File(['demo'], 'demo.mp3', {type: 'audio/mpeg'}))
+    mockCompleteBandTrackUpload.mockResolvedValue({
+      ok: true,
+      track: {id: 'track-2', title: 'Sobre Ruinas v2'},
+    })
 
     const response = await POST(
       new NextRequest('http://localhost/api/dashboard/bands/band-1/demos', {
         method: 'POST',
-        body: formData,
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          title: 'Sobre Ruinas v2',
+          trackType: 'demo',
+          trackStatus: 'nuevo',
+          isDownloadable: true,
+          upload: {
+            trackId: 'track-2',
+            storagePath: 'band-1/track-2/sobre-ruinas-v2.wav',
+            originalFileName: 'sobre-ruinas-v2.wav',
+            mimeType: 'audio/wav',
+            fileSizeBytes: 1024,
+          },
+        }),
+      }),
+      {
+        params: Promise.resolve({bandId: 'band-1'}),
+      }
+    )
+
+    expect(mockCompleteBandTrackUpload).toHaveBeenCalledWith(
+      'user-1',
+      'band-1',
+      expect.objectContaining({
+        title: 'Sobre Ruinas v2',
+        upload: expect.objectContaining({trackId: 'track-2'}),
+      }),
+      expect.objectContaining({requestId: 'req-demo-1'})
+    )
+    expect(response.status).toBe(201)
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      track: {id: 'track-2', title: 'Sobre Ruinas v2'},
+    })
+  })
+
+  it('maps service errors into JSON responses', async () => {
+    mockCreateClient.mockResolvedValue(createSupabaseMock())
+    mockCompleteBandTrackUpload.mockRejectedValue(new BandServiceError('Audio must be 50MB or smaller.', 400))
+
+    const response = await POST(
+      new NextRequest('http://localhost/api/dashboard/bands/band-1/demos', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          title: 'Sobre Ruinas',
+          trackType: 'demo',
+          trackStatus: 'nuevo',
+          isDownloadable: true,
+          upload: {
+            trackId: 'track-1',
+            storagePath: 'band-1/track-1/demo.mp3',
+            originalFileName: 'demo.mp3',
+            mimeType: 'audio/mpeg',
+            fileSizeBytes: 60 * 1024 * 1024,
+          },
+        }),
       }),
       {
         params: Promise.resolve({bandId: 'band-1'}),

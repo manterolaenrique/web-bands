@@ -22,6 +22,7 @@ function buildContentSecurityPolicyReportOnly() {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
+    "frame-src 'self' https://open.spotify.com https://www.youtube.com https://www.youtube-nocookie.com",
     "object-src 'none'",
     "img-src 'self' data: blob: https://cdn.sanity.io https://*.sanity.io https://*.supabase.co https://*.supabase.in",
     "style-src 'self' 'unsafe-inline'",

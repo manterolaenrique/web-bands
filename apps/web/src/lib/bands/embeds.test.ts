@@ -30,7 +30,7 @@ describe('resolveYouTubeEmbedUrl', () => {
 describe('resolveSpotifyEmbedUrl', () => {
   it('converts track urls to embeds', () => {
     expect(resolveSpotifyEmbedUrl('https://open.spotify.com/track/123abc')).toEqual({
-      embedUrl: 'https://open.spotify.com/embed/track/123abc?utm_source=generator',
+      embedUrl: 'https://open.spotify.com/embed/track/123abc?utm_source=generator&theme=0',
       type: 'track',
       id: '123abc',
     })
@@ -48,7 +48,7 @@ describe('resolveSpotifyEmbedUrl', () => {
         'https://open.spotify.com/intl-es/artist/64z7A5fKuQxahck2t1vLtr?si=QgJApHCMRaq38afFQS8MCg'
       )
     ).toEqual({
-      embedUrl: 'https://open.spotify.com/embed/artist/64z7A5fKuQxahck2t1vLtr?utm_source=generator',
+      embedUrl: 'https://open.spotify.com/embed/artist/64z7A5fKuQxahck2t1vLtr?utm_source=generator&theme=0',
       type: 'artist',
       id: '64z7A5fKuQxahck2t1vLtr',
     })
@@ -58,7 +58,7 @@ describe('resolveSpotifyEmbedUrl', () => {
         'https://open.spotify.com/intl-es/album/2N1ulJHFZnoMyrMOjnrjtC?si=ZIsBCPzRSzeDLkQ1tsXD0w'
       )
     ).toEqual({
-      embedUrl: 'https://open.spotify.com/embed/album/2N1ulJHFZnoMyrMOjnrjtC?utm_source=generator',
+      embedUrl: 'https://open.spotify.com/embed/album/2N1ulJHFZnoMyrMOjnrjtC?utm_source=generator&theme=0',
       type: 'album',
       id: '2N1ulJHFZnoMyrMOjnrjtC',
     })

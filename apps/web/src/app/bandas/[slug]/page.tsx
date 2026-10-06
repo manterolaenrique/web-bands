@@ -2,16 +2,24 @@ import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 
 import {PublicBandView} from '@/components/bands/PublicBandView'
-import {getCurrentUser} from '@/lib/auth/session'
 import {getSanityImageUrl} from '@/lib/sanity/image'
-import {getPublicBandBySlug} from '@/lib/sanity/queries'
+import {getPublicBandBySlug, getPublishedBands} from '@/lib/sanity/queries'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 type PageProps = {
   params: Promise<{
     slug: string
   }>
+}
+
+export async function generateStaticParams() {
+  const bands = await getPublishedBands().catch(() => [])
+
+  return bands
+    .map((band) => band.slug?.current)
+    .filter((slug): slug is string => Boolean(slug))
+    .map((slug) => ({slug}))
 }
 
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
@@ -38,11 +46,10 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
 export default async function BandPage({params}: PageProps) {
   const {slug} = await params
   const band = await getPublicBandBySlug(slug)
-  const user = await getCurrentUser()
 
   if (!band) {
     notFound()
   }
 
-  return <PublicBandView band={band} accountHref={user ? '/dashboard' : '/login'} accountLabel={user ? 'Cuenta' : 'Login'} />
+  return <PublicBandView band={band} />
 }

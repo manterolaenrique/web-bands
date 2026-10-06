@@ -1,11 +1,13 @@
 'use client'
 
-import {usePathname, useRouter} from 'next/navigation'
+import {usePathname} from 'next/navigation'
 import {useState, useTransition, type FormEvent} from 'react'
 
 import type {BandAudioTrackDetail} from '@web-bands/bands-domain'
 import {BAND_AUDIO_TRACK_STATUSES, BAND_AUDIO_TRACK_TYPES} from '@web-bands/bands-domain'
 
+import {InlineButtonSpinner} from '@/components/ui/InlineButtonSpinner'
+import {usePendingNavigation} from '@/components/ui/usePendingNavigation'
 import {updateDemoTrackRequest, type DemoApiValidationIssue} from '@/lib/dashboard/demos-api'
 import {getTrackStatusLabel, getTrackTypeLabel} from '@/lib/demos/format'
 
@@ -24,7 +26,7 @@ export function TrackEditSheet({
   track: BandAudioTrackDetail
   initialOpen?: boolean
 }) {
-  const router = useRouter()
+  const navigation = usePendingNavigation()
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(initialOpen)
   const [title, setTitle] = useState(track.title)
@@ -41,7 +43,7 @@ export function TrackEditSheet({
     setIsOpen(false)
 
     if (initialOpen) {
-      router.replace(pathname, {scroll: false})
+      navigation.replace(pathname, {scroll: false})
     }
   }
 
@@ -68,7 +70,7 @@ export function TrackEditSheet({
       }
 
       handleClose()
-      router.refresh()
+      navigation.refresh()
     })
   }
 
@@ -172,8 +174,8 @@ export function TrackEditSheet({
                 <button className="button" type="button" onClick={handleClose} disabled={isPending}>
                   Cancelar
                 </button>
-                <button className="button button--primary" type="submit" disabled={isPending}>
-                  {isPending ? 'Guardando...' : 'Guardar cambios'}
+                <button className="button button--primary" type="submit" disabled={isPending} aria-busy={isPending}>
+                  {isPending ? <InlineButtonSpinner label="Guardando..." /> : 'Guardar cambios'}
                 </button>
               </div>
             </form>

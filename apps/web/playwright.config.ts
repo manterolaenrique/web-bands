@@ -2,6 +2,7 @@ import {defineConfig, devices} from '@playwright/test'
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3100'
 const useManagedWebServer = !process.env.PLAYWRIGHT_BASE_URL
+const useSystemChrome = process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === 'true'
 const managedWebServerCommand =
   'npm run build && npm run start -- --hostname localhost --port 3100'
 const useVercelProtectionState =
@@ -36,6 +37,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        channel: useSystemChrome ? 'chrome' : undefined,
       },
     },
   ],
