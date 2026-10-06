@@ -1,0 +1,25 @@
+project_id = "dpdavyanumzzrymxdxhy"
+
+[auth]
+additional_redirect_urls = [
+  "https://web-bands.vercel.app/auth/callback",
+  "https://web-bands-v2.vercel.app/auth/callback",
+  "http://localhost:3000/auth/callback",
+]
+site_url = "https://web-bands.vercel.app"
+
+[auth.email]
+enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[storage.vector]
+enabled = false
